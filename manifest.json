@@ -1,0 +1,43 @@
+{
+  "id": "./",
+  "name": "سیستم جامع پرستاری قلب",
+  "short_name": "پرستاری قلب",
+  "description": "سامانه جامع پرستاری بخش قلب: برگ رسمی گزارش پرستار، محاسبات بالینی، تشخیص NANDA، بانک دارویی و مدیریت شیفت",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#080b12",
+  "theme_color": "#080b12",
+  "categories": [
+    "medical",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
