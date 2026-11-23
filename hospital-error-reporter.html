@@ -8,7 +8,7 @@
   <!-- فونت فارسی وزیرمتن با پشتیبان Tahoma -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -145,7 +145,7 @@
 
     /* تنظیمات تمیز برای حالت تعبیه‌شده (iframe / embedded=1) داخل اپ پرستاری قلب */
     body.embedded-mode #appShell {
-      padding-bottom: 5.75rem;
+      padding-bottom: 8.5rem;
     }
     body.embedded-mode #mainHeaderWrap {
       padding-top: 0.35rem;
@@ -300,23 +300,86 @@
     }
     #hamburgerDrawer.open { transform: translateX(0); }
 
-    /* منوی شناور سریع (Speed-Dial FAB) */
+    /* تضمین عملکرد قطعی مخفی‌سازی در تمام تب‌ها و حالت آفلاین */
+    .hidden { display: none !important; }
+
+    /* رفع کامل تداخل کلیک دکمه شناور با دکمه‌های کارت آرشیو (به‌ویژه دکمه حذف) */
+    #speedDialWrap {
+      pointer-events: none !important;
+    }
+    #speedDialWrap > div {
+      pointer-events: none !important;
+    }
+    #fabMainBtn {
+      pointer-events: auto !important;
+    }
     .speed-item {
       opacity: 0;
+      visibility: hidden;
       transform: translateY(14px) scale(0.92);
-      pointer-events: none;
-      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none !important;
+      transition: opacity 0.22s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.22s ease;
     }
     .speed-dial-open .speed-item {
       opacity: 1;
+      visibility: visible;
       transform: translateY(0) scale(1);
-      pointer-events: auto;
+      pointer-events: auto !important;
     }
-    .speed-dial-open .speed-item:nth-child(1) { transition-delay: 0.12s; }
-    .speed-dial-open .speed-item:nth-child(2) { transition-delay: 0.08s; }
-    .speed-dial-open .speed-item:nth-child(3) { transition-delay: 0.04s; }
+    .speed-dial-open .speed-item:nth-child(1) { transition-delay: 0.09s; }
+    .speed-dial-open .speed-item:nth-child(2) { transition-delay: 0.06s; }
+    .speed-dial-open .speed-item:nth-child(3) { transition-delay: 0.03s; }
     .speed-dial-open .speed-item:nth-child(4) { transition-delay: 0.0s; }
     .speed-dial-open #fabIcon { transform: rotate(45deg); }
+
+    /* لایه‌بندی دقیق مودال‌ها و اعلان‌ها */
+    #detailModal { z-index: 55 !important; }
+    #confirmModal { z-index: 70 !important; }
+    #toastContainer { z-index: 80 !important; }
+
+    /* افکت بصری مدرن برای کارت‌های آرشیو و هدر بخش‌ها */
+    .archive-card-pro {
+      position: relative;
+      overflow: hidden;
+      border-right-width: 4px !important;
+    }
+    .archive-card-pro::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+      pointer-events: none;
+    }
+    .edit-hud-active {
+      border-color: rgba(56, 189, 248, 0.65) !important;
+      box-shadow: 0 0 28px rgba(56, 189, 248, 0.22), var(--glass-highlight) !important;
+    }
+    .btn-del-card {
+      background: rgba(244, 63, 94, 0.14);
+      border: 1px solid rgba(244, 63, 94, 0.38);
+      color: #fda4af;
+      transition: all 0.18s ease;
+    }
+    .btn-del-card:hover {
+      background: rgba(244, 63, 94, 0.28);
+      border-color: rgba(244, 63, 94, 0.65);
+      color: #ffffff;
+    }
+    [data-theme="pearl"] .btn-del-card {
+      color: #be123c;
+      background: rgba(244, 63, 94, 0.10);
+      border-color: rgba(225, 29, 72, 0.35);
+    }
+    [data-theme="pearl"] .btn-del-card:hover {
+      background: #e11d48;
+      color: #ffffff;
+    }
+    .sec-badge {
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
+      box-shadow: var(--accent-glow);
+    }
 
     /* داک کپسولی شناور پایین */
     .floating-dock {
@@ -365,7 +428,7 @@
   </div>
 
   <!-- پوسته اصلی اپلیکیشن -->
-  <div id="appShell" class="relative z-10 min-h-screen flex flex-col pb-32">
+  <div id="appShell" class="relative z-10 min-h-screen flex flex-col pb-40">
 
     <!-- نوار اتصال زنده به سیستم پرستاری قلب (CARDIAC_BRIDGE Banner) -->
     <div id="cardiacBridgeBanner" class="hidden px-3 sm:px-5 pt-2.5">
@@ -437,7 +500,7 @@
 
     <!-- نوار وضعیت شناور شیشه‌ای HUD (در نمای ثبت گزارش) -->
     <div id="floatingStatusHud" class="sticky top-[74px] sm:top-[82px] z-20 px-3 sm:px-5 pt-2.5">
-      <div class="max-w-6xl mx-auto glass-card rounded-2xl px-3.5 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+      <div id="floatingHudCard" class="max-w-6xl mx-auto glass-card rounded-2xl px-3.5 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition-all">
         <div class="flex-1 min-w-0 space-y-1.5">
           <div class="flex items-center justify-between gap-2 text-[11px] sm:text-xs font-bold">
             <div class="flex items-center gap-2 truncate">
@@ -796,17 +859,40 @@
       <!-- ===================================================================
            نمای ۲: آرشیو و فیلترهای کلیکی
            =================================================================== -->
-      <div id="view-archive" class="view-panel hidden space-y-5 animate-view">
-        <section class="glass-card rounded-3xl p-4 sm:p-6 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <h2 class="text-base sm:text-lg font-black text-main">آرشیو و فیلتر کلیکی (بدون تایپ)</h2>
-              <span id="archiveMatchCount" class="px-3 py-1 rounded-full btn-luxury-primary text-xs font-black">۰ مورد</span>
+      <div id="view-archive" class="view-panel hidden space-y-4 animate-view">
+        <!-- خلاصه سریع آماری آرشیو -->
+        <div id="archiveQuickKpis" class="grid grid-cols-3 gap-2.5"></div>
+
+        <section class="glass-card rounded-3xl p-4 sm:p-5 space-y-3.5">
+          <div class="flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm sm:text-base font-black text-main">📂 آرشیو گزارش‌های ثبت‌شده</h2>
+              <span id="archiveMatchCount" class="px-2.5 py-0.5 rounded-full btn-luxury-primary text-[11px] font-black">۰ مورد</span>
             </div>
-            <button id="resetFiltersBtn" type="button" class="px-3.5 py-2 rounded-xl lux-chip text-xs font-bold">پاک کردن فیلترها</button>
+            <div class="flex items-center gap-1.5">
+              <button id="toggleFiltersDrawerBtn" type="button" class="px-3 py-1.5 rounded-xl lux-chip text-xs font-extrabold inline-flex items-center gap-1.5">
+                <span>🎛 فیلترهای کلیکی</span>
+                <span id="activeFilterCountBadge" class="hidden min-w-[1.2rem] h-4 px-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black inline-flex items-center justify-center">۰</span>
+              </button>
+              <button id="resetFiltersBtn" type="button" class="px-3 py-1.5 rounded-xl lux-chip text-xs font-bold text-rose-400">پاک کردن</button>
+            </div>
           </div>
 
-          <div class="space-y-3 text-xs">
+          <!-- جستجو + مرتب‌سازی سریع -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <div class="sm:col-span-8 relative">
+              <input id="archiveSearchInput" type="search" placeholder="🔍 جستجو در کد گزارش، بخش، نوع خطا، تخت یا یادداشت..."
+                class="w-full rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm text-main placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition"
+                style="background: var(--glass-bg-strong); border: 1px solid var(--glass-border);" />
+            </div>
+            <div class="sm:col-span-4 flex items-center gap-1.5">
+              <button type="button" id="sortNewestBtn" class="flex-1 py-2.5 px-2.5 rounded-2xl lux-chip text-[11px] font-extrabold is-active">🕒 جدیدترین</button>
+              <button type="button" id="sortSeverityBtn" class="flex-1 py-2.5 px-2.5 rounded-2xl lux-chip text-[11px] font-extrabold">🔥 شدیدترین</button>
+            </div>
+          </div>
+
+          <!-- پنل فیلترهای کلیکی (جمع‌شونده برای دید فوری کارت‌ها روی موبایل) -->
+          <div id="archiveFiltersPanel" class="hidden pt-3 border-t space-y-3 text-xs animate-view" style="border-color: var(--glass-border);">
             <div class="flex flex-wrap items-center gap-1.5">
               <span class="font-extrabold text-dim ml-1">فیلتر بحرانی:</span>
               <div id="fltCritical" class="flex flex-wrap gap-1.5"></div>
@@ -1521,7 +1607,8 @@
       lastSavedId: null,
       activeNeverGroup: 'surgical',
       form: null,
-      filters: { critical: 'all', shift: 'all', severity: 'all', category: 'all', ward: 'all' },
+      filters: { critical: 'all', shift: 'all', severity: 'all', category: 'all', ward: 'all', query: '', sort: 'newest' },
+      filtersOpen: false,
       activeDetailId: null,
       confirmCb: null,
       speedDialOpen: false,
@@ -1696,8 +1783,15 @@
           this.applyContext(params, false);
         }
 
+        // هماهنگی اولیه تم از پارامتر URL در صورت وجود
+        if (params.theme) {
+          const mappedInitTheme = this.mapHostTheme(params.theme);
+          if (mappedInitTheme) state.theme = mappedInitTheme;
+        }
+
         this.renderBanner();
         this.syncSharedStorage();
+        this.broadcast({ type: 'ERROR_APP_READY', source: 'error_app' });
         this.broadcastStats();
 
         // شنونده دوطرفه postMessage
@@ -1705,7 +1799,10 @@
           const data = event.data;
           if (!data || typeof data !== 'object' || !data.type) return;
 
-          if (data.type === 'CARDIAC_SYNC_CONTEXT') {
+          if (data.type === 'CARDIAC_SYNC_THEME') {
+            const mapped = this.mapHostTheme(data.theme || data.v12Theme);
+            if (mapped) applyTheme(mapped, true);
+          } else if (data.type === 'CARDIAC_SYNC_CONTEXT') {
             state.bridge.connected = true;
             const payload = data.payload && typeof data.payload === 'object' ? data.payload : data;
             this.applyContext(payload, true);
@@ -1715,7 +1812,13 @@
             state.bridge.connected = true;
             this.renderBanner();
             const stats = computeBridgeStats();
-            const msg = { type: 'ERROR_APP_STATS', ...stats };
+            const payload = {
+              total: stats.totalCount,
+              critical: stats.criticalCount,
+              today: stats.todayCount,
+              ...stats
+            };
+            const msg = { type: 'ERROR_STATS_RESPONSE', payload, ...payload };
             try {
               if (event.source && typeof event.source.postMessage === 'function') {
                 event.source.postMessage(msg, '*');
@@ -1840,11 +1943,26 @@
         } catch (e) { /* ignore */ }
       },
 
+      mapHostTheme(t) {
+        const s = String(t || '').toLowerCase();
+        if (!s) return '';
+        if (s.includes('pearl') || s.includes('light')) return 'pearl';
+        if (s.includes('emerald')) return 'emerald';
+        if (s.includes('obsidian') || s.includes('sapphire') || s.includes('dark')) return 'obsidian';
+        return THEME_META[s] ? s : '';
+      },
+
       syncSharedStorage() {
         try {
           const stats = computeBridgeStats();
+          const lastRec = state.records[0] || null;
           localStorage.setItem(BRIDGE_SYNC_KEY, JSON.stringify({
             updatedAt: new Date().toISOString(),
+            total: stats.totalCount,
+            critical: stats.criticalCount,
+            today: stats.todayCount,
+            summaryText: stats.lastSummary,
+            lastReport: lastRec ? { ...lastRec, summaryText: stats.lastSummary } : null,
             ...stats
           }));
         } catch (e) { /* ignore */ }
@@ -1852,16 +1970,26 @@
 
       broadcastStats() {
         const stats = computeBridgeStats();
-        this.broadcast({ type: 'ERROR_APP_STATS', ...stats });
+        const payload = {
+          total: stats.totalCount,
+          critical: stats.criticalCount,
+          today: stats.todayCount,
+          ...stats
+        };
+        this.broadcast({ type: 'ERROR_STATS_RESPONSE', payload, ...payload });
       },
 
       broadcastSaved(record) {
         const stats = computeBridgeStats();
         const summaryText = formatRecordSummary(record);
+        const enriched = { ...record, summaryText, text: summaryText };
         this.broadcast({
           type: 'ERROR_REPORT_SAVED',
-          report: record,
+          report: enriched,
+          payload: { report: enriched, total: stats.totalCount, critical: stats.criticalCount, summaryText },
           summaryText,
+          total: stats.totalCount,
+          critical: stats.criticalCount,
           totalCount: stats.totalCount,
           todayCount: stats.todayCount,
           criticalCount: stats.criticalCount
@@ -1884,10 +2012,20 @@
           return;
         }
 
-        this.broadcast({
-          type: 'ERROR_SEND_TO_CHALLENGES',
+        const challengePayload = {
+          id: report ? report.id : ('ch_' + Date.now()),
           text,
-          report
+          summaryText: text,
+          report,
+          ward: report?.ward || state.form?.ward || '',
+          shift: report?.shift || state.form?.shift || '',
+          severity: report?.severityCode || '',
+          category: report ? (report.categories || []).join(' / ') : ''
+        };
+        this.broadcast({
+          type: 'SEND_TO_CHALLENGES',
+          payload: challengePayload,
+          ...challengePayload
         });
         const copied = safeCopyText(text);
         if (state.bridge.connected) {
@@ -1913,11 +2051,12 @@
     /* =========================================================================
        ۵. مدیریت تم‌ها، منوی همبرگری، داک شناور و Speed-Dial
        ========================================================================= */
-    function applyTheme(themeKey) {
+    function applyTheme(themeKey, silent = false) {
       if (!THEME_META[themeKey]) return;
       state.theme = themeKey;
       document.documentElement.setAttribute('data-theme', themeKey);
-      document.getElementById('headerThemeName').textContent = THEME_META[themeKey].name;
+      const lbl = document.getElementById('headerThemeName');
+      if (lbl) lbl.textContent = THEME_META[themeKey].name;
 
       document.querySelectorAll('.theme-opt').forEach(btn => {
         const active = btn.dataset.themePick === themeKey;
@@ -1925,7 +2064,7 @@
         const chk = btn.querySelector('.theme-check');
         if (chk) chk.textContent = active ? 'فعال ✓' : '';
       });
-      savePrefs();
+      if (!silent) savePrefs();
     }
 
     function cycleTheme() {
@@ -1963,12 +2102,32 @@
       }
     }
 
+    function closeAllFloatingMenus() {
+      toggleSpeedDial(false);
+      const jmp = document.getElementById('sectionJumperPopover');
+      if (jmp) jmp.classList.add('hidden');
+      closeDrawer();
+    }
+
     function switchTab(tab) {
+      if (!document.getElementById(`view-${tab}`)) return;
       state.activeTab = tab;
+
+      // بستن کامل تمام منوهای شناور، کشو و بنرها هنگام تغییر تب
+      closeAllFloatingMenus();
+      closeDetail();
+      closeConfirm();
+
       document.querySelectorAll('.view-panel').forEach(v => v.classList.add('hidden'));
       document.getElementById(`view-${tab}`).classList.remove('hidden');
 
-      document.getElementById('floatingStatusHud').classList.toggle('hidden', tab !== 'form');
+      // نوار HUD و بنر پس‌از-ثبت فقط در تب ثبت گزارش نمایش داده می‌شوند
+      const hud = document.getElementById('floatingStatusHud');
+      if (hud) hud.classList.toggle('hidden', tab !== 'form');
+      if (tab !== 'form') {
+        const psb = document.getElementById('postSaveBanner');
+        if (psb) psb.classList.add('hidden');
+      }
 
       document.querySelectorAll('.dock-btn').forEach(btn => {
         const active = btn.dataset.dockTab === tab;
@@ -2384,9 +2543,12 @@
       document.getElementById('hudPercentText').textContent = `${toFaDigits(pct)}٪`;
       const dot = document.getElementById('hudDot');
       const txt = document.getElementById('hudStatusText');
+      const hudCard = document.getElementById('floatingHudCard');
+      if (hudCard) hudCard.classList.toggle('edit-hud-active', Boolean(state.editingId));
       if (state.editingId) {
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 shrink-0';
-        txt.textContent = 'در حال ویرایش گزارش ذخیره‌شده';
+        const editRec = state.records.find(x => String(x.id) === String(state.editingId));
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse shrink-0';
+        txt.textContent = editRec ? `✏️ در حال ویرایش گزارش ${editRec.code}` : '✏️ در حال ویرایش گزارش ذخیره‌شده';
       } else if (done === 4) {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0';
         txt.textContent = 'گزارش کامل و آماده ثبت نهایی است (۴ از ۴)';
@@ -2443,7 +2605,7 @@
       const patientCtx = document.getElementById('patientContextInput').value.trim();
       const noteVal = document.getElementById('voiceNoteArea').value.trim();
 
-      const existing = state.editingId ? state.records.find(r => r.id === state.editingId) : null;
+      const existing = state.editingId ? state.records.find(r => String(r.id) === String(state.editingId)) : null;
       const code = existing ? existing.code : nextReportCode(state.form.parts.jy);
 
       const rec = {
@@ -2478,7 +2640,7 @@
       };
 
       if (existing) {
-        const idx = state.records.findIndex(r => r.id === existing.id);
+        const idx = state.records.findIndex(r => String(r.id) === String(existing.id));
         state.records[idx] = rec;
         state.editingId = null;
       } else {
@@ -2502,8 +2664,11 @@
     }
 
     function startEditReport(id) {
-      const r = state.records.find(x => x.id === id);
+      const r = state.records.find(x => String(x.id) === String(id));
       if (!r) return;
+      const psb = document.getElementById('postSaveBanner');
+      if (psb) psb.classList.add('hidden');
+      closeAllFloatingMenus();
       state.editingId = r.id;
       if (r.ward && !allWards().includes(r.ward)) state.customWards.push(r.ward);
 
@@ -2543,11 +2708,14 @@
     }
 
     function resetFormAll(silent = false) {
+      const wasEditing = Boolean(state.editingId);
       state.editingId = null;
-      state.form = createBlankForm(false);
+      const psb = document.getElementById('postSaveBanner');
+      if (psb) psb.classList.add('hidden');
+      state.form = createBlankForm(wasEditing);
       ['shiftFieldWrap', 'wardFieldWrap', 'form-sec-2', 'severityFieldWrap'].forEach(clearHighlight);
       renderFullForm();
-      if (!silent) showToast('فرم برای ثبت گزارش جدید پاک‌سازی شد.', 'info');
+      if (!silent) showToast(wasEditing ? 'ویرایش لغو شد و فرم به حالت ثبت جدید برگشت.' : 'فرم برای ثبت گزارش جدید پاک‌سازی شد.', 'info');
     }
 
     function updateBadges() {
@@ -2571,54 +2739,162 @@
     /* =========================================================================
        ۸. یادداشت صوتی فارسی (Web Speech API fa-IR)
        ========================================================================= */
+    let voiceSession = null;
+
+    function joinVoiceChunks(base, add) {
+      const b = String(base || '').trim();
+      const a = String(add || '').trim();
+      if (!a) return b;
+      if (!b) return a;
+      if (b.slice(-a.length) === a) return b;
+      return b + ' ' + a;
+    }
+
+    function stopVoiceRecording(silent = false) {
+      if (!voiceSession) return;
+      const s = voiceSession;
+      s.userStopped = true;
+      clearTimeout(s.restartTimer);
+      voiceSession = null;
+      state.isRecording = false;
+      state.recognition = null;
+      if (s.rec) {
+        try { s.rec.stop(); } catch (e) { /* ignore */ }
+      }
+      const btn = document.getElementById('voiceRecordBtn');
+      const lbl = document.getElementById('voiceRecordLabel');
+      if (lbl) lbl.textContent = 'شروع ضبط صوت فارسی';
+      if (btn) btn.classList.remove('voice-recording', 'bg-rose-600', 'text-white');
+      if (!silent) showToast('⏹ ضبط صوت متوقف شد.', 'info');
+    }
+
     function toggleVoiceRecording() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) {
         showToast('مرورگر شما از تبدیل گفتار به متن پشتیبانی نمی‌کند (Chrome/Edge توصیه می‌شود).', 'error');
         return;
       }
-      const btn = document.getElementById('voiceRecordBtn');
-      const lbl = document.getElementById('voiceRecordLabel');
 
-      if (state.isRecording && state.recognition) {
-        state.recognition.stop();
+      if (state.isRecording || voiceSession) {
+        stopVoiceRecording(false);
         return;
       }
 
-      try {
-        const rec = new SR();
+      const btn = document.getElementById('voiceRecordBtn');
+      const lbl = document.getElementById('voiceRecordLabel');
+      const area = document.getElementById('voiceNoteArea');
+
+      const session = {
+        rec: null,
+        userStopped: false,
+        fatalError: false,
+        restartTimer: null,
+        emptyRestarts: 0,
+        committed: area ? area.value.trim() : ''
+      };
+      voiceSession = session;
+      state.isRecording = true;
+      if (lbl) lbl.textContent = '⏹ توقف ضبط (در حال شنیدن...)';
+      if (btn) btn.classList.add('voice-recording', 'bg-rose-600', 'text-white');
+
+      function launchRec() {
+        if (voiceSession !== session || session.userStopped || session.fatalError) return;
+        if (area) session.committed = area.value.trim();
+
+        let sessionFinal = '';
+        let lastInterim = '';
+        let gotResult = false;
+        let rec;
+        try {
+          rec = new SR();
+        } catch (err) {
+          session.fatalError = true;
+          stopVoiceRecording(true);
+          showToast('امکان فعال‌سازی میکروفون وجود ندارد.', 'error');
+          return;
+        }
+        session.rec = rec;
+        state.recognition = rec;
         rec.lang = 'fa-IR';
         rec.continuous = true;
-        rec.interimResults = false;
-        state.recognition = rec;
+        rec.interimResults = true;
+        rec.maxAlternatives = 1;
 
-        rec.onstart = () => {
-          state.isRecording = true;
-          lbl.textContent = 'در حال ضبط... (توقف)';
-          btn.classList.add('voice-recording', 'bg-rose-600', 'text-white');
-        };
         rec.onresult = (e) => {
-          let txt = '';
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            if (e.results[i].isFinal) txt += e.results[i][0].transcript + ' ';
+          if (voiceSession !== session) return;
+          gotResult = true;
+          session.emptyRestarts = 0;
+          let finalAccum = '';
+          let interimAccum = '';
+          for (let i = 0; i < e.results.length; i++) {
+            const res = e.results[i];
+            const tr = (res && res[0] && res[0].transcript) ? String(res[0].transcript).trim() : '';
+            if (!tr) continue;
+            if (res.isFinal) {
+              if (!finalAccum) finalAccum = tr;
+              else if (tr.indexOf(finalAccum) === 0) finalAccum = tr;
+              else if (finalAccum.slice(-tr.length) !== tr) finalAccum += ' ' + tr;
+            } else {
+              interimAccum = interimAccum ? (interimAccum + ' ' + tr) : tr;
+            }
           }
-          if (txt.trim()) {
-            const area = document.getElementById('voiceNoteArea');
-            area.value = (area.value ? area.value + ' ' : '') + txt.trim();
-            state.form.note = area.value;
-          }
+          sessionFinal = finalAccum;
+          lastInterim = interimAccum;
+          const combined = joinVoiceChunks(session.committed, joinVoiceChunks(sessionFinal, lastInterim));
+          if (area) area.value = combined;
+          state.form.note = combined;
         };
-        rec.onerror = () => showToast('دسترسی میکروفون تایید نشد یا صدایی دریافت نشد.', 'error');
+
+        rec.onerror = (ev) => {
+          if (voiceSession !== session) return;
+          const err = ev && ev.error ? ev.error : '';
+          if (err === 'no-speech' || err === 'aborted') return;
+          session.fatalError = true;
+          stopVoiceRecording(true);
+          const msg = (err === 'not-allowed' || err === 'service-not-allowed')
+            ? 'دسترسی میکروفون مسدود است.'
+            : (err === 'network' ? 'تشخیص گفتار مرورگر به اینترنت نیاز دارد.' : 'خطا در تشخیص گفتار.');
+          showToast(msg, 'error');
+        };
+
         rec.onend = () => {
-          state.isRecording = false;
-          lbl.textContent = 'شروع ضبط صوت فارسی';
-          btn.classList.remove('voice-recording', 'bg-rose-600', 'text-white');
+          if (voiceSession !== session) return;
+          const chunk = joinVoiceChunks(sessionFinal, lastInterim);
+          if (chunk) {
+            session.committed = joinVoiceChunks(session.committed, chunk);
+            if (area) area.value = session.committed;
+            state.form.note = session.committed;
+          }
+          if (session.userStopped || session.fatalError) {
+            stopVoiceRecording(true);
+            return;
+          }
+          if (!gotResult) {
+            session.emptyRestarts++;
+            if (session.emptyRestarts >= 12) {
+              stopVoiceRecording(true);
+              showToast('به دلیل سکوت طولانی، ضبط صوت متوقف شد.', 'info');
+              return;
+            }
+          }
+          clearTimeout(session.restartTimer);
+          session.restartTimer = setTimeout(launchRec, 160);
         };
-        rec.start();
-      } catch (err) {
-        showToast('امکان فعال‌سازی میکروفون وجود ندارد.', 'error');
+
+        try {
+          rec.start();
+        } catch (err) {
+          clearTimeout(session.restartTimer);
+          session.restartTimer = setTimeout(launchRec, 320);
+        }
       }
+
+      launchRec();
     }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && voiceSession) stopVoiceRecording(true);
+    });
 
     /* =========================================================================
        ۹. آرشیو کلیکی، جزئیات، ویرایش، ارسال به چالش‌های شیفت و چاپ A4
@@ -2633,8 +2909,51 @@
       box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => onPick(b.dataset.fv)));
     }
 
+    const SEV_ORDER = { I: 9, H: 8, G: 7, F: 6, E: 5, D: 4, C: 3, B: 2, A: 1 };
+
     function renderArchive() {
       const f = state.filters;
+      const stats = computeBridgeStats();
+
+      // خلاصه آماری سریع بالای آرشیو
+      const kpiEl = document.getElementById('archiveQuickKpis');
+      if (kpiEl) {
+        kpiEl.innerHTML = `
+          <button type="button" data-qk="all" class="glass-card glass-hover rounded-2xl p-3 text-center transition ${f.critical === 'all' ? 'ring-1 ring-amber-400/50' : ''}">
+            <div class="text-[10px] font-bold text-dim">کل گزارش‌ها</div>
+            <div class="text-lg font-black text-accent mt-0.5">${toFaDigits(stats.totalCount)}</div>
+          </button>
+          <div class="glass-card rounded-2xl p-3 text-center">
+            <div class="text-[10px] font-bold text-dim">ثبت امروز</div>
+            <div class="text-lg font-black text-emerald-400 mt-0.5">${toFaDigits(stats.todayCount)}</div>
+          </div>
+          <button type="button" data-qk="critical" class="glass-card glass-hover rounded-2xl p-3 text-center transition ${f.critical === 'critical' ? 'ring-1 ring-rose-500/70' : ''}">
+            <div class="text-[10px] font-bold text-dim">بحرانی / هرگز</div>
+            <div class="text-lg font-black text-rose-400 mt-0.5">${toFaDigits(stats.criticalCount)}</div>
+          </button>
+        `;
+        kpiEl.querySelectorAll('[data-qk]').forEach(b => b.addEventListener('click', () => {
+          f.critical = b.dataset.qk;
+          renderArchive();
+        }));
+      }
+
+      // شمارنده فیلترهای فعال
+      const activeCnt = [f.critical !== 'all', f.shift !== 'all', f.severity !== 'all', f.category !== 'all', f.ward !== 'all'].filter(Boolean).length;
+      const cntBadge = document.getElementById('activeFilterCountBadge');
+      if (cntBadge) {
+        cntBadge.textContent = toFaDigits(activeCnt);
+        cntBadge.classList.toggle('hidden', activeCnt === 0);
+      }
+      const fPanel = document.getElementById('archiveFiltersPanel');
+      if (fPanel) fPanel.classList.toggle('hidden', !state.filtersOpen);
+
+      // وضعیت دکمه‌های مرتب‌سازی
+      const sNew = document.getElementById('sortNewestBtn');
+      const sSev = document.getElementById('sortSeverityBtn');
+      if (sNew) sNew.classList.toggle('is-active', f.sort !== 'severity');
+      if (sSev) sSev.classList.toggle('is-active', f.sort === 'severity');
+
       renderFilterRow('fltCritical', [
         { id: 'all', label: 'همه موارد' },
         { id: 'critical', label: 'فقط بحرانی / Never Events' }
@@ -2658,82 +2977,95 @@
         { id: 'all', label: 'همه بخش‌ها' }, ...usedWards.map(w => ({ id: w, label: w }))
       ], f.ward, v => { f.ward = v; renderArchive(); });
 
+      const q = (f.query || '').trim().toLowerCase();
       const list = state.records.filter(r => {
         if (f.critical === 'critical' && !(r.isNeverEvent || ['G', 'H', 'I'].includes(r.severityCode))) return false;
         if (f.shift !== 'all' && r.shift !== f.shift) return false;
         if (f.severity !== 'all' && r.severityCode !== f.severity) return false;
         if (f.category !== 'all' && !(r.catIds || []).includes(f.category)) return false;
         if (f.ward !== 'all' && r.ward !== f.ward) return false;
+        if (q) {
+          const hay = [
+            r.code, r.ward, r.shift, r.patientContext, r.note, r.shamsiDate, r.severityTitle,
+            (r.categories || []).join(' '),
+            (r.selectedErrors || []).map(e => e.sub).join(' ')
+          ].join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
         return true;
       });
+
+      if (f.sort === 'severity') {
+        list.sort((a, b) => {
+          const scoreA = (a.isNeverEvent ? 20 : 0) + (SEV_ORDER[a.severityCode] || 0);
+          const scoreB = (b.isNeverEvent ? 20 : 0) + (SEV_ORDER[b.severityCode] || 0);
+          return scoreB - scoreA;
+        });
+      }
 
       document.getElementById('archiveMatchCount').textContent = `${toFaDigits(list.length)} مورد`;
       const grid = document.getElementById('archiveCardsGrid');
 
       if (list.length === 0) {
         grid.innerHTML = `
-          <div class="md:col-span-2 glass-card rounded-3xl p-10 text-center space-y-2">
-            <p class="text-sm font-black text-main">${state.records.length === 0 ? 'هنوز گزارشی ثبت نشده است' : 'موردی با فیلترهای فعلی یافت نشد'}</p>
-            <p class="text-xs text-dim">می‌توانید از منوی همبرگری یا بخش خروجی، ۵ نمونه آزمایشی بارگذاری کنید.</p>
+          <div class="md:col-span-2 glass-card rounded-3xl p-10 text-center space-y-3">
+            <div class="text-3xl">📭</div>
+            <p class="text-sm font-black text-main">${state.records.length === 0 ? 'هنوز گزارشی ثبت نشده است' : 'موردی با فیلتر یا جستجوی فعلی یافت نشد'}</p>
+            <p class="text-xs text-dim">می‌توانید گزارش جدیدی ثبت کنید یا از بخش خروجی، ۵ نمونه آزمایشی بارگذاری نمایید.</p>
           </div>`;
         return;
       }
 
       grid.innerHTML = list.map(r => {
         const sev = NCC_MERP.find(s => s.code === r.severityCode) || NCC_MERP[0];
+        const rid = escAttr(String(r.id));
+        const borderAccent = r.isNeverEvent ? '#f43f5e' : sev.color;
         return `
-          <article class="glass-card glass-hover rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3.5"
-            style="${r.isNeverEvent ? 'border-color: rgba(244,63,94,0.55);' : ''}">
+          <article class="glass-card glass-hover archive-card-pro rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3.5"
+            style="border-right-color: ${borderAccent} !important;">
             <div class="space-y-2.5">
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span class="px-2.5 py-0.5 rounded-lg btn-luxury-primary text-[11px] font-black">${escHtml(r.code)}</span>
-                <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-black text-white" style="background:${sev.color};">کد ${sev.code}: ${sev.title}</span>
-                ${r.isNeverEvent ? '<span class="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white text-[11px] font-black">⚠ خطای هرگز</span>' : ''}
+              <div class="flex flex-wrap items-center justify-between gap-1.5">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2.5 py-0.5 rounded-lg btn-luxury-primary text-[11px] font-black">${escHtml(r.code)}</span>
+                  <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-black text-white" style="background:${sev.color};">کد ${sev.code}: ${sev.title}</span>
+                  ${r.isNeverEvent ? '<span class="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white text-[11px] font-black">⚠ خطای هرگز</span>' : ''}
+                </div>
+                <span class="text-[10.5px] text-dim font-semibold">📅 ${r.shamsiDate} • ${r.time}</span>
               </div>
 
               <div>
-                <h3 class="text-sm font-black text-main">${escHtml((r.categories || []).join(' / '))}</h3>
+                <h3 class="text-sm font-black text-main leading-snug">${escHtml((r.categories || []).join(' / '))}</h3>
                 <p class="text-xs text-sub mt-1 leading-relaxed">${escHtml((r.selectedErrors || []).map(e => e.sub).join(' • '))}</p>
               </div>
 
-              <div class="flex flex-wrap items-center gap-2 text-[11px] text-dim pt-1">
-                <span class="px-2 py-0.5 rounded-lg glass-subpanel text-main font-bold">🏥 ${escHtml(r.ward)}</span>
-                <span>شیفت ${escHtml(r.shift)}</span>
-                <span>📅 ${r.shamsiDate} — ${r.time}</span>
-                ${r.patientContext ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 font-bold">🛏 ${escHtml(r.patientContext)}</span>` : ''}
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-dim pt-0.5">
+                <span class="px-2.5 py-0.5 rounded-lg glass-subpanel text-main font-bold">🏥 ${escHtml(r.ward)}</span>
+                <span class="px-2.5 py-0.5 rounded-lg glass-subpanel text-sub font-bold">🕒 شیفت ${escHtml(r.shift)}</span>
+                ${r.patientContext ? `<span class="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 font-bold">🛏 ${escHtml(r.patientContext)}</span>` : ''}
               </div>
             </div>
 
             <div class="space-y-2 pt-3 border-t" style="border-color: var(--glass-border);">
-              <button type="button" data-challenge-id="${r.id}"
+              <button type="button" data-action="challenge" data-id="${rid}"
                 class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 text-emerald-300 text-xs font-black transition active:scale-[0.99]">
                 📤 ارسال به چالش‌های شیفت (اپ پرستاری)
               </button>
-              <div class="flex items-center justify-between gap-1.5">
-                <button type="button" data-open-id="${r.id}" class="flex-1 py-2 rounded-xl lux-chip text-xs font-extrabold text-accent">جزئیات</button>
-                <button type="button" data-edit-id="${r.id}" class="px-3 py-2 rounded-xl lux-chip text-xs font-bold">✏️ ویرایش</button>
-                <button type="button" data-print-id="${r.id}" class="px-3 py-2 rounded-xl lux-chip text-xs font-bold">🖨 چاپ</button>
-                <button type="button" data-del-id="${r.id}" class="px-2.5 py-2 rounded-xl text-rose-400 hover:bg-rose-500/15 text-xs font-bold transition">حذف</button>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button type="button" data-action="open" data-id="${rid}" class="py-2 px-1.5 rounded-xl lux-chip text-[11.5px] font-extrabold text-accent text-center">👁 جزئیات</button>
+                <button type="button" data-action="edit" data-id="${rid}" class="py-2 px-1.5 rounded-xl lux-chip text-[11.5px] font-bold text-center">✏️ ویرایش</button>
+                <button type="button" data-action="print" data-id="${rid}" class="py-2 px-1.5 rounded-xl lux-chip text-[11.5px] font-bold text-center">🖨 چاپ</button>
+                <button type="button" data-action="delete" data-id="${rid}" class="py-2 px-1.5 rounded-xl btn-del-card text-[11.5px] font-extrabold text-center">🗑 حذف</button>
               </div>
             </div>
           </article>
         `;
       }).join('');
-
-      grid.querySelectorAll('[data-open-id]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.openId)));
-      grid.querySelectorAll('[data-edit-id]').forEach(b => b.addEventListener('click', () => startEditReport(b.dataset.editId)));
-      grid.querySelectorAll('[data-print-id]').forEach(b => b.addEventListener('click', () => printReportA4(b.dataset.printId)));
-      grid.querySelectorAll('[data-del-id]').forEach(b => b.addEventListener('click', () => requestDelete(b.dataset.delId)));
-      grid.querySelectorAll('[data-challenge-id]').forEach(b => b.addEventListener('click', () => {
-        const rec = state.records.find(x => x.id === b.dataset.challengeId);
-        if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
-      }));
     }
 
     function openDetail(id) {
-      const r = state.records.find(x => x.id === id);
+      const r = state.records.find(x => String(x.id) === String(id));
       if (!r) return;
-      state.activeDetailId = id;
+      state.activeDetailId = r.id;
       const sev = NCC_MERP.find(s => s.code === r.severityCode) || NCC_MERP[0];
       document.getElementById('modalCodeBadge').textContent = r.code;
 
@@ -2780,23 +3112,28 @@
     }
 
     function requestDelete(id) {
-      const r = state.records.find(x => x.id === id);
+      const r = state.records.find(x => String(x.id) === String(id));
       if (!r) return;
       openConfirm(`حذف گزارش ${r.code}`, 'این گزارش به صورت دائمی از حافظه دستگاه حذف می‌شود. ادامه می‌دهید؟', () => {
-        state.records = state.records.filter(x => x.id !== id);
-        if (state.editingId === id) resetFormAll(true);
+        state.records = state.records.filter(x => String(x.id) !== String(id));
+        if (state.editingId && String(state.editingId) === String(id)) resetFormAll(true);
+        if (state.lastSavedId && String(state.lastSavedId) === String(id)) {
+          state.lastSavedId = null;
+          const psb = document.getElementById('postSaveBanner');
+          if (psb) psb.classList.add('hidden');
+        }
         saveRecords();
         updateBadges();
         CARDIAC_BRIDGE.broadcastStats();
         closeDetail();
         if (state.activeTab === 'archive') renderArchive();
         if (state.activeTab === 'analytics') renderAnalytics();
-        showToast(`گزارش ${r.code} حذف شد.`, 'info');
+        showToast(`گزارش ${r.code} با موفقیت حذف شد.`, 'info');
       });
     }
 
     function printReportA4(id) {
-      const r = state.records.find(x => x.id === id);
+      const r = state.records.find(x => String(x.id) === String(id));
       if (!r) return;
       const nowFmt = formatParts(dateToJalaliParts(new Date()));
       const area = document.getElementById('printArea');
@@ -3021,14 +3358,39 @@
       return out;
     }
 
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        try { document.body.removeChild(a); } catch (e) { /* ignore */ }
+        URL.revokeObjectURL(url);
+      }, 2000);
+    }
+
+    function exportOfflineHtmlXls() {
+      const rows = buildExcelRows();
+      const headers = Object.keys(rows[0]);
+      const th = headers.map(h => `<th style="background:#0f172a;color:#fff;padding:6px;">${escHtml(h)}</th>`).join('');
+      const trs = rows.map(r => '<tr>' + headers.map(h => `<td style="padding:5px;">${escHtml(r[h])}</td>`).join('') + '</tr>').join('');
+      const htmlXls = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body dir="rtl"><table border="1"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table></body></html>`;
+      const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
+      const fname = `Hospital_Safety_Report_${stamp}.xls`;
+      downloadBlob(new Blob(['\uFEFF' + htmlXls], { type: 'application/vnd.ms-excel;charset=utf-8' }), fname);
+      CARDIAC_BRIDGE.broadcast({ type: 'ERROR_EXCEL_EXPORTED', filename: fname });
+      showToast(`فایل اکسل آفلاین (${fname}) در پوشه Download ذخیره شد.`, 'success');
+    }
+
     function exportExcel() {
       if (state.records.length === 0) {
         showToast('ابتدا حداقل یک گزارش ثبت کنید یا نمونه‌های آزمایشی را بارگذاری نمایید.', 'error');
         return;
       }
       if (typeof XLSX === 'undefined') {
-        showToast('در حالت آفلاین هستید؛ فایل CSV سازگار با اکسل فارسی دانلود می‌شود.', 'info');
-        exportCsv();
+        exportOfflineHtmlXls();
         return;
       }
       try {
@@ -3051,21 +3413,14 @@
 
         const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
         const fname = `Hospital_Safety_Report_${stamp}.xlsx`;
-        XLSX.writeFile(wb, fname);
-        showToast(`فایل اکسل دوشیته (${fname}) با موفقیت دانلود شد.`, 'success');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        downloadBlob(new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname);
+        CARDIAC_BRIDGE.broadcast({ type: 'ERROR_EXCEL_EXPORTED', filename: fname });
+        showToast(`فایل اکسل دوشیته (${fname}) در پوشه Download ذخیره شد.`, 'success');
       } catch (err) {
         console.error(err);
-        exportCsv();
+        exportOfflineHtmlXls();
       }
-    }
-
-    function downloadBlob(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     }
 
     function exportCsv() {
@@ -3075,8 +3430,10 @@
       const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
       const csv = [headers.map(q).join(','), ...rows.map(r => headers.map(h => q(r[h])).join(','))].join('\r\n');
       const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
-      downloadBlob(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }), `Hospital_Safety_${stamp}.csv`);
-      showToast('فایل CSV سازگار با اکسل فارسی دانلود شد.', 'success');
+      const fname = `Hospital_Safety_${stamp}.csv`;
+      downloadBlob(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }), fname);
+      CARDIAC_BRIDGE.broadcast({ type: 'ERROR_EXCEL_EXPORTED', filename: fname });
+      showToast(`فایل CSV فارسی (${fname}) در پوشه Download ذخیره شد.`, 'success');
     }
 
     function exportJson() {
@@ -3294,7 +3651,7 @@
 
       // بنر پس از ثبت
       document.getElementById('postSaveSendChallengeBtn').addEventListener('click', () => {
-        const rec = state.records.find(r => r.id === state.lastSavedId) || state.records[0];
+        const rec = state.records.find(r => String(r.id) === String(state.lastSavedId)) || state.records[0];
         if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
       });
       document.getElementById('postSavePrintBtn').addEventListener('click', () => {
@@ -3419,10 +3776,58 @@
       document.getElementById('formSubmitBottomBtn').addEventListener('click', submitReport);
       document.getElementById('formResetBottomBtn').addEventListener('click', () => resetFormAll());
 
-      // فیلتر آرشیو
-      document.getElementById('resetFiltersBtn').addEventListener('click', () => {
-        state.filters = { critical: 'all', shift: 'all', severity: 'all', category: 'all', ward: 'all' };
+      // فیلتر، جستجو، مرتب‌سازی و رویداد متمرکز کارت‌های آرشیو (Event Delegation)
+      document.getElementById('toggleFiltersDrawerBtn').addEventListener('click', () => {
+        state.filtersOpen = !state.filtersOpen;
+        document.getElementById('archiveFiltersPanel').classList.toggle('hidden', !state.filtersOpen);
+      });
+      document.getElementById('archiveSearchInput').addEventListener('input', (e) => {
+        state.filters.query = e.target.value || '';
         renderArchive();
+      });
+      document.getElementById('sortNewestBtn').addEventListener('click', () => {
+        state.filters.sort = 'newest';
+        renderArchive();
+      });
+      document.getElementById('sortSeverityBtn').addEventListener('click', () => {
+        state.filters.sort = 'severity';
+        renderArchive();
+      });
+      document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+        state.filters = { critical: 'all', shift: 'all', severity: 'all', category: 'all', ward: 'all', query: '', sort: 'newest' };
+        const sInp = document.getElementById('archiveSearchInput');
+        if (sInp) sInp.value = '';
+        renderArchive();
+      });
+      document.getElementById('archiveCardsGrid').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action][data-id]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const act = btn.dataset.action;
+        const rid = btn.dataset.id;
+        if (act === 'open') openDetail(rid);
+        else if (act === 'edit') startEditReport(rid);
+        else if (act === 'print') printReportA4(rid);
+        else if (act === 'delete') requestDelete(rid);
+        else if (act === 'challenge') {
+          const rec = state.records.find(x => String(x.id) === String(rid));
+          if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
+        }
+      });
+
+      // بستن منوی شناور و پاپ‌اور با کلیک بیرون و کلید Escape
+      document.addEventListener('click', (e) => {
+        if (state.speedDialOpen && !e.target.closest('#speedDialWrap') && !e.target.closest('#sectionJumperPopover')) {
+          toggleSpeedDial(false);
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeConfirm();
+          closeDetail();
+          closeAllFloatingMenus();
+        }
       });
 
       // مودال جزئیات و تایید
@@ -3433,7 +3838,7 @@
       document.getElementById('modalEditBtn').addEventListener('click', () => { if (state.activeDetailId) startEditReport(state.activeDetailId); });
       document.getElementById('modalDeleteBtn').addEventListener('click', () => { if (state.activeDetailId) requestDelete(state.activeDetailId); });
       document.getElementById('modalSendChallengeBtn').addEventListener('click', () => {
-        const rec = state.records.find(r => r.id === state.activeDetailId);
+        const rec = state.records.find(r => String(r.id) === String(state.activeDetailId));
         if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
       });
 
