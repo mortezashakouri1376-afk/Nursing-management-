@@ -53,6 +53,7 @@ html,body{max-width:100%;overflow-x:hidden;}
 </style>
 
     <meta charset="UTF-8">
+<meta name="color-scheme" content="dark light">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#080b12">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1665,6 +1666,109 @@ html[data-v12-theme="pearl-light"] .result-box-box span.val { color: #0f766e; }
 }
 .rep-entry-chip .rep-chip-edit {
   color: var(--accent) !important; font-size: 12px !important; margin-inline-start: 2px;
+}
+
+/* ==== Anti-Auto-Dark Protection & Direct In-Page A4 Print (v20.1 TWA Fix) ==== */
+:root { color-scheme: dark light; }
+.sheet-preview-scroll,
+.ir-sheet-page,
+.ir-sheet-page.heshmat-sheet,
+.ir-sheet-page.hw-paper,
+.rep-sig-canvas-box,
+.rep-sig-saved-preview,
+#v20PrintMount {
+  color-scheme: only light !important;
+  forced-color-adjust: none !important;
+}
+.ir-sheet-page,
+.ir-sheet-page.heshmat-sheet {
+  background-color: #ffffff !important;
+  color: #000000;
+}
+.ir-sheet-page.hw-paper {
+  background-color: #faf7f0 !important;
+  background-image: none !important;
+  color: #000000;
+}
+.ir-sheet-page.heshmat-sheet table,
+.ir-sheet-page.heshmat-sheet td,
+.ir-sheet-page.heshmat-sheet th {
+  color: #000000;
+  border-color: #222222;
+}
+.ir-sheet-page.heshmat-sheet .ir-main-table th {
+  background-color: #f8fafc !important;
+  color: #000000 !important;
+}
+.ir-sheet-page.heshmat-sheet .hesh-orange-banner {
+  background-color: #f5b357 !important;
+  color: #1a1a1a !important;
+}
+.ir-sheet-page.heshmat-sheet .hesh-footer-bar {
+  background-color: #f5b357 !important;
+  color: #111111 !important;
+}
+#v20PrintMount {
+  display: none;
+}
+@media print {
+  @page { size: A4 portrait; margin: 5mm; }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    color-scheme: only light !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body.v20-printing-active > *:not(#v20PrintMount) {
+    display: none !important;
+  }
+  body.v20-printing-active #v20PrintMount {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    direction: rtl !important;
+  }
+  #v20PrintMount * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  #v20PrintMount .ir-sheet-page.heshmat-sheet {
+    width: 100% !important;
+    max-width: 198mm !important;
+    min-height: 282mm !important;
+    margin: 0 auto !important;
+    padding: 0 12px 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  #v20PrintMount .ir-sheet-page.heshmat-sheet:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+  #v20PrintMount .hesh-footer-bar {
+    margin-left: -12px !important;
+    margin-right: -12px !important;
+  }
+  #v20PrintMount .v20-arch-pdf {
+    font-family: Tahoma, Vazirmatn, sans-serif;
+    padding: 12px;
+    color: #000000;
+    background: #ffffff;
+  }
+  #v20PrintMount .v20-arch-pdf h2 { text-align: center; margin: 0 0 12px 0; color: #000; }
+  #v20PrintMount .v20-arch-pdf table { width: 100%; border-collapse: collapse; }
+  #v20PrintMount .v20-arch-pdf th,
+  #v20PrintMount .v20-arch-pdf td { border: 1px solid #444; padding: 6px; font-size: 12px; color: #000; }
+  #v20PrintMount .v20-arch-pdf th { background: #f1f5f9 !important; }
 }
 
 </style>
@@ -3702,7 +3806,7 @@ html[data-v12-theme="pearl-light"] .result-box-box span.val { color: #0f766e; }
 
             let html = '<div class="category-card" style="border-right:4px solid var(--dx-color); background:#252525;">' +
                 '<div class="cat-header"><span class="cat-title" style="color:var(--dx-color);">📄 تشخیص پرستاری پیشنهادی' +
-                (name ? ' — ' + name : '') + (age ? '، ' + age + ' ساله، ' + gender : '') + '</span></div>';
+                (name ? ' — ' + repEsc(name) : '') + (age ? '، ' + repEsc(age) + ' ساله، ' + repEsc(gender) : '') + '</span></div>';
 
             const labels = ['اولویت اول', 'اولویت دوم', 'اولویت سوم'];
             const colors = ['#e74c3c', '#e67e22', '#27ae60'];
@@ -4150,8 +4254,35 @@ function calcRASS() {
             });
         }
 
+        function copyTextReliable(text, okMsg) {
+            const done = () => {
+                if (typeof v8Toast === 'function') v8Toast(okMsg);
+                else alert(okMsg);
+            };
+            const legacyCopy = () => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                try {
+                    const ok = document.execCommand('copy');
+                    if (ok) done();
+                    else alert('خطا در کپی خودکار؛ لطفاً متن را دستی کپی کنید.');
+                } catch (e) {
+                    alert('خطا در کپی خودکار؛ لطفاً متن را دستی کپی کنید.');
+                }
+                document.body.removeChild(ta);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, legacyCopy);
+            } else {
+                legacyCopy();
+            }
+        }
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => { alert('کد ' + text + ' کپی شد!'); });
+            copyTextReliable(String(text || ''), '📋 کد ' + text + ' کپی شد');
         }
 
         // ==========================================
@@ -4427,11 +4558,7 @@ function calcRASS() {
         }
 
         function fallbackHandoverCopy(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('✅ متن گزارش و اطلاعات شیفت کپی شد. می‌توانید در واتس‌اپ/تلگرام Paste کنید.');
-            }).catch(() => {
-                alert('خطا در کپی خودکار!');
-            });
+            copyTextReliable(String(text || ''), '✅ متن گزارش و اطلاعات شیفت کپی شد. می‌توانید در واتس‌اپ/تلگرام Paste کنید.');
         }
 
         // قابلیت دریافت گزارش شیفت (Handover Import)
@@ -5246,6 +5373,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!el) return;
             el.value = val;
             el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        function repSetValSilent(id, val) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = val;
         }
         function repAppendText(id, phrase) {
             const el = document.getElementById(id);
@@ -7379,16 +7511,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!found) return;
             repChartState = JSON.parse(JSON.stringify(found));
             const h = found.header || {};
-            repSetVal('rep_adm_name', h.fname || found.patientName || '');
-            repSetVal('rep_adm_lname', h.lname || '');
-            repSetVal('rep_adm_father', h.father || '');
-            repSetVal('rep_adm_dob', h.dob || '');
-            repSetVal('rep_adm_unitno', h.unitNo || '');
-            repSetVal('rep_adm_physician', h.physician || '');
-            if (h.ward && document.getElementById('rep_adm_ward')) document.getElementById('rep_adm_ward').value = h.ward;
-            repSetVal('rep_adm_room_no', h.roomNo || '');
-            repSetVal('rep_adm_room', h.bed || found.room || '');
-            if (h.admDate) repSetVal('rep_adm_date', h.admDate);
+            repSetValSilent('rep_adm_name', h.fname || found.patientName || '');
+            repSetValSilent('rep_adm_lname', h.lname || '');
+            repSetValSilent('rep_adm_father', h.father || '');
+            repSetValSilent('rep_adm_dob', h.dob || '');
+            repSetValSilent('rep_adm_unitno', h.unitNo || '');
+            repSetValSilent('rep_adm_physician', h.physician || '');
+            if (document.getElementById('rep_adm_ward')) document.getElementById('rep_adm_ward').value = h.ward || 'بخش قلب';
+            repSetValSilent('rep_adm_room_no', h.roomNo || '');
+            repSetValSilent('rep_adm_room', h.bed || found.room || '');
+            repSetValSilent('rep_adm_date', h.admDate || getShamsiToday());
             saveActiveChart();
             renderContinuousChartUI();
             renderChartSelector();
@@ -7439,6 +7571,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // ---- چاپ / خروجی PDF برگ رسمی بیمارستان قلب دکتر حشمت (تک‌صفحه‌ای و چندصفحه‌ای خودکار) ----
+        function v20TriggerDirectPrint(innerHtml, customTitle) {
+            let mount = document.getElementById('v20PrintMount');
+            if (!mount) {
+                mount = document.createElement('div');
+                mount.id = 'v20PrintMount';
+                mount.setAttribute('aria-hidden', 'true');
+                document.body.appendChild(mount);
+            }
+            mount.innerHTML = innerHtml;
+            const prevTitle = document.title;
+            if (customTitle) document.title = customTitle;
+            document.body.classList.add('v20-printing-active');
+
+            let cleaned = false;
+            function cleanup() {
+                if (cleaned) return;
+                cleaned = true;
+                document.body.classList.remove('v20-printing-active');
+                document.title = prevTitle;
+                window.removeEventListener('afterprint', cleanup);
+            }
+            window.addEventListener('afterprint', cleanup);
+
+            const firePrint = () => {
+                try {
+                    window.focus();
+                    window.print();
+                } catch (e) {
+                    cleanup();
+                    alert('خطا در باز کردن پنجره چاپ مرورگر');
+                }
+            };
+            if (document.fonts && document.fonts.ready) {
+                let fired = false;
+                const once = () => { if (fired) return; fired = true; setTimeout(firePrint, 120); };
+                document.fonts.ready.then(once).catch(once);
+                setTimeout(once, 800);
+            } else {
+                setTimeout(firePrint, 150);
+            }
+        }
+
         function repPrintChart() {
             if (!repChartState.entries.length) {
                 if (confirm('هنوز مرحله‌ای به برگ رسمی الحاق نکرده‌اید. می‌خواهید فرم فعلی را همین الان الحاق و چاپ کنید؟')) {
@@ -7446,109 +7620,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 if (!repChartState.entries.length) return;
             }
-            const w = window.open('', '_blank');
-            if (!w) { alert('پنجره چاپ مسدود شد؛ لطفاً popup را فعال کنید.'); return; }
-
             const sheetHtml = buildOfficialSheetInnerHTML(true);
-            const customFontCss = (hwCustomFontData && hwCustomFontData.dataUrl)
-                ? ("@font-face { font-family: 'CustomUserHandwriting'; src: url('" + hwCustomFontData.dataUrl + "'); font-display: swap; }\n")
-                : '';
-
-            const printCss = customFontCss
-                + '@page { size: A4 portrait; margin: 5mm; }\n'
-                + '* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }\n'
-                + 'html, body { margin: 0; padding: 0; background: #fff; color: #000; font-family: Tahoma, Vazirmatn, sans-serif; direction: rtl; }\n'
-                + '.ir-sheet-page.heshmat-sheet { width: 100%; max-width: 198mm; min-height: 282mm; margin: 0 auto; background: #fff; color: #000; padding: 0 12px 0; display: flex; flex-direction: column; page-break-after: always; break-after: page; }\n'
-                + '.ir-sheet-page.heshmat-sheet:last-child { page-break-after: auto; break-after: auto; }\n'
-                + '.ir-sheet-page.hw-paper { background: #fdfbf6; }\n'
-                + '.hesh-top-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 5px; }\n'
-                + '.hesh-unit-col { width: 170px; padding-top: 10px; }\n'
-                + '.hesh-unit-box { width: 100%; min-height: 46px; border: 1.5px solid #111; border-radius: 7px; padding: 4px 8px; background: rgba(255,255,255,0.9); }\n'
-                + '.hesh-unit-labels { display: flex; justify-content: space-between; font-size: 9.5px; font-weight: bold; }\n'
-                + '.ir-unit-val { text-align: center; font-size: 12px; font-weight: bold; margin-top: 2px; font-family: monospace; }\n'
-                + '.hesh-center-col { flex: 1; text-align: center; }\n'
-                + '.hesh-orange-banner { background: linear-gradient(180deg, #f3a23d 0%, #f7be6d 58%, #fce3b8 100%); padding: 9px 14px 6px; border-radius: 0 0 8px 8px; margin-bottom: 3px; }\n'
-                + '.hesh-hosp-fa { font-size: 18px; font-weight: bold; color: #1a1a1a; font-family: Gulzar, "Aref Ruqaa", Tahoma, serif; line-height: 1.35; }\n'
-                + '.hesh-hosp-en { font-size: 13px; font-weight: bold; font-family: Georgia, "Times New Roman", serif; line-height: 1.25; }\n'
-                + '.hesh-form-fa { font-size: 13px; font-weight: bold; line-height: 1.35; }\n'
-                + '.hesh-form-en { font-size: 11px; font-weight: bold; letter-spacing: 0.5px; }\n'
-                + '.hesh-logo-col { width: 170px; padding-top: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; }\n'
-                + '.hesh-logo-svg { width: 54px; height: 48px; display: block; margin-bottom: 2px; }\n'
-                + '.hesh-logo-fa { font-size: 8.5px; font-weight: bold; color: #222; line-height: 1.25; }\n'
-                + '.hesh-logo-en { font-size: 8px; font-weight: bold; color: #333; line-height: 1.2; }\n'
-                + '.ir-demo-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.5px solid #000; font-size: 10px; }\n'
-                + '.ir-demo-table td { border: 1px solid #000; padding: 3px 6px; vertical-align: top; }\n'
-                + '.ir-fld-lbl { display: flex; justify-content: space-between; font-size: 9.5px; line-height: 1.25; }\n'
-                + '.ir-fld-val { font-size: 11px; font-weight: bold; text-align: center; min-height: 16px; padding-top: 2px; }\n'
-                + '.ir-ward-row { display: flex; justify-content: space-between; font-size: 9.5px; padding: 2px 0; border-bottom: 1px dotted #999; }\n'
-                + '.ir-ward-row:last-child { border-bottom: none; }\n'
-                + '.ir-ward-row .wv { font-weight: bold; font-size: 10.5px; padding: 0 4px; }\n'
-                + '.ir-main-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.5px solid #000; border-top: none; }\n'
-                + '.ir-main-table th { border: 1px solid #000; border-top: none; border-bottom: 1.5px solid #000; padding: 5px 4px; text-align: center; font-size: 10.5px; font-weight: bold; background: #f8fafc; line-height: 1.45; }\n'
-                + '.ir-main-table th small { display: block; font-size: 9px; font-weight: bold; }\n'
-                + '.ir-main-table td { border-left: 1.2px solid #000; border-right: 1.2px solid #000; border-bottom: 1px solid #333; padding: 0 5px; height: 26px; vertical-align: middle; font-size: 11px; }\n'
-                + '.ir-td-date { text-align: center; font-size: 10px; font-weight: bold; padding: 0 2px !important; }\n'
-                + '.ir-td-time { text-align: center; font-size: 10px; font-family: monospace; font-weight: bold; padding: 0 2px !important; }\n'
-                + '.ir-td-proc { font-size: 10.5px; direction: ltr; text-align: left; white-space: nowrap; overflow: visible; }\n'
-                + '.ir-td-proc.rtl-proc { direction: rtl; text-align: right; }\n'
-                + '.ir-shift-pill { display: inline-block; font-size: 12px; font-weight: bold; }\n'
-                + '.ir-date-ul { display: inline-block; border-bottom: 1.2px solid #000; padding: 0 3px; line-height: 1.3; }\n'
-                + '.ir-arrow-cell { text-align: center; padding: 0 6px !important; }\n'
-                + '.ir-arrow-line { display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 11px; font-weight: bold; }\n'
-                + '.ir-arrow-line .bar { flex: 1; height: 0; border-top: 1.3px solid #000; margin: 0 2px; }\n'
-                + '.ir-sig-cell { text-align: center; font-size: 9.5px; font-weight: bold; line-height: 1.2; }\n'
-                + '.ir-sig-span-td { padding: 0 !important; vertical-align: middle !important; position: relative; border-left: 1.2px solid #000; border-right: 1.2px solid #000; border-bottom: 1px solid #333; text-align: center; overflow: hidden; }\n'
-                + '.ir-sig-span-inner { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; height: 100%; padding: 0 4px; }\n'
-                + '.ir-td-proc-cont { padding-inline-start: 14px !important; }\n'
-                + '.ir-proc-cross-td { padding: 0 !important; vertical-align: top !important; position: relative; border-left: 1.2px solid #000; border-right: 1.2px solid #000; border-bottom: 1px solid #333; }\n'
-                + '.ir-proc-cross-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; overflow: visible; }\n'
-                + '.ir-td-obs { padding: 0 !important; vertical-align: top !important; position: relative; border-bottom: 1.2px solid #000 !important; overflow: hidden; }\n'
-                + '.ir-obs-lines { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }\n'
-                + '.ir-obs-line { height: 26px; border-bottom: 1px solid #333; }\n'
-                + '.ir-obs-content { position: relative; z-index: 1; padding: 0 7px; font-size: 11px; line-height: 26px; text-align: right; }\n'
-                + '.ir-obs-line-item { height: 26px; line-height: 26px; overflow: visible; white-space: nowrap; }\n'
-                + '.ir-obs-cont-tag { height: 26px; line-height: 26px; font-weight: bold; font-size: 11.5px; text-align: center; }\n'
-                + '.ir-obs-close-wrap { height: 26px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 2px; }\n'
-                + '.ir-close-line-svg { flex: 1; height: 16px; display: block; overflow: visible; }\n'
-                + '.ir-custom-sig-img { height: 24px; max-width: 96px; object-fit: contain; display: inline-block; mix-blend-mode: multiply; }\n'
-                + '.ir-proc-stamp-wrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }\n'
-                + '.ir-proc-sig-img { height: 22px; max-width: 68px; object-fit: contain; display: inline-block; mix-blend-mode: multiply; }\n'
-                + '.hesh-footer-bar { margin-top: auto; margin-left: -12px; margin-right: -12px; padding: 6px 16px 7px; background: linear-gradient(90deg, #f3a642 0%, #f9cf87 38%, #fde9c5 55%, #f5b357 100%); border-top: 1.2px solid #b45309; display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: bold; }\n'
-                + '.hesh-footer-pg { font-size: 10px; color: #333; }\n'
-                + '.ir-sheet-page.hw-font-ruqaa { --hw-fa-font: "Aref Ruqaa", "Marhey", Tahoma, cursive; --hw-en-font: "Caveat", "Kalam", cursive; --hw-fa-size: 14px; --hw-en-size: 15.5px; --hw-proc-size: 14.5px; }\n'
-                + '.ir-sheet-page.hw-font-marhey { --hw-fa-font: "Marhey", "Aref Ruqaa", Tahoma, cursive; --hw-en-font: "Kalam", "Caveat", cursive; --hw-fa-size: 12.2px; --hw-en-size: 13.5px; --hw-proc-size: 13px; }\n'
-                + '.ir-sheet-page.hw-font-gulzar { --hw-fa-font: "Gulzar", "Aref Ruqaa", Tahoma, serif; --hw-en-font: "Caveat", "Kalam", cursive; --hw-fa-size: 13px; --hw-en-size: 15px; --hw-proc-size: 14px; }\n'
-                + '.ir-sheet-page.hw-font-custom { --hw-fa-font: "CustomUserHandwriting", "Aref Ruqaa", Tahoma, cursive; --hw-en-font: "CustomUserHandwriting", "Caveat", cursive; --hw-fa-size: 14.5px; --hw-en-size: 15px; --hw-proc-size: 14px; }\n'
-                + '.ir-sheet-page.hw-sz-sm { --hw-scale: 0.88; }\n'
-                + '.ir-sheet-page.hw-sz-md { --hw-scale: 1.0; }\n'
-                + '.ir-sheet-page.hw-sz-lg { --hw-scale: 1.13; }\n'
-                + '.ir-sheet-page.hw-active .hw-ink-blue { color: #14387d !important; }\n'
-                + '.ir-sheet-page.hw-active .hw-ink-black { color: #1b2029 !important; }\n'
-                + '.ir-sheet-page.hw-active .hw-ink-red { color: #9b1c26 !important; }\n'
-                + '.ir-sheet-page.hw-active .hw-ink-green { color: #125c39 !important; }\n'
-                + '.ir-sheet-page.hw-active .ir-fld-val, .ir-sheet-page.hw-active .ir-unit-val, .ir-sheet-page.hw-active .ir-ward-row .wv { font-family: var(--hw-fa-font); font-weight: 400; font-size: calc(var(--hw-fa-size) * var(--hw-scale, 1)); color: var(--hw-hdr-ink, #14387d); }\n'
-                + '.ir-sheet-page.hw-active .ir-td-date, .ir-sheet-page.hw-active .ir-td-time { font-family: var(--hw-en-font); font-size: calc(var(--hw-en-size) * var(--hw-scale, 1)); font-weight: 600; }\n'
-                + '.ir-sheet-page.hw-active .ir-shift-pill { font-family: var(--hw-en-font); font-size: 18px; font-weight: 700; transform: rotate(-6deg); }\n'
-                + '.ir-sheet-page.hw-active .ir-td-proc { font-family: var(--hw-en-font); font-size: calc(var(--hw-proc-size) * var(--hw-scale, 1)); font-weight: 600; }\n'
-                + '.ir-sheet-page.hw-active .ir-td-proc.rtl-proc { font-family: var(--hw-fa-font); font-size: calc(var(--hw-fa-size) * var(--hw-scale, 1)); font-weight: 400; }\n'
-                + '.ir-sheet-page.hw-active .ir-obs-content { font-family: var(--hw-fa-font); font-size: calc(var(--hw-fa-size) * var(--hw-scale, 1)); line-height: 26px; text-align: right; font-weight: 400; }\n'
-                + '.ir-sheet-page.hw-font-custom .ir-td-date, .ir-sheet-page.hw-font-custom .ir-td-time, .ir-sheet-page.hw-font-custom .ir-td-proc, .ir-sheet-page.hw-font-custom .hw-en, .ir-sheet-page.hw-font-custom .ir-shift-pill { font-weight: 400 !important; }\n'
-                + '.hw-w { display: inline-block; }\n'
-                + '.hw-en { font-family: var(--hw-en-font) !important; font-size: 1.12em; font-weight: 600; direction: ltr; unicode-bidi: isolate; }\n'
-                + '.hw-arrow-svg { width: 96%; height: 15px; display: block; margin: 0 auto; overflow: visible; }\n'
-                + '.hw-stamp-box { display: inline-block; border: 1.2px solid rgba(35,58,128,0.72); border-radius: 3px; padding: 1px 7px; color: rgba(35,58,128,0.82) !important; font-family: Tahoma, sans-serif !important; font-size: 8.5px !important; font-weight: bold !important; line-height: 1.35 !important; transform: rotate(-3.2deg); background: rgba(35,58,128,0.03); text-align: center; }\n'
-                + '.hw-sig-svg { width: 68px; height: 22px; overflow: visible; flex: 0 0 auto; }\n';
-
-            const gFontTag = '<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&amp;family=Caveat:wght@500;700&amp;family=Gulzar&amp;family=Kalam:wght@400;700&amp;family=Marhey:wght@400;600&amp;display=swap" rel="stylesheet">';
-            const docHtml = '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="UTF-8"><title>برگ گزارش پرستار — مرکز آموزشی درمانی قلب دکتر حشمت<' + '/title>'
-                + gFontTag
-                + '<style>' + printCss + '<' + '/style><' + '/head><body>'
-                + sheetHtml
-                + '<script>(function(){var done=false;function go(){if(done)return;done=true;setTimeout(function(){window.focus();window.print();},260);} if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go);setTimeout(go,1400);}else{window.onload=go;}})();<' + '/script>'
-                + '<' + '/body><' + '/html>';
-
-            w.document.write(docHtml);
-            w.document.close();
+            const pName = (repChartState.patientName || '').trim();
+            const title = 'برگ گزارش پرستار' + (pName ? (' — ' + pName) : ' — بیمارستان قلب دکتر حشمت');
+            v20TriggerDirectPrint(sheetHtml, title);
         }
 
         function clearActiveRepPane() {
@@ -7632,16 +7707,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (parsed && Array.isArray(parsed.entries)) {
                         repChartState = parsed;
                         const h = parsed.header || {};
-                        if (h.fname) repSetVal('rep_adm_name', h.fname);
-                        if (h.lname) repSetVal('rep_adm_lname', h.lname);
-                        if (h.father) repSetVal('rep_adm_father', h.father);
-                        if (h.dob) repSetVal('rep_adm_dob', h.dob);
-                        if (h.unitNo) repSetVal('rep_adm_unitno', h.unitNo);
-                        if (h.physician) repSetVal('rep_adm_physician', h.physician);
+                        if (h.fname) repSetValSilent('rep_adm_name', h.fname);
+                        if (h.lname) repSetValSilent('rep_adm_lname', h.lname);
+                        if (h.father) repSetValSilent('rep_adm_father', h.father);
+                        if (h.dob) repSetValSilent('rep_adm_dob', h.dob);
+                        if (h.unitNo) repSetValSilent('rep_adm_unitno', h.unitNo);
+                        if (h.physician) repSetValSilent('rep_adm_physician', h.physician);
                         if (h.ward && document.getElementById('rep_adm_ward')) document.getElementById('rep_adm_ward').value = h.ward;
-                        if (h.roomNo) repSetVal('rep_adm_room_no', h.roomNo);
-                        if (h.bed) repSetVal('rep_adm_room', h.bed);
-                        if (h.admDate) repSetVal('rep_adm_date', h.admDate);
+                        if (h.roomNo) repSetValSilent('rep_adm_room_no', h.roomNo);
+                        if (h.bed) repSetValSilent('rep_adm_room', h.bed);
+                        if (h.admDate) repSetValSilent('rep_adm_date', h.admDate);
                     }
                 }
             } catch (e) {}
@@ -7797,7 +7872,7 @@ function v8Bars(map, total, color) {
     keys.forEach(function(k) {
         var v = map[k];
         var pct = Math.round(v / max * 100);
-        html += '<div style="font-size:12px;">' + k + ' <b>' + v + '</b></div>' +
+        html += '<div style="font-size:12px;">' + v8EscHtml(k) + ' <b>' + (Number(v) || 0) + '</b></div>' +
                 '<div class="v8StatBarWrap"><div class="v8StatBar" style="width:' + pct + '%; background:' + color + ';"></div></div>';
     });
     return html;
@@ -7827,7 +7902,12 @@ function v8FilterArchive() {
 function v8Highlight(root, q) {
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
     var nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    while (walker.nextNode()) {
+        var cur = walker.currentNode;
+        var p = cur.parentElement;
+        if (p && p.closest('button, a, script, style, mark, input, textarea, select')) continue;
+        nodes.push(cur);
+    }
     nodes.forEach(function(node) {
         if (node.nodeValue.indexOf(q) === -1) return;
         var frag = document.createDocumentFragment();
@@ -7949,29 +8029,9 @@ function v8ToggleTheme() {
     v8ApplyTheme(cur === 'dark' ? 'light' : 'dark');
 }
 
-/* ---------- 6) PWA (manifest + SW via Blob URLs) ---------- */
+/* ---------- 6) PWA handled officially by ./manifest.json & ./sw.js (v20 TWA Fix) ---------- */
 (function v8InitPWA() {
-    try {
-        if (!('serviceWorker' in navigator)) return;
-        var manifest = {
-            name: 'سیستم جامع پرستاری قلب', short_name: 'پرستاری قلب',
-            start_url: '.', display: 'standalone', background_color: '#1e1e1e',
-            theme_color: '#2c3e50',
-            icons: [{ src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect width="192" height="192" fill="#e74c3c"/><text x="96" y="124" font-size="84" text-anchor="middle" fill="#fff">+</text></svg>'), sizes: '192x192', type: 'image/svg+xml' }]
-        };
-        var mBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-        var link = document.createElement('link');
-        link.rel = 'manifest';
-        link.href = URL.createObjectURL(mBlob);
-        document.head.appendChild(link);
-        var swCode =
-            'var CACHE="v8-nursing-cache";' +
-            'self.addEventListener("install",function(e){self.skipWaiting();e.waitUntil(caches.open(CACHE).then(function(c){return c.add("/");}).catch(function(){}));});' +
-            'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});' +
-            'self.addEventListener("fetch",function(e){if(e.request.method!=="GET")return;e.respondWith(caches.match(e.request).then(function(r){return r||fetch(e.request).then(function(res){var cp=res.clone();caches.open(CACHE).then(function(c){c.put(e.request,cp);}).catch(function(){});return res;}).catch(function(){return caches.match("/");});}));});';
-        var swBlob = new Blob([swCode], { type: 'text/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function() {});
-    } catch (e) { /* PWA not available */ }
+    /* Disabled legacy blob manifest/SW injection so ./manifest.json & ./sw.js stay authoritative */
 })();
 
 /* ---------- 7) Reminder checker (30s) + Notification ---------- */
@@ -8051,20 +8111,17 @@ function v8ExportWord() {
 function v8ExportPDF() {
     var db = v8GetReports();
     if (!db.length) { alert('گزارشی برای خروجی وجود ندارد'); return; }
-    var w = window.open('', '_blank');
-    if (!w) { alert('پنجره جدید بسته شد؛ لطفاً popup را فعال کنید'); return; }
-    var doc = '<html dir="rtl"><head><meta charset="UTF-8"><title>گزارش‌های پرستاری<' + '/title>' +
-        '<style>body{font-family:Tahoma;padding:20px;} table{width:100%;border-collapse:collapse;} td,th{border:1px solid #999;padding:6px;font-size:12px;} h2{text-align:center;}<' + '/style>' +
-        '<' + '/head><body><h2>گزارش‌های پرستاری بخش قلب</h2><table><tr><th>تاریخ</th><th>شیفت</th><th>مجموع</th><th>ترخیص</th><th>چالش‌ها</th></tr>';
+    var doc = '<div class="v20-arch-pdf"><h2>گزارش‌های پرستاری بخش قلب</h2><table><tr><th>تاریخ</th><th>شیفت</th><th>مجموع</th><th>ترخیص</th><th>چالش‌ها</th></tr>';
     db.forEach(function(r) {
         doc += '<tr><td>' + v8EscHtml(r.date || '') + '</td><td>' + v8EscHtml(r.shift || '') + '</td><td>' + (Number(r.total) || 0) +
                 '</td><td>' + (Number(r.discharges) || 0) + '</td><td>' + v8EscHtml(r.challenges || '') + '</td></tr>';
     });
-    doc += '</table><' + '/body><' + '/html>';
-    w.document.write(doc);
-    w.document.close();
-    w.focus();
-    w.print();
+    doc += '</table></div>';
+    if (typeof window.v20TriggerDirectPrint === 'function') {
+        window.v20TriggerDirectPrint(doc, 'آرشیو گزارش‌های پرستاری بخش قلب');
+    } else {
+        window.print();
+    }
 }
 function v8DownloadBlob(blob, filename) {
     var url = URL.createObjectURL(blob);
@@ -10382,6 +10439,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       desc: "شیشه‌ای مات مجلل با درخشش طلایی (هماهنگ با اپ خطا)",
       swatch: "linear-gradient(135deg, #0b0f19 35%, #d4af37 100%)",
       isLight: false,
+      themeColor: "#080b12",
       errorAppTheme: "obsidian"
     },
     {
@@ -10390,6 +10448,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       desc: "شیشه‌ای تیره با طیف زمردی آرام‌بخش برای شیفت شب",
       swatch: "linear-gradient(135deg, #051311 35%, #10b981 100%)",
       isLight: false,
+      themeColor: "#051311",
       errorAppTheme: "emerald"
     },
     {
@@ -10398,6 +10457,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       desc: "سرمه‌ای عمیق شیشه‌ای با رنگ آبی پزشکی خوانا",
       swatch: "linear-gradient(135deg, #071120 35%, #38bdf8 100%)",
       isLight: false,
+      themeColor: "#071120",
       errorAppTheme: "obsidian"
     },
     {
@@ -10406,6 +10466,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       desc: "سفید شیشه‌ای شفاف مناسب مانیتورهای پرنور و شیفت روز",
       swatch: "linear-gradient(135deg, #f8fafc 45%, #0f766e 100%)",
       isLight: true,
+      themeColor: "#f8fafc",
       errorAppTheme: "pearl"
     },
     {
@@ -10414,6 +10475,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       desc: "تم ساده با کنتراست بالا و بدون افکت پس‌زمینه",
       swatch: "linear-gradient(135deg, #121212 45%, #27ae60 100%)",
       isLight: false,
+      themeColor: "#000000",
       errorAppTheme: "obsidian"
     }
   ];
@@ -10448,6 +10510,8 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     var theme = THEMES.filter(function(t){ return t.id === themeId; })[0] || THEMES[0];
     var root = document.documentElement;
     root.setAttribute("data-v12-theme", theme.id);
+    var metaTc = document.querySelector('meta[name="theme-color"]');
+    if (metaTc && theme.themeColor) metaTc.setAttribute("content", theme.themeColor);
 
     if (theme.isLight) {
       root.setAttribute("data-theme", "light");
