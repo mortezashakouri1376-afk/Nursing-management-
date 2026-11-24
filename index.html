@@ -68,7 +68,7 @@ html,body{max-width:100%;overflow-x:hidden;}
 <style id="HW_CUSTOM_FONT_STYLE"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>سیستم جامع پرستاری قلب (نسخه ۲۱ — قالب‌های بالینی، هشدارگر علائم حیاتی، تایمر کد احیا و رفع کامل باگ‌ها)</title>
+    <title>سیستم جامع پرستاری قلب (نسخه ۲۲ — گزارش‌نویسی واقعی پرستاران ایران، AVPU، ارزیابی کامل IV Line، مورس و برادن سریع، دفع و خواب شب)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -1885,6 +1885,73 @@ html[data-v12-theme="pearl-light"] .cpr-card {
 .v8-qn-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .v8-qn-actions button { padding: 4px 9px !important; font-size: 11px !important; margin: 0 !important; }
 
+
+/* ==== V22 Authentic Iranian Nursing Assessment Widgets (Morse/Braden Quick, IV Line, Elimination, Night Sleep) ==== */
+.rep-qscale-grid {
+  display: grid; grid-template-columns: 1fr; gap: 9px; margin-bottom: 10px;
+}
+.rep-qscale-card {
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 9px 10px;
+}
+.rep-qscale-head {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 6px; margin-bottom: 7px; font-size: 12px; font-weight: bold;
+}
+.rep-qscale-chips {
+  display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+}
+.rep-qscale-btn {
+  min-width: 34px; padding: 5px 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--card); color: var(--text);
+  font-family: monospace; font-size: 12.5px; font-weight: bold; cursor: pointer;
+  transition: 0.14s; text-align: center;
+}
+.rep-qscale-btn:hover { border-color: var(--accent); }
+.rep-qscale-btn.active {
+  background: var(--accent); color: var(--accent-contrast, #0b0f19);
+  border-color: var(--accent); transform: scale(1.04);
+}
+.rep-qscale-btn.risk-low.active { background: #10b981; color: #04110f; border-color: #10b981; }
+.rep-qscale-btn.risk-med.active { background: #f59e0b; color: #0b0f19; border-color: #f59e0b; }
+.rep-qscale-btn.risk-hi.active  { background: #ef4444; color: #ffffff; border-color: #ef4444; }
+.rep-qscale-inp {
+  width: 68px !important; padding: 4px 6px !important; font-size: 12.5px !important;
+  text-align: center; border-radius: 8px !important; font-family: monospace;
+}
+
+.rep-clinical-box {
+  background: var(--card); border: 1px solid var(--border);
+  border-right: 4px solid #10b981; border-radius: 14px;
+  padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-glass);
+}
+.rep-clinical-head {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 6px; padding-bottom: 7px; margin-bottom: 9px; border-bottom: 1px dashed var(--border);
+  font-size: 13px; font-weight: bold; color: #10b981;
+}
+.rep-clin-sub {
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 11px; padding: 9px 10px; margin-bottom: 9px;
+}
+.rep-clin-sub:last-child { margin-bottom: 0; }
+.rep-clin-sub-title {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 6px; font-size: 12px; font-weight: bold; color: var(--accent); margin-bottom: 6px;
+}
+.rep-sleep-sub {
+  border-color: rgba(129, 140, 248, 0.45);
+  background: rgba(99, 102, 241, 0.08);
+}
+.rep-sleep-sub.night-active {
+  border: 1.5px solid #818cf8;
+  box-shadow: 0 0 14px rgba(129, 140, 248, 0.22);
+}
+.rep-chip.iv-ok-chip.selected { background: #10b981; color: #04110f; border-color: #10b981; }
+.rep-chip.iv-warn-chip.selected { background: #ef4444; color: #ffffff; border-color: #ef4444; }
+.rep-chip.elim-chip.selected { background: #0ea5e9; color: #ffffff; border-color: #0ea5e9; }
+.rep-chip.sleep-chip.selected { background: #818cf8; color: #0b0f19; border-color: #818cf8; }
+
 /* ==== Anti-Auto-Dark Protection & Direct In-Page A4 Print (v20.3 TWA Fix) ==== */
 :root { color-scheme: dark light; }
 .sheet-preview-scroll,
@@ -2014,7 +2081,7 @@ html[data-v12-theme="pearl-light"] .cpr-card {
 
     <header>
         <button id="headerErrorBtn" type="button" onclick="openErrorReporter()" title="ثبت سریع خطای بیمارستانی">🚨 ثبت خطا <span id="headerErrBadge" class="hdr-err-badge" style="display:none;">0</span></button>
-        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v21</small></h1>
+        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v22</small></h1>
         <button id="themeToggleBtn" type="button" onclick="v12ToggleThemeMenu()" title="انتخاب تم ظاهری">🎨 <span class="theme-btn-lbl">تم</span></button>
     </header>
 
@@ -3097,12 +3164,16 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                 <div class="row">
                     <div class="col form-group"><label>بخش (Ward):</label>
                         <select id="rep_adm_ward" onchange="repLiveHeaderSync()">
+                            <option value="بخش قلب مردان">بخش قلب مردان</option>
+                            <option value="بخش قلب زنان">بخش قلب زنان</option>
                             <option value="بخش قلب">بخش قلب</option>
                             <option value="CCU">CCU</option>
+                            <option value="CCU 1">CCU 1</option>
+                            <option value="CCU 2">CCU 2</option>
                             <option value="Post-CCU">Post-CCU</option>
                             <option value="ICU قلب">ICU قلب</option>
-                            <option value="اورژانس">اورژانس</option>
-                            <option value="آنژیوگرافی">آنژیوگرافی</option>
+                            <option value="اورژانس قلب">اورژانس قلب</option>
+                            <option value="آنژیوگرافی">آنژیوگرافی / کت‌لب</option>
                             <option value="داخلی">داخلی</option>
                         </select>
                     </div>
@@ -3144,8 +3215,58 @@ html[data-v12-theme="pearl-light"] .cpr-card {
             </div>
         </div>
 
-        <!-- سبد معیارها و محاسبات بالینی پیوست‌شده از تب ماشین‌حساب -->
+        <!-- سبد معیارها + انتخاب سریع عددی مورس و برادن (v22 — بدون نیاز به ماشین‌حساب) -->
         <div class="rep-scores-tray">
+            <div class="rep-qscale-grid">
+                <!-- مورس (Morse Fall Scale) سریع -->
+                <div class="rep-qscale-card">
+                    <div class="rep-qscale-head">
+                        <span>🏃 نمره مورس (خطر سقوط — انتخاب مستقیم)</span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span class="nrs-badge" id="quickMorseBadge">انتخاب نشده</span>
+                            <button type="button" class="nrs-clear-btn" onclick="repClearQuickScale('morse')" title="پاک کردن مورس">✕</button>
+                        </div>
+                    </div>
+                    <div class="rep-qscale-chips" id="quickMorseChips">
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="0" onclick="repSetQuickScale('morse',0)">0</button>
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="15" onclick="repSetQuickScale('morse',15)">15</button>
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="20" onclick="repSetQuickScale('morse',20)">20</button>
+                        <button type="button" class="rep-qscale-btn risk-med" data-val="25" onclick="repSetQuickScale('morse',25)">25</button>
+                        <button type="button" class="rep-qscale-btn risk-med" data-val="35" onclick="repSetQuickScale('morse',35)">35</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="45" onclick="repSetQuickScale('morse',45)">45</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="50" onclick="repSetQuickScale('morse',50)">50</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="60" onclick="repSetQuickScale('morse',60)">60</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="75" onclick="repSetQuickScale('morse',75)">75</button>
+                        <input type="number" min="0" max="125" id="rep_quick_morse" class="rep-qscale-inp" placeholder="عدد..." oninput="repSyncQuickScaleInput('morse', this.value)">
+                    </div>
+                </div>
+
+                <!-- برادن (Braden Pressure Injury Scale) سریع -->
+                <div class="rep-qscale-card">
+                    <div class="rep-qscale-head">
+                        <span>🛏️ نمره برادن (زخم فشاری — انتخاب مستقیم)</span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span class="nrs-badge" id="quickBradenBadge">انتخاب نشده</span>
+                            <button type="button" class="nrs-clear-btn" onclick="repClearQuickScale('braden')" title="پاک کردن برادن">✕</button>
+                        </div>
+                    </div>
+                    <div class="rep-qscale-chips" id="quickBradenChips">
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="23" onclick="repSetQuickScale('braden',23)">23</button>
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="21" onclick="repSetQuickScale('braden',21)">21</button>
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="20" onclick="repSetQuickScale('braden',20)">20</button>
+                        <button type="button" class="rep-qscale-btn risk-low" data-val="19" onclick="repSetQuickScale('braden',19)">19</button>
+                        <button type="button" class="rep-qscale-btn risk-med" data-val="18" onclick="repSetQuickScale('braden',18)">18</button>
+                        <button type="button" class="rep-qscale-btn risk-med" data-val="16" onclick="repSetQuickScale('braden',16)">16</button>
+                        <button type="button" class="rep-qscale-btn risk-med" data-val="15" onclick="repSetQuickScale('braden',15)">15</button>
+                        <button type="button" class="rep-qscale-btn risk-med" data-val="14" onclick="repSetQuickScale('braden',14)">14</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="12" onclick="repSetQuickScale('braden',12)">12</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="10" onclick="repSetQuickScale('braden',10)">10</button>
+                        <button type="button" class="rep-qscale-btn risk-hi" data-val="9" onclick="repSetQuickScale('braden',9)">9</button>
+                        <input type="number" min="6" max="23" id="rep_quick_braden" class="rep-qscale-inp" placeholder="6-23" oninput="repSyncQuickScaleInput('braden', this.value)">
+                    </div>
+                </div>
+            </div>
+
             <div class="rep-scores-head">
                 <span>📊 معیارها و محاسبات پیوست‌شده به گزارش (<span id="repAttachedCount">0</span>)</span>
                 <button type="button" class="rep-mini-btn" style="padding:3px 8px; font-size:11px; color:#ef4444;" onclick="repClearAttachedCalcs()">پاک کردن</button>
@@ -3180,7 +3301,7 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                 <div class="row">
                     <div class="col form-group"><label>ساعت ورود:</label><input type="time" id="rep_adm_time"></div>
                     <div class="col form-group"><label>شیفت پذیرش:</label>
-                        <select id="rep_adm_shift"><option value="صبح">صبح (D)</option><option value="عصر">عصر (E)</option><option value="شب">شب (N)</option></select>
+                        <select id="rep_adm_shift" onchange="repSyncNightSleepHighlight()"><option value="صبح">صبح (D)</option><option value="عصر">عصر (E)</option><option value="شب">شب (N)</option></select>
                     </div>
                 </div>
                 <div class="row">
@@ -3201,13 +3322,44 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                             <option value="اعزام از مرکز دیگر">اعزام از مرکز دیگر</option>
                         </select>
                     </div>
-                    <div class="col form-group"><label>نحوه ورود به بخش:</label>
+                    <div class="col form-group"><label>نحوه انتقال به بخش:</label>
                         <select id="rep_adm_arrival">
-                            <option value="با برانکارد">با برانکارد</option>
                             <option value="با ویلچر">با ویلچر</option>
+                            <option value="با برانکارد">با برانکارد</option>
+                            <option value="با تخت">با تخت</option>
                             <option value="با پای خود">با پای خود</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="row">
+                    <div class="col form-group">
+                        <label>همراهان انتقال:</label>
+                        <select id="rep_adm_escort">
+                            <option value="به همراه خدمات بیمار و پرستار">خدمات و پرستار</option>
+                            <option value="به همراه کمک‌بهیار و پرستار">کمک‌بهیار و پرستار</option>
+                            <option value="به همراه پرستار و مانیتور پرتابل">پرستار با مانیتور پرتابل</option>
+                            <option value="به همراه خدمات">خدمات / کمک‌بهیار</option>
+                            <option value="به همراه خانواده">همراه / خانواده</option>
+                            <option value="">بدون ذکر همراه</option>
+                        </select>
+                    </div>
+                    <div class="col form-group">
+                        <label>تشخیص پزشکی (Diagnosis):</label>
+                        <input type="text" id="rep_adm_dx" placeholder="مثلاً NSTEMI، ACS، CHF، کاندید آنژیو...">
+                    </div>
+                </div>
+                <div class="rep-chips" style="margin-top:-4px;">
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','NSTEMI')">NSTEMI</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','STEMI')">STEMI</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','ACS')">ACS</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','آنژین ناپایدار (UA)')">UA</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','نارسایی قلبی (CHF)')">CHF</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','فیبریلاسیون دهلیزی (AFib)')">AFib</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','افزایش فشار خون (HTN)')">HTN</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','کاندید آنژیوگرافی کرونر')">کاندید آنژیو</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','پست آنژیوگرافی / PCI')">Post-PCI</button>
+                    <button type="button" class="rep-chip" onclick="repSetVal('rep_adm_dx','بلوک قلبی / کاندید پیس‌میکر')">بلوک / پیس‌میکر</button>
                 </div>
 
                 <div class="form-group">
@@ -3236,15 +3388,15 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                 <div class="vs-guard-bar" id="vsGuard_adm"></div>
 
                 <div class="row">
-                    <div class="col form-group"><label>سطح هوشیاری:</label>
+                    <div class="col form-group"><label>سطح هشیاری (AVPU):</label>
                         <select id="rep_adm_loc">
-                            <option value="هوشیار و آگاه به زمان، مکان و شخص (Oriented ×3)">هوشیار و آگاه (Oriented×3)</option>
-                            <option value="هوشیار">هوشیار</option>
-                            <option value="خواب‌آلود">خواب‌آلود</option>
-                            <option value="گیج و بی‌قرار">گیج و بی‌قرار</option>
-                            <option value="نیمه‌هوشیار">نیمه‌هوشیار</option>
-                            <option value="بیهوش">بیهوش</option>
-                            <option value="اینتوبه و تحت سداسیون">اینتوبه و سدیت</option>
+                            <option value="طبق AVPU در فاز A هشیار و آگاه به زمان، مکان و شخص است">فاز A — هشیار و آگاه (AVPU: A)</option>
+                            <option value="طبق AVPU در فاز A هشیار است">فاز A — هشیار (AVPU: A)</option>
+                            <option value="طبق AVPU در فاز V (پاسخ به صدا) و خواب‌آلود است">فاز V — پاسخ به صدا (AVPU: V)</option>
+                            <option value="طبق AVPU در فاز A اما گیج و بی‌قرار است">فاز A — گیج و بی‌قرار</option>
+                            <option value="طبق AVPU در فاز P (پاسخ به محرک دردناک) است">فاز P — پاسخ به درد (AVPU: P)</option>
+                            <option value="طبق AVPU در فاز U (عدم پاسخ‌دهی) می‌باشد">فاز U — عدم پاسخ (AVPU: U)</option>
+                            <option value="اینتوبه و تحت سداسیون می‌باشد">اینتوبه و تحت سداسیون</option>
                         </select>
                     </div>
                     <div class="col form-group"><label>درد قفسه سینه:</label>
@@ -3318,13 +3470,13 @@ html[data-v12-theme="pearl-light"] .cpr-card {
 
                 <div class="rep-subhead">✅ اقدامات روتین بدو ورود (با لمس انتخاب کنید)</div>
                 <div class="rep-chips" id="repAdmRoutineChips">
-                    <button type="button" class="rep-chip selected" data-phrase="بیمار تحت مانیتورینگ قلبی-تنفسی قرار گرفت">مانیتورینگ وصل شد</button>
-                    <button type="button" class="rep-chip selected" data-phrase="نوار قلب دوازده لید (ECG) گرفته و بررسی شد">ECG ۱۲ لید</button>
-                    <button type="button" class="rep-chip selected" data-phrase="دستبند شناسایی نصب و هویت بیمار تطبیق داده شد">دستبند شناسایی</button>
-                    <button type="button" class="rep-chip selected" data-kind="edu_adm" data-phrase="آموزش بدو ورود، قوانین بخش و منشور حقوق بیمار ارائه شد">آموزش بدو ورود</button>
-                    <button type="button" class="rep-chip selected" data-kind="morse" data-phrase="ارزیابی خطر سقوط (Morse) انجام و نرده‌های کنار تخت بالا قرار داده شد">ارزیابی سقوط و نرده تخت</button>
-                    <button type="button" class="rep-chip" data-phrase="نمونه آزمایشات درخواستی اخذ و به آزمایشگاه ارسال گردید">ارسال آزمایشات</button>
-                    <button type="button" class="rep-chip selected" data-phrase="دستورات پزشک (Order) چک و اجرا و به پزشک معالج/کشیک اطلاع داده شد">چک اردر و اطلاع به پزشک</button>
+                    <button type="button" class="rep-chip selected" data-phrase="تحت مانیتورینگ قلبی قرار گرفت">مانیتورینگ قلبی</button>
+                    <button type="button" class="rep-chip selected" data-phrase="ECG دوازده لید گرفته و بررسی شد">ECG ۱۲ لید</button>
+                    <button type="button" class="rep-chip selected" data-phrase="دستبند شناسایی چک و تطبیق داده شد">دستبند شناسایی</button>
+                    <button type="button" class="rep-chip" data-kind="edu_adm" data-phrase="آموزش بدو ورود و قوانین بخش به مددجو و همراه ارائه شد">آموزش بدو ورود</button>
+                    <button type="button" class="rep-chip" data-kind="morse" data-phrase="نرده‌های کنار تخت بالا قرار داده شد و تدابیر پیشگیری از سقوط رعایت گردید">بالا بودن نرده تخت</button>
+                    <button type="button" class="rep-chip" data-phrase="نمونه آزمایشات طبق دستور اخذ و ارسال شد">ارسال آزمایشات</button>
+                    <button type="button" class="rep-chip selected" data-phrase="اردر پزشک چک و اجرا و پذیرش مددجو به پزشک معالج/کشیک اطلاع داده شد">چک اردر و اطلاع به پزشک</button>
                 </div>
 
                 <div class="rep-edu-box">
@@ -3358,7 +3510,7 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                     <div class="col form-group"><label>تاریخ شمسی:</label><input type="text" id="rep_dur_date" placeholder="1405/09/02"></div>
                     <div class="col form-group"><label>ساعت ثبت:</label><input type="time" id="rep_dur_time"></div>
                     <div class="col form-group"><label>شیفت:</label>
-                        <select id="rep_dur_shift"><option value="صبح">صبح</option><option value="عصر">عصر</option><option value="شب">شب</option></select>
+                        <select id="rep_dur_shift" onchange="repSyncNightSleepHighlight()"><option value="صبح">صبح</option><option value="عصر">عصر</option><option value="شب">شب</option></select>
                     </div>
                 </div>
 
@@ -3374,14 +3526,16 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                 <div class="vs-guard-bar" id="vsGuard_dur"></div>
 
                 <div class="row">
-                    <div class="col form-group"><label>وضعیت عمومی و هوشیاری:</label>
+                    <div class="col form-group"><label>سطح هشیاری (AVPU) و حال عمومی:</label>
                         <select id="rep_dur_condition">
                             <option value="">-- انتخاب --</option>
-                            <option value="هوشیار و آگاه و با حال عمومی پایدار">هوشیار و آگاه (پایدار)</option>
-                            <option value="هوشیار و آگاه">هوشیار و آگاه</option>
-                            <option value="خواب‌آلود">خواب‌آلود</option>
-                            <option value="گیج و بی‌قرار">گیج و بی‌قرار</option>
-                            <option value="اینتوبه و تحت سداسیون">اینتوبه و سدیت</option>
+                            <option value="طبق AVPU در فاز A هشیار و با حال عمومی پایدار است">فاز A — هشیار و پایدار (AVPU: A)</option>
+                            <option value="طبق AVPU در فاز A هشیار است">فاز A — هشیار (AVPU: A)</option>
+                            <option value="طبق AVPU در فاز V (پاسخ به صدا) و خواب‌آلود است">فاز V — پاسخ به صدا / خواب‌آلود</option>
+                            <option value="طبق AVPU در فاز A اما گیج و بی‌قرار است">فاز A — گیج و بی‌قرار</option>
+                            <option value="طبق AVPU در فاز P (پاسخ به درد) می‌باشد">فاز P — پاسخ به درد (AVPU: P)</option>
+                            <option value="طبق AVPU در فاز U (عدم پاسخ‌دهی) می‌باشد">فاز U — عدم پاسخ (AVPU: U)</option>
+                            <option value="اینتوبه و تحت سداسیون می‌باشد">اینتوبه و تحت سداسیون</option>
                         </select>
                     </div>
                     <div class="col form-group"><label>سطح هوشیاری (GCS):</label><input type="number" id="rep_dur_gcs" placeholder="15"></div>
@@ -3526,7 +3680,7 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                 </div>
                 <div class="row">
                     <div class="col form-group"><label>از شیفت:</label>
-                        <select id="rep_hand_from"><option value="صبح">صبح</option><option value="عصر">عصر</option><option value="شب">شب</option></select>
+                        <select id="rep_hand_from" onchange="repOnHandoverShiftChange()"><option value="صبح">صبح</option><option value="عصر">عصر</option><option value="شب">شب</option></select>
                     </div>
                     <div class="col form-group"><label>به شیفت:</label>
                         <select id="rep_hand_to"><option value="عصر">عصر</option><option value="شب">شب</option><option value="صبح">صبح</option></select>
@@ -3535,13 +3689,12 @@ html[data-v12-theme="pearl-light"] .cpr-card {
 
                 <div class="rep-subhead">📋 وضعیت بیمار در زمان تحویل (با لمس انتخاب کنید)</div>
                 <div class="rep-chips" id="repHandStatusChips">
-                    <button type="button" class="rep-chip selected" data-phrase="هوشیار و آگاه و با حال عمومی پایدار">هوشیار و پایدار</button>
+                    <button type="button" class="rep-chip selected" data-phrase="طبق AVPU در فاز A هشیار و با حال عمومی پایدار">فاز A هشیار و پایدار</button>
                     <button type="button" class="rep-chip selected" data-phrase="فاقد درد قفسه سینه و دیسترس تنفسی">بدون درد و دیسترس</button>
                     <button type="button" class="rep-chip selected" data-phrase="دارای ریتم قلبی پایدار در مانیتورینگ">ریتم پایدار</button>
-                    <button type="button" class="rep-chip selected" data-phrase="رگ محیطی باز و بدون علائم فلبیت">آنژیوکت باز</button>
-                    <button type="button" class="rep-chip" data-phrase="دارای برون‌ده ادراری مناسب">برون‌ده ادراری مناسب</button>
+                    <button type="button" class="rep-chip" data-kind="iv_hand" data-phrase="رگ محیطی باز و فاقد فلبیت، نشتی و اکیموز">آنژیوکت سالم</button>
                     <button type="button" class="rep-chip" data-phrase="پانسمان خشک و تمیز و بدون هماتوم">پانسمان خشک و تمیز</button>
-                    <button type="button" class="rep-chip selected" data-phrase="نرده‌های کنار تخت بالا و تدابیر ایمنی رعایت شده">ایمنی و نرده تخت</button>
+                    <button type="button" class="rep-chip selected" data-kind="morse" data-phrase="نرده‌های کنار تخت بالا و زنگ اخبار در دسترس">ایمنی و نرده تخت</button>
                 </div>
 
                 <div class="rep-subhead">🩺 علائم حیاتی هنگام تحویل (اختیاری)</div>
@@ -3673,6 +3826,144 @@ html[data-v12-theme="pearl-light"] .cpr-card {
                 <div class="form-group"><label>داروهای ترخیص (متصل به بانک دارویی):</label><textarea id="rep_dis_meds" rows="2"></textarea></div>
                 <div class="form-group"><label>توصیه‌های پزشک معالج:</label><textarea id="rep_dis_advice" rows="2"></textarea></div>
                 <div class="form-group"><label>زمان پیگیری بعدی (ویزیت درمانگاه/مطب):</label><input type="text" id="rep_dis_follow" placeholder="مثلاً یک هفته دیگر در درمانگاه قلب همراه با جواب آزمایشات"></div>
+            </div>
+        </div>
+
+        <!-- ==================== پایش بالینی استاندارد پرستاری ایران (IV Line کامل، دفع، خواب شب، تغذیه و تحرک) ==================== -->
+        <div class="rep-clinical-box" id="repClinicalAssessBox">
+            <div class="rep-clinical-head">
+                <span>🩺 پایش بالینی استاندارد پرستاری (IV Line، دفع، خواب، تغذیه و تحرک)</span>
+                <button type="button" class="nrs-clear-btn" onclick="repResetClinicalAssessBox()">🧹 پاک کردن این بخش</button>
+            </div>
+
+            <!-- ۱. ارزیابی کامل IV Line (آنژیوکت) -->
+            <div class="rep-clin-sub">
+                <div class="rep-clin-sub-title">
+                    <span>💉 بررسی کامل رگ محیطی (IV Line)</span>
+                    <button type="button" class="nrs-clear-btn" onclick="repSetIvToday()">📅 تاریخ امروز</button>
+                </div>
+                <div class="row" style="margin-bottom:6px;">
+                    <div class="col form-group" style="margin-bottom:0;">
+                        <label>محل رگ:</label>
+                        <select id="rep_iv_site">
+                            <option value="">-- انتخاب محل --</option>
+                            <option value="دست راست">دست راست</option>
+                            <option value="دست چپ">دست چپ</option>
+                            <option value="ساعد راست">ساعد راست</option>
+                            <option value="ساعد چپ">ساعد چپ</option>
+                            <option value="پشت دست راست">پشت دست راست</option>
+                            <option value="پشت دست چپ">پشت دست چپ</option>
+                            <option value="آنتی‌کوبیتال راست">آنتی‌کوبیتال راست</option>
+                            <option value="آنتی‌کوبیتال چپ">آنتی‌کوبیتال چپ</option>
+                            <option value="دو رگ محیطی (دست راست و چپ)">دو رگ محیطی</option>
+                            <option value="کاتتر ورید مرکزی (CVP)">CVP Line</option>
+                            <option value="فاقد رگ محیطی">فاقد IV Line</option>
+                        </select>
+                    </div>
+                    <div class="col form-group" style="margin-bottom:0;">
+                        <label>سایز آنژیوکت:</label>
+                        <select id="rep_iv_gauge">
+                            <option value="">اختیاری</option>
+                            <option value="سایز ۱۸ (سبز)">۱۸ (سبز)</option>
+                            <option value="سایز ۲۰ (صورتی)">۲۰ (صورتی)</option>
+                            <option value="سایز ۲۲ (آبی)">۲۲ (آبی)</option>
+                            <option value="سایز ۱۶ (خاکستری)">۱۶ (خاکستری)</option>
+                        </select>
+                    </div>
+                    <div class="col form-group" style="margin-bottom:0;">
+                        <label>تاریخ تعبیه:</label>
+                        <input type="text" id="rep_iv_date" placeholder="مثلاً 1405/09/02">
+                    </div>
+                </div>
+                <div class="rep-chips" id="repIvStatusChips" style="margin-bottom:4px;">
+                    <button type="button" class="rep-chip iv-ok-chip" data-iv-ok="1" onclick="repToggleIvOk(this)">✅ سالم، باز و فیکس (فاقد فلبیت، نشتی، اکیموز، قرمزی و تورم)</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="فلبیت و قرمزی">🔴 فلبیت/قرمزی</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="نشتی (انفیلتراسیون)">💧 نشتی</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="اکیموز (کبودی)">🟣 اکیموز</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="تورم موضعی">🟠 تورم</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="درد و حساسیت لمسی">⚡ درد موضعی</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="ترشح یا خونریزی">🩸 ترشح/خونریزی</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="انسداد (بسته بودن رگ)">⛔ مسدود</button>
+                    <button type="button" class="rep-chip iv-warn-chip" data-iv-issue="انقضای تاریخ ۷۲ ساعته">⏳ انقضای تاریخ</button>
+                </div>
+                <div class="rep-chips" id="repIvActionChips" style="margin-bottom:0;">
+                    <button type="button" class="rep-chip" data-iv-act="خارج و آنژیوکت جدید با تاریخ امروز در اندام مقابل تعبیه و فیکس شد">🔄 خارج و رگ جدید زده شد</button>
+                    <button type="button" class="rep-chip" data-iv-act="پانسمان استریل محل رگ تعویض و فیکس گردید">🩹 تعویض پانسمان رگ</button>
+                    <button type="button" class="rep-chip" data-iv-act="آنژیوکت هپارین‌لاک/فلاش و باز بودن آن تایید شد">💧 فلاش و باز است</button>
+                </div>
+            </div>
+
+            <!-- ۲. دفع ادراری و اجابت مزاج -->
+            <div class="rep-clin-sub">
+                <div class="rep-clin-sub-title">
+                    <span>🚻 دفع ادراری و اجابت مزاج (Elimination)</span>
+                </div>
+                <div class="rep-chips" id="repUrineChips" style="margin-bottom:6px;">
+                    <button type="button" class="rep-chip elim-chip" data-single="urine" data-phrase="دفع ادراری خودبه‌خودی و طبیعی دارد">✅ دفع ادرار طبیعی</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="urine" data-phrase="دفع ادراری مناسب (در پاسخ به دیورتیک) دارد">💧 دیورز خوب</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="urine" data-phrase="دارای سوند فولی باز با ادرار شفاف است">🟡 فولی باز و شفاف</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="urine" data-phrase="کاهش برون‌ده ادراری (الیگوری) گزارش شد">⚠️ الیگوری</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="urine" data-phrase="شاکی از سوزش و تکرر ادرار می‌باشد">🔥 دیزوری</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="urine" data-phrase="در این شیفت دفع ادرار نداشته (بررسی احتباس)">⛔ بدون دفع ادرار</button>
+                </div>
+                <div class="row" style="margin-bottom:6px;">
+                    <div class="col form-group" style="margin-bottom:0;">
+                        <input type="number" id="rep_urine_vol" placeholder="حجم ادرار در شیفت (اختیاری — مثلاً 600 cc)" style="padding:7px 9px; font-size:12.5px;">
+                    </div>
+                </div>
+                <div class="rep-chips" id="repBowelChips" style="margin-bottom:0;">
+                    <button type="button" class="rep-chip elim-chip" data-single="bowel" data-phrase="اجابت مزاج طبیعی دارد">✅ اجابت مزاج طبیعی</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="bowel" data-phrase="در این شیفت اجابت مزاج نداشته است">➖ اجابت مزاج نداشته</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="bowel" data-phrase="شاکی از یبوست می‌باشد">⚠️ یبوست دارد</button>
+                    <button type="button" class="rep-chip elim-chip" data-single="bowel" data-phrase="دارای اسهال/دفع شل می‌باشد">💧 اسهال دارد</button>
+                </div>
+            </div>
+
+            <!-- ۳. خواب مددجو در شیفت شب -->
+            <div class="rep-clin-sub rep-sleep-sub" id="repSleepBox">
+                <div class="rep-clin-sub-title" style="color:#a5b4fc;">
+                    <span>🌙 خواب مددجو <span id="repSleepShiftTag" style="font-size:10.5px; opacity:0.85;">(ویژه شیفت شب)</span></span>
+                    <button type="button" class="nrs-clear-btn" onclick="repClearSleep()">✕</button>
+                </div>
+                <div class="rep-chips" id="repSleepHoursChips" style="margin-bottom:6px;">
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="0" onclick="repSelectSleepHours(0)">بی‌خواب (0h)</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="2" onclick="repSelectSleepHours(2)">۲ ساعت</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="3" onclick="repSelectSleepHours(3)">۳ ساعت</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="4" onclick="repSelectSleepHours(4)">۴ ساعت</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="5" onclick="repSelectSleepHours(5)">۵ ساعت</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="6" onclick="repSelectSleepHours(6)">۶ ساعت</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="7" onclick="repSelectSleepHours(7)">۷ ساعت</button>
+                    <button type="button" class="rep-chip sleep-chip" data-sleep-hr="8" onclick="repSelectSleepHours(8)">۸ ساعت</button>
+                    <input type="number" min="0" max="14" step="0.5" id="rep_sleep_hours" class="rep-qscale-inp" placeholder="ساعت" oninput="repSyncSleepHoursInput(this.value)">
+                </div>
+                <div class="rep-chips" id="repSleepQualityChips" style="margin-bottom:0;">
+                    <button type="button" class="rep-chip sleep-chip" data-single="sleepq" data-phrase="خواب آرام و پیوسته">😴 آرام و پیوسته</button>
+                    <button type="button" class="rep-chip sleep-chip" data-single="sleepq" data-phrase="خواب منقطع و سبک">🌗 منقطع و سبک</button>
+                    <button type="button" class="rep-chip sleep-chip" data-single="sleepq" data-phrase="خواب منقطع به علت درد/تنگی نفس">😣 بیداری با درد/تنگی نفس</button>
+                    <button type="button" class="rep-chip sleep-chip" data-single="sleepq" data-phrase="با تجویز آرام‌بخش/مسکن خوابید">💊 با دارو خوابید</button>
+                    <button type="button" class="rep-chip sleep-chip" data-single="sleepq" data-phrase="به علت اضطراب و محیط بخش دچار بی‌خوابی بود">👁 بی‌خوابی/اضطراب</button>
+                </div>
+            </div>
+
+            <!-- ۴. تغذیه / رژیم غذایی و تحرک -->
+            <div class="rep-clin-sub">
+                <div class="rep-clin-sub-title">
+                    <span>🍽️ رژیم غذایی، تحرک و پوست</span>
+                </div>
+                <div class="rep-chips" id="repDietChips" style="margin-bottom:6px;">
+                    <button type="button" class="rep-chip" data-single="diet" data-phrase="رژیم قلبی کم‌نمک و کم‌چرب تحمل دارد">🥗 رژیم قلبی (تحمل دارد)</button>
+                    <button type="button" class="rep-chip" data-single="diet" data-phrase="رژیم دیابتی و قلبی تحمل دارد">🩺 رژیم دیابتی-قلبی</button>
+                    <button type="button" class="rep-chip" data-single="diet" data-phrase="بیمار ناشتا (NPO) می‌باشد">🚫 ناشتا (NPO)</button>
+                    <button type="button" class="rep-chip" data-single="diet" data-phrase="رژیم مایعات صاف تحمل دارد">🥤 مایعات صاف</button>
+                    <button type="button" class="rep-chip" data-single="diet" data-phrase="کاهش اشتها و تهوع خفیف ذکر کرد">🤢 کم‌اشتها/تهوع</button>
+                </div>
+                <div class="rep-chips" id="repMobilityChips" style="margin-bottom:0;">
+                    <button type="button" class="rep-chip" data-single="mob" data-phrase="تحت استراحت مطلق در تخت (CBR) است">🛏 CBR (استراحت مطلق)</button>
+                    <button type="button" class="rep-chip" data-single="mob" data-phrase="تحت استراحت نسبی (RBR) با اجازه سرویس بهداشتی است">🪑 RBR (استراحت نسبی)</button>
+                    <button type="button" class="rep-chip" data-single="mob" data-phrase="تحرک آزاد در بخش (OOB) بدون علامت دارد">🚶 OOB (تحرک آزاد)</button>
+                    <button type="button" class="rep-chip" data-skin="1" data-phrase="پوست سالم، گرم و خشک و فاقد ادم و زخم فشاری است">✨ پوست سالم و بدون ادم</button>
+                    <button type="button" class="rep-chip" data-skin="1" data-phrase="دارای ادم گودگذار اندام‌های تحتانی است">💧 ادم اندام تحتانی</button>
+                </div>
             </div>
         </div>
 
@@ -5703,6 +5994,7 @@ document.addEventListener('DOMContentLoaded', function() {
             autoSyncProcModeForActivePane();
             updateRepMainActionButton();
             renderPendingProcs();
+            if (typeof repSyncNightSleepHighlight === 'function') repSyncNightSleepHighlight();
         }
 
         function switchRepOutputView(view) {
@@ -6235,10 +6527,22 @@ document.addEventListener('DOMContentLoaded', function() {
         function formatCalcSentence(resId, cleanSummary) {
             const meta = CALC_REPORT_META[resId] || { key: resId, label: 'معیار بالینی', prefix: 'ارزیابی بالینی انجام شد' };
             if (resId === 'morse-result') {
-                return 'ارزیابی خطر سقوط با مقیاس Morse انجام شد (' + cleanSummary + ') و تدابیر پیشگیری از سقوط و بالا بودن نرده‌های کنار تخت رعایت گردید';
+                const mScore = cleanSummary.match(/(\d+)/);
+                if (mScore) {
+                    const n = parseInt(mScore[1], 10);
+                    if (typeof repSetQuickScale === 'function') repSetQuickScale('morse', n);
+                    return buildQuickMorseSentence(n);
+                }
+                return 'ارزیابی خطر سقوط با مقیاس مورس انجام شد (' + cleanSummary + ') و نرده‌های کنار تخت بالا قرار داده شد';
             }
             if (resId === 'braden-result') {
-                return 'ارزیابی خطر زخم فشاری با مقیاس Braden انجام شد (' + cleanSummary + ') و مراقبت پوستی متناسب لحاظ گردید';
+                const bScore = cleanSummary.match(/(\d+)/);
+                if (bScore) {
+                    const n = parseInt(bScore[1], 10);
+                    if (typeof repSetQuickScale === 'function') repSetQuickScale('braden', n);
+                    return buildQuickBradenSentence(n);
+                }
+                return 'ارزیابی خطر زخم فشاری با مقیاس برادن انجام شد (' + cleanSummary + ') و مراقبت پوستی لحاظ گردید';
             }
             if (resId === 'rass-result') {
                 const shortRass = cleanSummary.split('اقدام پیشنهادی:')[0].trim().replace(/[—\-\s]+$/, '');
@@ -6397,16 +6701,297 @@ document.addEventListener('DOMContentLoaded', function() {
             return repAttachedCalcs.some(c => c.key === key);
         }
 
+        // ==========================================
+        // موتور ارزیابی بالینی واقعی پرستاری ایران (v22: مورس/برادن سریع، IV Line کامل، دفع، خواب شب، تغذیه/تحرک)
+        // ==========================================
+        let repQuickScales = { morse: null, braden: null, sleepHours: null };
+
+        function getMorseRiskMeta(val) {
+            const n = Number(val);
+            if (isNaN(n) || n < 0) return { label: 'انتخاب نشده', cls: '', riskFa: '' };
+            if (n < 25) return { label: n + ' — خطر پایین', cls: 'lv0', riskFa: 'خطر پایین' };
+            if (n <= 44) return { label: n + ' — خطر متوسط', cls: 'lv2', riskFa: 'خطر متوسط' };
+            return { label: n + ' — خطر بالا', cls: 'lv3', riskFa: 'خطر بالا' };
+        }
+        function getBradenRiskMeta(val) {
+            const n = Number(val);
+            if (isNaN(n) || n < 6) return { label: 'انتخاب نشده', cls: '', riskFa: '' };
+            if (n > 18) return { label: n + ' — بدون خطر/پایین', cls: 'lv0', riskFa: 'بدون خطر زخم فشاری' };
+            if (n >= 15) return { label: n + ' — خطر خفیف', cls: 'lv1', riskFa: 'خطر خفیف زخم فشاری' };
+            if (n >= 13) return { label: n + ' — خطر متوسط', cls: 'lv2', riskFa: 'خطر متوسط زخم فشاری' };
+            if (n >= 10) return { label: n + ' — خطر بالا', cls: 'lv3', riskFa: 'خطر بالا برای زخم فشاری' };
+            return { label: n + ' — خطر بسیار بالا', cls: 'lv3', riskFa: 'خطر بسیار بالا برای زخم فشاری' };
+        }
+
+        function repSetQuickScale(type, val) {
+            const n = Number(val);
+            if (isNaN(n)) return;
+            if (type === 'morse') {
+                const clamped = Math.max(0, Math.min(125, Math.round(n)));
+                repQuickScales.morse = clamped;
+                const box = document.getElementById('quickMorseChips');
+                if (box) box.querySelectorAll('.rep-qscale-btn').forEach(b => b.classList.toggle('active', Number(b.getAttribute('data-val')) === clamped));
+                const inp = document.getElementById('rep_quick_morse');
+                if (inp && Number(inp.value) !== clamped) inp.value = String(clamped);
+                const meta = getMorseRiskMeta(clamped);
+                const bd = document.getElementById('quickMorseBadge');
+                if (bd) { bd.textContent = 'مورس ' + meta.label; bd.className = 'nrs-badge ' + meta.cls; }
+            } else if (type === 'braden') {
+                const clamped = Math.max(6, Math.min(23, Math.round(n)));
+                repQuickScales.braden = clamped;
+                const box = document.getElementById('quickBradenChips');
+                if (box) box.querySelectorAll('.rep-qscale-btn').forEach(b => b.classList.toggle('active', Number(b.getAttribute('data-val')) === clamped));
+                const inp = document.getElementById('rep_quick_braden');
+                if (inp && Number(inp.value) !== clamped) inp.value = String(clamped);
+                const meta = getBradenRiskMeta(clamped);
+                const bd = document.getElementById('quickBradenBadge');
+                if (bd) { bd.textContent = 'برادن ' + meta.label; bd.className = 'nrs-badge ' + meta.cls; }
+            }
+        }
+        function repClearQuickScale(type) {
+            if (type === 'morse') {
+                repQuickScales.morse = null;
+                const box = document.getElementById('quickMorseChips');
+                if (box) box.querySelectorAll('.rep-qscale-btn').forEach(b => b.classList.remove('active'));
+                const inp = document.getElementById('rep_quick_morse');
+                if (inp) inp.value = '';
+                const bd = document.getElementById('quickMorseBadge');
+                if (bd) { bd.textContent = 'انتخاب نشده'; bd.className = 'nrs-badge'; }
+            } else if (type === 'braden') {
+                repQuickScales.braden = null;
+                const box = document.getElementById('quickBradenChips');
+                if (box) box.querySelectorAll('.rep-qscale-btn').forEach(b => b.classList.remove('active'));
+                const inp = document.getElementById('rep_quick_braden');
+                if (inp) inp.value = '';
+                const bd = document.getElementById('quickBradenBadge');
+                if (bd) { bd.textContent = 'انتخاب نشده'; bd.className = 'nrs-badge'; }
+            }
+        }
+        function repSyncQuickScaleInput(type, raw) {
+            if (raw === '' || raw === null || raw === undefined) { repClearQuickScale(type); return; }
+            const n = Number(raw);
+            if (type === 'braden' && n < 6) return; // wait until user finishes typing 2 digits like 18
+            if (!isNaN(n)) repSetQuickScale(type, n);
+        }
+
+        function buildQuickMorseSentence(overrideVal) {
+            const v = (overrideVal !== undefined && overrideVal !== null) ? overrideVal : repQuickScales.morse;
+            if (v === null || v === undefined || isNaN(v)) return '';
+            const n = Number(v);
+            if (n < 25) {
+                return 'نمره خطر سقوط طبق مقیاس مورس ' + n + ' (خطر پایین) بوده و تدابیر ایمنی و بالا بودن نرده‌های کنار تخت رعایت شد';
+            }
+            if (n <= 44) {
+                return 'نمره خطر سقوط طبق مقیاس مورس ' + n + ' (خطر متوسط) ارزیابی گردید؛ آموزش پیشگیری از سقوط ارائه و نرده‌های کنار تخت بالا قرار داده شد';
+            }
+            return 'نمره خطر سقوط طبق مقیاس مورس ' + n + ' (خطر بالا) ارزیابی گردید؛ دستبند و علامت خطر سقوط چک، نرده‌های کنار تخت بالا و زنگ اخبار در دسترس مددجو قرار گرفت';
+        }
+        function buildQuickBradenSentence(overrideVal) {
+            const v = (overrideVal !== undefined && overrideVal !== null) ? overrideVal : repQuickScales.braden;
+            if (v === null || v === undefined || isNaN(v)) return '';
+            const n = Number(v);
+            if (n > 18) {
+                return 'نمره برادن ' + n + ' (بدون خطر زخم فشاری) بوده و یکپارچگی پوست سالم است';
+            }
+            if (n >= 15) {
+                return 'نمره برادن ' + n + ' (خطر خفیف زخم فشاری) ارزیابی و آموزش تغییر پوزیشن و مراقبت پوستی ارائه شد';
+            }
+            if (n >= 13) {
+                return 'نمره برادن ' + n + ' (خطر متوسط زخم فشاری) بوده و تغییر پوزیشن منظم و مراقبت از نقاط تحت فشار انجام گردید';
+            }
+            if (n >= 10) {
+                return 'نمره برادن ' + n + ' (خطر بالا برای زخم فشاری) بوده، تغییر پوزیشن هر ۲ ساعت، مراقبت پوستی و استفاده از تشک مواج لحاظ شد';
+            }
+            return 'نمره برادن ' + n + ' (خطر بسیار بالا برای زخم فشاری) بوده، پروتکل پیشگیری شامل تشک مواج، تغییر پوزیشن هر ۲ ساعت و پایش دقیق پوست اجرا گردید';
+        }
+
+        // ---- IV Line Detailed Assessment Helpers ----
+        function repSetIvToday() {
+            repSetValSilent('rep_iv_date', getShamsiToday());
+        }
+        function repToggleIvOk(btn) {
+            const willSelect = !btn.classList.contains('selected');
+            btn.classList.toggle('selected', willSelect);
+            if (willSelect) {
+                document.querySelectorAll('#repIvStatusChips .iv-warn-chip').forEach(b => b.classList.remove('selected'));
+            }
+        }
+        function buildDetailedIvSentence(fallbackText) {
+            const site = repVal('rep_iv_site');
+            const gauge = repVal('rep_iv_gauge');
+            const dt = repVal('rep_iv_date');
+            const okBtn = document.querySelector('#repIvStatusChips .iv-ok-chip.selected');
+            const issues = [];
+            document.querySelectorAll('#repIvStatusChips .iv-warn-chip.selected').forEach(b => {
+                const iss = b.getAttribute('data-iv-issue');
+                if (iss) issues.push(iss);
+            });
+            const acts = [];
+            document.querySelectorAll('#repIvActionChips .rep-chip.selected').forEach(b => {
+                const a = b.getAttribute('data-iv-act');
+                if (a) acts.push(a);
+            });
+
+            if (site === 'فاقد رگ محیطی') return 'مددجو در حال حاضر فاقد رگ محیطی (IV Line) می‌باشد';
+
+            const hasStructured = Boolean(site || gauge || dt || okBtn || issues.length || acts.length);
+            if (!hasStructured) {
+                if (!fallbackText) return '';
+                return 'رگ محیطی (IV Line) ' + fallbackText;
+            }
+
+            let head = 'رگ محیطی (IV Line' + (gauge ? (' ' + gauge) : '') + ')';
+            if (site) head += ' در ' + site;
+            if (dt) head += ' به تاریخ ' + dt;
+            else if (okBtn || issues.length) head += ' با بررسی تاریخ تعبیه';
+
+            if (issues.length) {
+                let s = head + ' چک شد و دارای ' + issues.join('، ') + ' بود';
+                if (acts.length) s += ' که ' + acts.join(' و ');
+                return s;
+            }
+            if (okBtn) {
+                let s = head + ' چک شد؛ کاملاً باز (Patent)، فیکس و فاقد علائم فلبیت، قرمزی، تورم، درد، نشتی و اکیموز می‌باشد';
+                if (acts.length) s += ' و ' + acts.join('، ');
+                return s;
+            }
+            if (acts.length) return head + ' بررسی شد و ' + acts.join('، ');
+            return head + ' باز، فیکس و بدون علائم فلبیت، نشتی و اکیموز است';
+        }
+
+        // ---- Elimination (Urine & Bowel) ----
+        function buildEliminationSentence(fallbackFoley) {
+            const uSel = document.querySelector('#repUrineChips .rep-chip.selected');
+            const bSel = document.querySelector('#repBowelChips .rep-chip.selected');
+            const uVol = repVal('rep_urine_vol');
+            const parts = [];
+            if (uSel) {
+                let uTxt = uSel.getAttribute('data-phrase') || '';
+                if (uVol) uTxt += ' (حجم تقریبی ' + uVol + ' سی‌سی در شیفت)';
+                parts.push(uTxt);
+            } else if (uVol) {
+                parts.push('برون‌ده ادراری در شیفت ' + uVol + ' سی‌سی ثبت شد');
+            } else if (fallbackFoley) {
+                parts.push('سوند فولی (' + fallbackFoley + ') کنترل گردید');
+            }
+            if (bSel) {
+                parts.push(bSel.getAttribute('data-phrase') || '');
+            }
+            return parts.join(' و ');
+        }
+
+        // ---- Night Shift Sleep ----
+        function repSelectSleepHours(hr) {
+            repQuickScales.sleepHours = hr;
+            document.querySelectorAll('#repSleepHoursChips .sleep-chip').forEach(b => {
+                b.classList.toggle('selected', Number(b.getAttribute('data-sleep-hr')) === hr);
+            });
+            const inp = document.getElementById('rep_sleep_hours');
+            if (inp) inp.value = String(hr);
+        }
+        function repSyncSleepHoursInput(raw) {
+            if (raw === '' || raw === null || raw === undefined) {
+                repQuickScales.sleepHours = null;
+                document.querySelectorAll('#repSleepHoursChips .sleep-chip').forEach(b => b.classList.remove('selected'));
+                return;
+            }
+            const n = Number(raw);
+            if (!isNaN(n)) {
+                repQuickScales.sleepHours = n;
+                document.querySelectorAll('#repSleepHoursChips .sleep-chip').forEach(b => {
+                    b.classList.toggle('selected', Number(b.getAttribute('data-sleep-hr')) === n);
+                });
+            }
+        }
+        function repClearSleep() {
+            repQuickScales.sleepHours = null;
+            document.querySelectorAll('#repSleepHoursChips .sleep-chip, #repSleepQualityChips .sleep-chip').forEach(b => b.classList.remove('selected'));
+            const inp = document.getElementById('rep_sleep_hours');
+            if (inp) inp.value = '';
+        }
+        function buildSleepSentence(shiftName) {
+            const hrs = repQuickScales.sleepHours;
+            const qSel = document.querySelector('#repSleepQualityChips .rep-chip.selected');
+            const qTxt = qSel ? (qSel.getAttribute('data-phrase') || '') : '';
+            if (hrs === null && !qTxt) return '';
+            const scope = (shiftName === 'شب') ? 'در طول شیفت شب ' : 'در طول شیفت ';
+            if (hrs === 0) {
+                return 'مددجو ' + scope + (qTxt ? qTxt : 'دچار بی‌خوابی بود و استراحت کافی نداشت');
+            }
+            if (hrs !== null && qTxt) {
+                return 'مددجو ' + scope + 'حدود ' + hrs + ' ساعت ' + qTxt + ' داشته است';
+            }
+            if (hrs !== null) {
+                return 'مددجو ' + scope + 'حدود ' + hrs + ' ساعت خواب آرام و استراحت داشته است';
+            }
+            return 'مددجو ' + scope + qTxt + ' داشته است';
+        }
+        function repSyncNightSleepHighlight() {
+            const box = document.getElementById('repSleepBox');
+            const tag = document.getElementById('repSleepShiftTag');
+            if (!box) return;
+            let sh = getAutoShiftName();
+            if (activeRepPane === 'adm') sh = repVal('rep_adm_shift') || sh;
+            else if (activeRepPane === 'dur') sh = repVal('rep_dur_shift') || sh;
+            else if (activeRepPane === 'hand') sh = repVal('rep_hand_from') || sh;
+            const isNight = (sh === 'شب');
+            box.classList.toggle('night-active', isNight);
+            if (tag) tag.textContent = isNight ? '(شیفت شب فعال — لطفاً ساعت خواب را انتخاب کنید)' : '(اختیاری — ویژه شیفت شب)';
+        }
+        function repOnHandoverShiftChange() {
+            const fromSh = repVal('rep_hand_from');
+            const toEl = document.getElementById('rep_hand_to');
+            if (toEl && fromSh) toEl.value = getNextShiftName(fromSh);
+            repSyncNightSleepHighlight();
+        }
+
+        // ---- Diet, Mobility & Skin ----
+        function buildDietMobilitySentence() {
+            const out = [];
+            const dSel = document.querySelector('#repDietChips .rep-chip.selected');
+            if (dSel) out.push(dSel.getAttribute('data-phrase') || '');
+            const mSel = document.querySelector('#repMobilityChips .rep-chip[data-single="mob"].selected');
+            if (mSel) out.push(mSel.getAttribute('data-phrase') || '');
+            document.querySelectorAll('#repMobilityChips .rep-chip[data-skin="1"].selected').forEach(b => {
+                const ph = b.getAttribute('data-phrase');
+                if (ph) out.push(ph);
+            });
+            return out;
+        }
+
+        function repResetClinicalAssessBox() {
+            ['rep_iv_site', 'rep_iv_gauge'].forEach(id => { const e = document.getElementById(id); if (e) e.selectedIndex = 0; });
+            ['rep_iv_date', 'rep_urine_vol'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+            const box = document.getElementById('repClinicalAssessBox');
+            if (box) box.querySelectorAll('.rep-chip').forEach(b => b.classList.remove('selected'));
+            repClearSleep();
+        }
+
+        // Collect all non-duplicate attached calc sentences (skip morse/braden if quick scales already handle them)
+        function getFilteredCalcSentences() {
+            return repAttachedCalcs
+                .filter(c => !(c.key === 'morse' && repQuickScales.morse !== null) && !(c.key === 'braden' && repQuickScales.braden !== null))
+                .map(c => c.sentence)
+                .filter(Boolean);
+        }
+
+        // ==========================================
+        // ۱) گزارش پرستاری بدو ورود — فرم اصیل پرستاران ایران
+        // مثال: مددجو آقای ۲۷ ساله با تشخیص NSTEMI در سرویس دکتر ... با ویلچر به همراه خدمات و پرستار به بخش قلب مردان در ساعت ۷ منتقل شد. طبق AVPU در فاز A هشیار است.
+        // ==========================================
         function buildAdmissionObservation(style) {
-            const date = repVal('rep_adm_date') || getShamsiToday();
             const time = repVal('rep_adm_time') || getCurrentHHMM();
+            const shiftName = repVal('rep_adm_shift') || getAutoShiftName();
             const name = getFullPatientName();
             const age = repVal('rep_adm_age');
             const sex = repVal('rep_adm_sex');
             const room = repVal('rep_adm_room');
-            const ward = repVal('rep_adm_ward') || 'بخش قلب';
+            const ward = repVal('rep_adm_ward') || 'بخش قلب مردان';
+            const physician = repVal('rep_adm_physician');
+            const dx = cleanInlineText(repVal('rep_adm_dx'));
             const origin = repVal('rep_adm_origin');
             const arrival = repVal('rep_adm_arrival');
+            const escort = repVal('rep_adm_escort');
             const complaint = cleanInlineText(repVal('rep_adm_complaint'));
             const vitals = buildVitalsString('rep_adm', false);
             const loc = repVal('rep_adm_loc');
@@ -6414,60 +6999,76 @@ document.addEventListener('DOMContentLoaded', function() {
             const ecg = repVal('rep_adm_ecg');
             const o2 = repVal('rep_adm_o2');
             const allergy = cleanInlineText(repVal('rep_adm_allergy'));
-            const iv = cleanInlineText(repVal('rep_adm_iv'));
+            const ivSent = buildDetailedIvSentence(cleanInlineText(repVal('rep_adm_iv')));
+            const elimSent = buildEliminationSentence('');
+            const sleepSent = buildSleepSentence(shiftName);
+            const dietMob = buildDietMobilitySentence();
             const extra = cleanInlineText(repVal('rep_adm_extra'));
             const admEdus = collectStageEducation('repAdmEduChips', 'rep_adm_edu');
+            const morseSent = buildQuickMorseSentence();
+            const bradenSent = buildQuickBradenSentence();
+
             const skipKinds = [];
-            if (hasAttachedCalc('morse')) skipKinds.push('morse');
+            if (morseSent || hasAttachedCalc('morse')) skipKinds.push('morse');
             if (admEdus.length) skipKinds.push('edu_adm');
             const routines = getSelectedChipPhrases('repAdmRoutineChips', skipKinds);
-            const calcSentences = getAttachedCalcSentences();
+            const calcSentences = getFilteredCalcSentences();
             const nrsSentence = buildNrsSentence('adm');
             const nandaSentence = buildNandaSentence();
 
-            const prefixSex = sex === 'مرد' ? 'آقای ' : (sex === 'زن' ? 'خانم ' : '');
-            let intro = 'بیمار ' + (name ? (prefixSex + name) : (sex === 'مرد' ? 'آقا' : (sex === 'زن' ? 'خانم' : 'مذکور')));
-            if (age) intro += '، ' + age + ' ساله';
-            intro += ' ساعت ' + time;
+            // جمله شروع استاندارد پرستاران ایران
+            let who = 'مددجو';
+            if (sex === 'مرد') who += name ? (' آقای ' + name) : ' آقای';
+            else if (sex === 'زن') who += name ? (' خانم ' + name) : ' خانم';
+            else if (name) who += ' ' + name;
+            if (age) who += (sex && !name ? (' ' + age + ' ساله') : ('، ' + age + ' ساله'));
+
+            let intro = who;
+            if (dx) intro += ' با تشخیص ' + dx;
+            if (physician) {
+                const docClean = /^دکتر\s/.test(physician) ? physician : ('دکتر ' + physician);
+                intro += ' در سرویس ' + docClean;
+            }
             if (origin) intro += ' از ' + origin;
             if (arrival) intro += ' ' + arrival;
-            intro += ' در ' + ward + (room ? (' (تخت ' + room.replace(/^تخت\s*/,'') + ')') : '') + ' پذیرش و بستری گردید';
+            if (escort) intro += ' ' + escort;
+            intro += ' به ' + ward + (room ? (' (تخت ' + room.replace(/^تخت\s*/,'') + ')') : '') + ' در ساعت ' + time + ' منتقل و پذیرش شد';
 
             const dataSentences = [intro];
-            if (complaint) {
-                if (/کاندید|جهت|پست|پس از|پیگیری/.test(complaint)) {
-                    dataSentences.push('بیمار با تشخیص/علت بستری ' + complaint + ' پذیرش شده است');
-                } else {
-                    dataSentences.push('بیمار با شکایت اصلی ' + complaint + ' مراجعه نموده است');
-                }
+            if (loc) dataSentences.push(loc);
+            if (complaint) dataSentences.push('شکایت اصلی مددجو ' + complaint + ' ذکر گردید');
+            if (nrsSentence) {
+                dataSentences.push(nrsSentence);
+            } else if (pain) {
+                if (pain === 'ندارد') dataSentences.push('در حال حاضر فاقد درد قفسه سینه می‌باشد');
+                else if (pain === 'دارد') dataSentences.push('شاکی از درد قفسه سینه می‌باشد');
+                else dataSentences.push('شاکی از درد قفسه سینه ' + pain + ' است');
             }
-            if (loc) dataSentences.push('در بدو ورود ' + loc + ' می‌باشد');
-            if (pain) {
-                if (pain === 'ندارد') dataSentences.push('در حال حاضر فاقد درد قفسه سینه است');
-                else if (pain === 'دارد') dataSentences.push('از درد قفسه سینه شاکی می‌باشد');
-                else dataSentences.push('از درد قفسه سینه ' + pain + ' شاکی است');
-            }
-            if (nrsSentence) dataSentences.push(nrsSentence);
+            if (vitals) dataSentences.push('علائم حیاتی بدو ورود کنترل و ثبت شد: ' + vitals);
             if (ecg) dataSentences.push('ریتم قلبی در مانیتورینگ و نوار قلب ' + ecg + ' مشاهده شد');
-            if (vitals) dataSentences.push('علائم حیاتی بدو ورود کنترل و ثبت گردید: ' + vitals);
-            if (o2) dataSentences.push('وضعیت تنفس بیمار ' + o2 + ' می‌باشد');
+            if (o2) dataSentences.push('تنفس مددجو ' + o2 + ' می‌باشد');
             if (allergy) {
                 if (/ندارد|nkda/i.test(allergy)) dataSentences.push('سابقه حساسیت دارویی و غذایی ندارد (NKDA)');
-                else dataSentences.push('سابقه حساسیت به ' + allergy + ' ذکر می‌نماید');
+                else dataSentences.push('سابقه حساسیت به ' + allergy + ' ذکر می‌کند');
             }
+            if (ivSent) dataSentences.push(ivSent);
+            if (elimSent) dataSentences.push(elimSent);
+            if (dietMob.length) dataSentences.push(dietMob.join('، '));
+            if (sleepSent) dataSentences.push(sleepSent);
             if (extra) dataSentences.push(extra);
 
             const actionSentences = [];
-            if (iv) actionSentences.push('آنژیوکت محیطی ' + iv);
+            if (morseSent) actionSentences.push(morseSent);
+            if (bradenSent) actionSentences.push(bradenSent);
             if (calcSentences.length) calcSentences.forEach(s => actionSentences.push(s));
             if (nandaSentence) actionSentences.push(nandaSentence);
             const existingAdmIdx = findSingletonStageIndex('adm');
             const existingAdmHasProcs = existingAdmIdx !== -1 && repChartState.entries[existingAdmIdx] && Array.isArray(repChartState.entries[existingAdmIdx].procedures) && repChartState.entries[existingAdmIdx].procedures.length > 0;
-            if (repPendingProcs.length || existingAdmHasProcs) actionSentences.push('اقدامات دارویی و درمانی بدو ورود طبق دستور پزشک اجرا و در ستون داروها ثبت گردید');
+            if (repPendingProcs.length || existingAdmHasProcs) actionSentences.push('اقدامات دارویی و درمانی بدو ورود طبق اردر اجرا و در ستون اقدامات ثبت شد');
             if (routines.length) actionSentences.push(routines.join('، '));
-            if (admEdus.length) actionSentences.push('آموزش‌های بدو ورود شامل ' + admEdus.join('، ') + ' به بیمار و همراه ارائه و تفهیم گردید');
+            if (admEdus.length) actionSentences.push('آموزش‌های بدو ورود شامل ' + admEdus.join('، ') + ' به مددجو و همراه ارائه و تفهیم گردید');
 
-            const responseSentence = 'بیمار در تخت خود مستقر گردید و تحت پایش مستمر همودینامیک و علائم حیاتی قرار دارد.';
+            const responseSentence = 'مددجو در تخت مستقر و تحت پایش مستمر علائم حیاتی و مراقبت پرستاری قرار دارد.';
 
             if (style === 'dar') {
                 let out = 'D: ' + joinSentences(dataSentences) + '\n';
@@ -6478,73 +7079,82 @@ document.addEventListener('DOMContentLoaded', function() {
             return joinSentences(dataSentences.concat(actionSentences)) + ' ' + responseSentence;
         }
 
+        // ==========================================
+        // ۲) گزارش حین بستری / پیگیری شیفت — فرم اصیل پرستاران ایران
+        // ==========================================
         function buildDuringObservation(style) {
+            const shiftName = repVal('rep_dur_shift') || getAutoShiftName();
             const cond = repVal('rep_dur_condition');
             const gcs = repVal('rep_dur_gcs');
             const pain = repVal('rep_dur_pain');
-            const painScore = repVal('rep_dur_pain_score');
             const complaint = cleanInlineText(repVal('rep_dur_complaint'));
             const vitals = buildVitalsString('rep_dur', true);
             const rhythm = cleanInlineText(repVal('rep_dur_rhythm'));
             const resp = repVal('rep_dur_resp');
             const drips = cleanInlineText(repVal('rep_dur_drips'));
-            const iv = cleanInlineText(repVal('rep_dur_iv'));
-            const foley = cleanInlineText(repVal('rep_dur_foley'));
+            const ivSent = buildDetailedIvSentence(cleanInlineText(repVal('rep_dur_iv')));
+            const elimSent = buildEliminationSentence(cleanInlineText(repVal('rep_dur_foley')));
+            const sleepSent = buildSleepSentence(shiftName);
+            const dietMob = buildDietMobilitySentence();
             const otherLines = cleanInlineText(repVal('rep_dur_otherlines'));
             const actions = cleanInlineText(repVal('rep_dur_actions'));
             const meds = cleanInlineText(repVal('rep_dur_meds'));
             const prn = cleanInlineText(repVal('rep_dur_prn'));
             const dr = cleanInlineText(repVal('rep_dur_dr'));
-            const nanda = cleanInlineText(repVal('rep_dur_nanda'));
             const notes = cleanInlineText(repVal('rep_dur_notes'));
             const response = cleanInlineText(repVal('rep_dur_response'));
-            const calcSentences = getAttachedCalcSentences();
+            const morseSent = buildQuickMorseSentence();
+            const bradenSent = buildQuickBradenSentence();
+            const calcSentences = getFilteredCalcSentences();
 
             const dataSentences = [];
-            let opener = 'بیمار در تخت خود';
-            if (cond) opener += ' ' + cond;
-            if (gcs && !hasAttachedCalc('gcs')) opener += ' (GCS=' + gcs + ')';
-            opener += ' تحت مانیتورینگ و مراقبت پرستاری قرار دارد';
-            if (cond || gcs || vitals || rhythm || complaint || calcSentences.length) dataSentences.push(opener);
+            if (cond) {
+                dataSentences.push('مددجو در تخت خود ' + cond + (gcs && !hasAttachedCalc('gcs') ? (' (GCS=' + gcs + ')') : ''));
+            } else if (gcs && !hasAttachedCalc('gcs')) {
+                dataSentences.push('مددجو با GCS=' + gcs + ' تحت پایش و مراقبت پرستاری قرار دارد');
+            } else if (vitals || rhythm || complaint || ivSent || elimSent || sleepSent || calcSentences.length || morseSent || bradenSent) {
+                dataSentences.push('مددجو در تخت خود تحت پایش و مراقبت پرستاری قرار دارد');
+            }
 
             if (complaint) {
                 if (/فاقد|ندارد/.test(complaint)) dataSentences.push('در این نوبت ' + complaint + ' بود');
-                else dataSentences.push('بیمار از ' + complaint + ' شاکی است');
+                else dataSentences.push('مددجو از ' + complaint + ' شاکی است');
             }
             const durNrs = buildNrsSentence('dur');
             if (durNrs) {
                 dataSentences.push(durNrs);
             } else if (pain) {
-                if (pain === 'بدون درد') dataSentences.push('بیمار فاقد درد می‌باشد (NRS=0/10)');
-                else dataSentences.push('شدت درد بیمار ' + pain + ' ارزیابی شد');
+                if (pain === 'بدون درد') dataSentences.push('مددجو فاقد درد می‌باشد (NRS=0/10)');
+                else dataSentences.push('شدت درد مددجو ' + pain + ' ارزیابی شد');
             }
             if (vitals) dataSentences.push('علائم حیاتی کنترل و ثبت شد: ' + vitals);
-            if (rhythm) dataSentences.push('ریتم قلبی در مانیتورینگ ' + rhythm + ' می‌باشد');
-            if (resp) dataSentences.push('وضعیت تنفس ' + resp + ' است');
-            if (drips) dataSentences.push('انفوزیون ' + drips + ' طبق دستور با پمپ در حال اجرا می‌باشد');
-
-            const linesArr = [];
-            if (iv) linesArr.push('آنژیوکت (' + iv + ')');
-            if (foley) linesArr.push('سوند فولی (' + foley + ')');
-            if (otherLines) linesArr.push(otherLines);
-            if (linesArr.length) dataSentences.push('اتصالات و پانسمان بیمار شامل ' + linesArr.join('، ') + ' کنترل گردید');
+            if (rhythm) dataSentences.push('ریتم قلبی در مانیتورینگ ' + rhythm + ' است');
+            if (resp) dataSentences.push('تنفس ' + resp + ' می‌باشد');
+            if (drips) dataSentences.push('انفوزیون ' + drips + ' طبق دستور با پمپ در حال اجراست');
+            if (ivSent) dataSentences.push(ivSent);
+            if (otherLines) dataSentences.push(otherLines);
+            if (elimSent) dataSentences.push(elimSent);
+            if (dietMob.length) dataSentences.push(dietMob.join('، '));
+            if (sleepSent) dataSentences.push(sleepSent);
 
             const actionSentences = [];
+            if (morseSent) actionSentences.push(morseSent);
+            if (bradenSent) actionSentences.push(bradenSent);
             if (calcSentences.length) calcSentences.forEach(s => actionSentences.push(s));
             if (actions) actionSentences.push(actions);
-            if (meds || repPendingProcs.length) actionSentences.push('داروها و اقدامات درمانی تجویزی طبق کاردکس اجرا و در ستون اقدامات دارویی ثبت شد');
-            if (prn) actionSentences.push('داروی PRN (' + prn + ') طبق دستور پزشک تجویز گردید');
+            if (meds || repPendingProcs.length) actionSentences.push('داروهای روتین طبق کاردکس اجرا و در ستون اقدامات ثبت شد');
+            if (prn) actionSentences.push('داروی PRN (' + prn + ') طبق اردر تزریق گردید');
             const durNandaSent = buildNandaSentence();
             if (durNandaSent) actionSentences.push(durNandaSent);
             const durEdus = collectStageEducation('repDurEduChips', 'rep_dur_edu');
-            if (durEdus.length) actionSentences.push('آموزش‌های حین بستری شامل ' + durEdus.join('، ') + ' به بیمار و همراه ارائه گردید');
+            if (durEdus.length) actionSentences.push('آموزش‌های حین بستری شامل ' + durEdus.join('، ') + ' به مددجو و همراه ارائه شد');
             if (dr) actionSentences.push('به پزشک (' + dr + ') اطلاع داده شد');
             if (notes) actionSentences.push(notes);
 
             const respSentences = [];
             if (response) respSentences.push(response);
             else if (dataSentences.length || actionSentences.length) {
-                respSentences.push('بیمار با حال عمومی پایدار و علائم حیاتی کنترل‌شده تحت پایش مستمر قرار دارد');
+                respSentences.push('مددجو با حال عمومی پایدار و علائم حیاتی کنترل‌شده تحت پایش مستمر پرستاری قرار دارد');
             }
 
             if (!dataSentences.length && !actionSentences.length && !response && !repPendingProcs.length) return '';
@@ -6559,18 +7169,30 @@ document.addEventListener('DOMContentLoaded', function() {
             return joinSentences(dataSentences.concat(actionSentences, respSentences));
         }
 
+        // ==========================================
+        // ۳) گزارش تحویل شیفت (Handover) — شامل خواب شیفت شب، دفع و IV Line کامل
+        // ==========================================
         function buildHandoverObservation(style) {
             const fromSh = repVal('rep_hand_from') || getAutoShiftName();
             const toSh = repVal('rep_hand_to') || getNextShiftName(fromSh);
-            const statuses = getSelectedChipPhrases('repHandStatusChips');
+            const ivSent = buildDetailedIvSentence('');
+            const morseSent = buildQuickMorseSentence();
+            const bradenSent = buildQuickBradenSentence();
+            const skipKinds = [];
+            if (ivSent) skipKinds.push('iv_hand');
+            if (morseSent || hasAttachedCalc('morse')) skipKinds.push('morse');
+            const statuses = getSelectedChipPhrases('repHandStatusChips', skipKinds);
             const vitals = buildVitalsString('rep_hand', false);
             const drips = cleanInlineText(repVal('rep_hand_drips'));
             const pending = cleanInlineText(repVal('rep_hand_pending'));
             const receiver = repVal('rep_hand_receiver');
-            const calcSentences = getAttachedCalcSentences();
+            const elimSent = buildEliminationSentence('');
+            const sleepSent = buildSleepSentence(fromSh);
+            const dietMob = buildDietMobilitySentence();
+            const calcSentences = getFilteredCalcSentences();
 
             const dataSentences = [];
-            let open = 'در پایان شیفت ' + fromSh + '، بیمار';
+            let open = 'در پایان شیفت ' + fromSh + '، مددجو';
             if (statuses.length) open += ' ' + statuses.join('، ');
             else open += ' با حال عمومی پایدار';
             open += ' می‌باشد';
@@ -6579,15 +7201,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const handNrs = buildNrsSentence('hand');
             if (handNrs) dataSentences.push(handNrs);
             if (vitals) dataSentences.push('علائم حیاتی هنگام تحویل کنترل شد: ' + vitals);
+            if (ivSent) dataSentences.push(ivSent);
             if (drips) dataSentences.push('انفوزیون/سرم در حال اجرا شامل ' + drips + ' به همکار شیفت بعد تحویل داده شد');
+            if (elimSent) dataSentences.push(elimSent);
+            if (dietMob.length) dataSentences.push(dietMob.join('، '));
+            if (sleepSent) dataSentences.push(sleepSent);
+            if (morseSent) dataSentences.push(morseSent);
+            if (bradenSent) dataSentences.push(bradenSent);
             if (calcSentences.length) calcSentences.forEach(s => dataSentences.push(s));
 
             const actionSentences = [];
             const handNandaSent = buildNandaSentence();
             if (handNandaSent) actionSentences.push(handNandaSent);
-            if (pending) actionSentences.push('موارد مهم جهت پیگیری در شیفت ' + toSh + ' شامل ' + pending + ' یادآوری و تحویل گردید');
+            if (pending) actionSentences.push('موارد جهت پیگیری در شیفت ' + toSh + ' شامل ' + pending + ' یادآوری و تحویل گردید');
 
-            let resp = 'بیمار بر بالین به همراه کاردکس و پرونده پزشکی تحویل همکار شیفت ' + toSh;
+            let resp = 'مددجو بر بالین به همراه کاردکس و پرونده پزشکی تحویل همکار شیفت ' + toSh;
             if (receiver) resp += ' (' + receiver + ')';
             resp += ' داده شد.';
 
@@ -6600,6 +7228,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return joinSentences(dataSentences.concat(actionSentences)) + ' ' + resp;
         }
 
+        // ==========================================
+        // ۴) گزارش ترخیص / انتقال
+        // ==========================================
         function buildDischargeObservation(style) {
             const time = repVal('rep_dis_time') || getCurrentHHMM();
             const disType = repVal('rep_dis_type') || 'با دستور پزشک معالج';
@@ -6611,26 +7242,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const meds = cleanInlineText(repVal('rep_dis_meds'));
             const advice = cleanInlineText(repVal('rep_dis_advice'));
             const follow = cleanInlineText(repVal('rep_dis_follow'));
-            const calcSentences = getAttachedCalcSentences();
+            const elimSent = buildEliminationSentence('');
+            const calcSentences = getFilteredCalcSentences();
             const disNrs = buildNrsSentence('dis');
 
             const dataSentences = [];
-            let open = 'بیمار ساعت ' + time + ' ' + disType;
+            let open = 'مددجو در ساعت ' + time + ' ' + disType;
             if (general) open += ' با حال عمومی ' + general;
-            open += ' آماده خروج از بخش گردید';
+            open += ' و طبق AVPU در فاز A هشیار آماده خروج از بخش گردید';
             dataSentences.push(open);
             if (disNrs) dataSentences.push(disNrs);
             if (vitals) dataSentences.push('علائم حیاتی هنگام ترخیص کنترل و ثبت شد: ' + vitals);
+            if (elimSent) dataSentences.push(elimSent);
             if (calcSentences.length) calcSentences.forEach(s => dataSentences.push(s));
 
             const actionSentences = [];
             if (routines.length) actionSentences.push(routines.join('، '));
-            if (disEdus.length) actionSentences.push('آموزش‌های حین ترخیص شامل ' + disEdus.join('، ') + ' به بیمار و همراه ارائه و تفهیم گردید');
-            if (meds) actionSentences.push('نحوه مصرف داروهای ترخیص آموزش داده شد');
-            if (advice) actionSentences.push('توصیه‌های پزشک معالج شامل ' + advice + ' به بیمار و همراه یادآوری شد');
+            if (disEdus.length) actionSentences.push('آموزش‌های حین ترخیص شامل ' + disEdus.join('، ') + ' به مددجو و همراه ارائه و تفهیم شد');
+            if (meds) actionSentences.push('نحوه مصرف و تداخلات داروهای ترخیص آموزش داده شد');
+            if (advice) actionSentences.push('توصیه‌های پزشک معالج شامل ' + advice + ' به مددجو و همراه یادآوری شد');
             if (follow) actionSentences.push('زمان پیگیری و ویزیت مجدد (' + follow + ') اعلام گردید');
 
-            const respSentence = 'در نهایت بیمار ' + (mode ? (mode + ' ') : '') + 'در وضعیت پایدار از بخش ترخیص/خارج شد.';
+            const respSentence = 'در نهایت مددجو ' + (mode ? (mode + ' ') : '') + 'در وضعیت پایدار از بخش ترخیص/خارج شد.';
 
             if (style === 'dar') {
                 let out = 'D: ' + joinSentences(dataSentences) + '\n';
@@ -7894,6 +8527,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
+            if (!stageOnly) {
+                if (typeof repClearQuickScale === 'function') { repClearQuickScale('morse'); repClearQuickScale('braden'); }
+                if (typeof repResetClinicalAssessBox === 'function') repResetClinicalAssessBox();
+            }
         }
 
         function repEditChartEntry(idx) {
@@ -8094,7 +8731,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof v8Toast === 'function') v8Toast('💾 پرونده «' + repChartState.patientName + '» ذخیره شد');
         }
         function repClearTransientStageInputs() {
-            ['rep_adm_age', 'rep_adm_complaint', 'rep_adm_extra', 'rep_adm_allergy', 'rep_adm_iv', 'rep_adm_edu',
+            ['rep_adm_age', 'rep_adm_dx', 'rep_adm_complaint', 'rep_adm_extra', 'rep_adm_allergy', 'rep_adm_iv', 'rep_adm_edu',
              'rep_adm_bp', 'rep_adm_hr', 'rep_adm_rr', 'rep_adm_temp', 'rep_adm_spo2', 'rep_adm_bs',
              'rep_dur_bp', 'rep_dur_bpd', 'rep_dur_hr', 'rep_dur_rr', 'rep_dur_temp', 'rep_dur_spo2',
              'rep_dur_gcs', 'rep_dur_pain_score', 'rep_dur_complaint', 'rep_dur_rhythm', 'rep_dur_drips',
@@ -8158,7 +8795,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 patientName: '', room: '', entries: [], customText: ''
             };
             ['rep_adm_name', 'rep_adm_lname', 'rep_adm_father', 'rep_adm_dob', 'rep_adm_unitno',
-             'rep_adm_physician', 'rep_adm_room_no', 'rep_adm_age', 'rep_adm_room', 'rep_adm_complaint',
+             'rep_adm_physician', 'rep_adm_room_no', 'rep_adm_age', 'rep_adm_dx', 'rep_adm_room', 'rep_adm_complaint',
              'rep_adm_extra', 'rep_adm_allergy', 'rep_adm_iv', 'rep_adm_edu',
              'rep_adm_bp', 'rep_adm_hr', 'rep_adm_rr', 'rep_adm_temp', 'rep_adm_spo2', 'rep_adm_bs',
              'rep_dur_bp', 'rep_dur_bpd', 'rep_dur_hr', 'rep_dur_rr', 'rep_dur_temp', 'rep_dur_spo2',
@@ -8302,6 +8939,7 @@ document.addEventListener('DOMContentLoaded', function() {
             acs: {
                 title: 'درد قفسه سینه / ACS',
                 adm: {
+                    dx: 'NSTEMI / ACS',
                     complaint: 'درد قفسه سینه فشارنده با انتشار به شانه/دست چپ و تعریق سرد',
                     pain: 'متوسط', ecg: 'تغییرات ST-T / ایسکمی (STEMI/NSTEMI)', o2: 'با نازال کانولا ۲ تا ۴ لیتر در دقیقه',
                     nanda: ['درد حاد مرتبط با کاهش خونرسانی میوکارد', 'خطر کاهش برون‌ده قلبی (یا خطر آن) مرتبط با اختلال ریتم/انقباض میوکارد'],
@@ -8324,6 +8962,7 @@ document.addEventListener('DOMContentLoaded', function() {
             post_pci: {
                 title: 'پست‌آنژیوگرافی / PCI',
                 adm: {
+                    dx: 'پست آنژیوگرافی / PCI',
                     complaint: 'پیگیری و مراقبت پس از آنژیوگرافی کرونر / PCI',
                     pain: 'ندارد', ecg: 'ریتم سینوسی نرمال (NSR)',
                     extra: 'بیمار پس از انجام آنژیوگرافی/PCI از کت‌لب تحویل گرفته شد؛ پانسمان محل ورود کاتتر خشک و بدون هماتوم و نبض دیستال اندام قابل لمس و گرم است',
@@ -8349,7 +8988,8 @@ document.addEventListener('DOMContentLoaded', function() {
             hf: {
                 title: 'نارسایی قلبی / ادم ریوی',
                 adm: {
-                    complaint: 'تنگی نفس، ارتوپنه و ادم اندام‌های تحتانی (نارسایی قلبی)',
+                    dx: 'نارسایی قلبی (CHF)',
+                    complaint: 'تنگی نفس، ارتوپنه و ادم اندام‌های تحتانی',
                     pain: 'ندارد', o2: 'با نازال کانولا ۲ تا ۴ لیتر در دقیقه',
                     nanda: ['اختلال در تبادل گازها مرتبط با احتقان ریوی/نارسایی قلبی', 'افزایش حجم مایعات مرتبط با اختلال مکانیسم‌های تنظیمی'],
                     edu: ['گزارش فوری علائم هشدار (درد قفسه سینه، تنگی نفس، تپش قلب یا سرگیجه)']
@@ -8372,6 +9012,7 @@ document.addEventListener('DOMContentLoaded', function() {
             afib: {
                 title: 'آریتمی / AFib',
                 adm: {
+                    dx: 'فیبریلاسیون دهلیزی (AFib)',
                     complaint: 'تپش قلب و احساس نامنظمی ضربان قلب',
                     pain: 'ندارد', ecg: 'فیبریلاسیون دهلیزی (AFib)',
                     nanda: ['کاهش برون‌ده قلبی (یا خطر آن) مرتبط با اختلال ریتم/انقباض میوکارد'],
@@ -8395,7 +9036,8 @@ document.addEventListener('DOMContentLoaded', function() {
             pre_angio: {
                 title: 'کاندید آنژیوگرافی (NPO)',
                 adm: {
-                    complaint: 'کاندید آنژیوگرافی کرونر الکتیو',
+                    dx: 'کاندید آنژیوگرافی کرونر',
+                    complaint: 'بستری جهت انجام آنژیوگرافی کرونر الکتیو',
                     pain: 'ندارد', ecg: 'ریتم سینوسی نرمال (NSR)',
                     extra: 'بیمار جهت انجام آنژیوگرافی کرونر پذیرش شد؛ رضایت آگاهانه، ناشتایی (NPO)، شیو محل و آزمایشات پایه (CBC، Cr، PT/INR، Plt) بررسی گردید',
                     nanda: ['اضطراب مرتبط با تغییر وضعیت سلامت و بستری در بخش'],
@@ -8425,7 +9067,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     edu: ['آشنایی با بخش و زنگ اخبار', 'ایمنی تخت و پیشگیری از سقوط']
                 },
                 dur: {
-                    condition: 'هوشیار و آگاه و با حال عمومی پایدار',
+                    condition: 'طبق AVPU در فاز A هشیار و با حال عمومی پایدار است',
                     complaint: 'فاقد شکایت خاص', pain: 'بدون درد', rhythm: 'سینوسی نرمال (NSR)',
                     resp: 'طبیعی و بدون دیسترس در هوای اتاق (RA)',
                     actions: 'داروهای روتین طبق کاردکس تجویز شد، علائم حیاتی و ریتم قلبی کنترل گردید، محل آنژیوکت باز و بدون علائم فلبیت است و نرده‌های کنار تخت بالا قرار دارد',
@@ -8459,6 +9101,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = tpl[stage] || {};
 
             if (stage === 'adm') {
+                if (data.dx) repSetValSilent('rep_adm_dx', data.dx);
                 if (data.complaint) repSetValSilent('rep_adm_complaint', data.complaint);
                 if (data.pain && document.getElementById('rep_adm_pain')) document.getElementById('rep_adm_pain').value = data.pain;
                 if (data.ecg && document.getElementById('rep_adm_ecg')) document.getElementById('rep_adm_ecg').value = data.ecg;
@@ -8470,7 +9113,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (stage === 'dur') {
                 if (data.condition && document.getElementById('rep_dur_condition')) document.getElementById('rep_dur_condition').value = data.condition;
                 else if (document.getElementById('rep_dur_condition') && !document.getElementById('rep_dur_condition').value) {
-                    document.getElementById('rep_dur_condition').value = 'هوشیار و آگاه';
+                    document.getElementById('rep_dur_condition').value = 'طبق AVPU در فاز A هشیار است';
                 }
                 if (data.complaint) repSetValSilent('rep_dur_complaint', data.complaint);
                 if (data.pain && document.getElementById('rep_dur_pain')) document.getElementById('rep_dur_pain').value = data.pain;
@@ -8836,13 +9479,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const ht = document.getElementById('rep_hand_to');
             if (ht) ht.value = getNextShiftName(shiftAuto);
 
-            ['repAdmRoutineChips', 'repHandStatusChips', 'repDisRoutineChips', 'repAdmEduChips', 'repDurEduChips', 'repDisEduChips', 'repNandaQuickChips'].forEach(cid => {
+            ['repAdmRoutineChips', 'repHandStatusChips', 'repDisRoutineChips', 'repAdmEduChips', 'repDurEduChips', 'repDisEduChips', 'repNandaQuickChips', 'repIvActionChips'].forEach(cid => {
                 const box = document.getElementById(cid);
                 if (!box) return;
                 box.querySelectorAll('.rep-chip').forEach(btn => {
                     btn.addEventListener('click', () => btn.classList.toggle('selected'));
                 });
             });
+            // IV warning chips automatically deselect "OK" chip when tapped
+            document.querySelectorAll('#repIvStatusChips .iv-warn-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('selected');
+                    if (btn.classList.contains('selected')) {
+                        const okB = document.querySelector('#repIvStatusChips .iv-ok-chip');
+                        if (okB) okB.classList.remove('selected');
+                    }
+                });
+            });
+            // Single-select toggle groups (Urine, Bowel, Sleep Quality, Diet, Mobility) + multi-select skin
+            ['repUrineChips', 'repBowelChips', 'repSleepQualityChips', 'repDietChips', 'repMobilityChips'].forEach(cid => {
+                const box = document.getElementById(cid);
+                if (!box) return;
+                box.querySelectorAll('.rep-chip').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const grp = btn.getAttribute('data-single');
+                        const willSel = !btn.classList.contains('selected');
+                        if (grp && willSel) {
+                            box.querySelectorAll('.rep-chip[data-single="' + grp + '"]').forEach(o => o.classList.remove('selected'));
+                        }
+                        btn.classList.toggle('selected', willSel);
+                    });
+                });
+            });
+            if (typeof repSyncNightSleepHighlight === 'function') repSyncNightSleepHighlight();
 
             // Restore active continuous patient chart
             try {
@@ -11901,14 +12570,75 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     }
   };
 
-  window.cardiacBridgeTriggerExcel = function() {
-    if (!bridgeState.loadedOnce) {
-      window.cardiacBridgeLoadFrame(buildContext());
-      if (typeof v8Toast === "function") v8Toast("در حال بارگذاری سامانه خطا... مجدداً دکمه اکسل را بزنید");
-      return;
+    function buildFallbackErrorsExcelBlob() {
+    var feed = [];
+    try { feed = JSON.parse(localStorage.getItem("CARDIAC_ERROR_BRIDGE_FEED_V11") || "[]"); } catch (e) {}
+    var ctx = bridgeState._lastCtx || buildContext();
+    var esc = function(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    };
+    var rows = "";
+    if (Array.isArray(feed) && feed.length) {
+      feed.forEach(function(it, idx) {
+        rows += "<tr>"
+          + "<td>" + (idx + 1) + "</td>"
+          + "<td>" + esc(it.time || it.date || "") + "</td>"
+          + "<td>" + esc(it.ward || ctx.ward || "") + "</td>"
+          + "<td>" + esc(it.shift || ctx.shift || "") + "</td>"
+          + "<td>" + esc(it.category || it.type || "خطای ثبت‌شده") + "</td>"
+          + "<td>" + esc(it.severity || "") + "</td>"
+          + "<td>" + esc(it.summary || it.text || it.description || "") + "</td>"
+          + "</tr>";
+      });
+    } else {
+      rows = "<tr><td>1</td><td>" + esc(ctx.date || "") + "</td><td>" + esc(ctx.ward || "") + "</td><td>" + esc(ctx.shift || "") + "</td><td>بدون خطای ثبت‌شده در این نشست</td><td>-</td><td>هنوز خطایی در فید این نشست ثبت نشده است</td></tr>";
     }
-    postToTargets({ type: "CARDIAC_TRIGGER_EXCEL", source: "cardiac_app" });
-    if (typeof v8Toast === "function") v8Toast("📊 دستور دانلود اکسل به سامانه خطا ارسال شد");
+    var xlsHtml = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body dir="rtl">'
+      + '<table border="1"><thead><tr>'
+      + '<th>ردیف</th><th>تاریخ/ساعت</th><th>بخش</th><th>شیفت</th><th>نوع/دسته خطا</th><th>شدت</th><th>شرح خطا</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table></body></html>';
+    return new Blob(["\ufeff" + xlsHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
+  }
+
+  function triggerLocalExcelDownload(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      try { document.body.removeChild(a); } catch (e) {}
+      URL.revokeObjectURL(url);
+    }, 1800);
+  }
+
+  window.cardiacBridgeTriggerExcel = function() {
+    var ctx = buildContext();
+    var fileName = "Hospital_Errors_" + (ctx.ward || "Ward").replace(/[^\w\u0600-\u06FF]+/g, "_") + ".xls";
+    if (!bridgeState.loadedOnce) {
+      window.cardiacBridgeLoadFrame(ctx);
+    }
+    var sent = postToTargets({ type: "CARDIAC_TRIGGER_EXCEL", source: "cardiac_app" });
+    setTimeout(function() {
+      if (!bridgeState.excelHandledByChild) {
+        try {
+          var blob = buildFallbackErrorsExcelBlob();
+          triggerLocalExcelDownload(blob, fileName);
+          if (typeof v8Toast === "function") {
+            v8Toast("📥 فایل اکسل (" + fileName + ") در پوشه Download گوشی ذخیره شد");
+          }
+        } catch (err) {
+          if (typeof v8Toast === "function") v8Toast("⚠️ خطا در ساخت فایل اکسل: " + err.message);
+        }
+      }
+      bridgeState.excelHandledByChild = false;
+    }, 650);
+    if (!sent && typeof v8Toast === "function") {
+      v8Toast("📊 در حال آماده‌سازی خروجی اکسل خطاها...");
+    }
   };
 
   window.cardiacBridgeOpenStandalone = function(override) {
@@ -12029,6 +12759,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     var msg = ev.data;
     if (!msg || typeof msg !== "object") return;
     var t = String(msg.type || msg.action || "");
+    if (/EXCEL|XLS|EXPORT/i.test(t)) { bridgeState.excelHandledByChild = true; if (typeof v8Toast === "function") v8Toast("📥 دانلود اکسل از سامانه خطا انجام شد (پوشه Download)"); }
     if (!t) return;
 
     if (t === "ERROR_APP_READY" || t === "CARDIAC_BRIDGE_READY" || t === "HOSP_ERR_READY") {
