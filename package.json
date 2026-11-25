@@ -1,0 +1,15 @@
+{
+  "name": "cardiac-clinical-ai-server",
+  "version": "2.0.0",
+  "description": "Auto-connect Gemini Vision + Serper Medical Search proxy for Cardiac Nursing App",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
