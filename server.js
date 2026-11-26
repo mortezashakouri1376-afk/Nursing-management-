@@ -219,7 +219,7 @@ async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch
 app.get('/', (req, res) => {
   res.json({
     ok: true,
-    service: 'Cardiac Clinical AI Server (v29 — Gemini + Tavily + Exa AI)',
+    service: 'Cardiac Clinical AI Server (v30 — Gemini + Tavily + Exa AI)',
     endpoints: ['/health', '/webhook/clinical-interpret', '/webhook/medical-search'],
     geminiConfigured: getServerGeminiKeys().length > 0,
     tavilyConfigured: getServerTavilyKeys().length > 0,
@@ -234,7 +234,7 @@ app.get('/health', (req, res) => {
   res.json({
     ok: true,
     status: 'running',
-    version: 'v29',
+    version: 'v30',
     geminiConfigured: getServerGeminiKeys().length > 0,
     tavilyConfigured: getServerTavilyKeys().length > 0,
     exaConfigured: getServerExaKeys().length > 0,
@@ -320,6 +320,10 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
     } = req.body || {};
 
     const geminiKeys = splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []));
+    const rawEnvSearch = String(process.env.LIVE_SEARCH ?? process.env.ENABLE_LIVE_SEARCH ?? process.env.USE_LIVE_SEARCH ?? '').trim().toLowerCase();
+    const envSearchEnabled = ['true', '1', 'yes', 'on'].includes(rawEnvSearch);
+    const envSearchDisabled = ['false', '0', 'no', 'off'].includes(rawEnvSearch);
+    const effectiveLiveSearch = envSearchDisabled ? false : (Boolean(useLiveSearch) || envSearchEnabled);
     if (!geminiKeys.length) {
       return res.status(400).json({ error: 'هیچ کلید Gemini API در Render یا تنظیمات دستی تعریف نشده است.' });
     }
@@ -329,7 +333,7 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
 
     let liveSources = [];
     let searchAnswer = '';
-    if (useLiveSearch) {
+    if (effectiveLiveSearch) {
       const seed = (text || context || modalityLabel || '').replace(/\s+/g, ' ').trim().slice(0, 180);
       if (seed) {
         if (tavilyKeys.length) {
@@ -356,7 +360,7 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
       searchBlock
     ].filter(Boolean).join('\n\n');
 
-    const useBuiltInGoogle = Boolean(useLiveSearch) && liveSources.length === 0;
+    const useBuiltInGoogle = effectiveLiveSearch && liveSources.length === 0;
     const out = await callGeminiAPI({
       keys: geminiKeys,
       model: clientModel,
@@ -381,4 +385,4 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Cardiac Gemini+Tavily+Exa Server v29 running on port ' + PORT));
+app.listen(PORT, () => console.log('Cardiac Gemini+Tavily+Exa Server v30 running on port ' + PORT));
