@@ -1,0 +1,3866 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="obsidian">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سامانه جامع ثبت خطاهای بیمارستانی | متصل به سیستم پرستاری قلب</title>
+
+  <!-- فونت فارسی وزیرمتن با پشتیبان Tahoma -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Vazirmatn', 'Tahoma', 'Segoe UI', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- کتابخانه SheetJS برای تولید فایل اکسل دوشیته واقعی (.xlsx) با پشتیبان آفلاین CSV -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+  <style>
+    /* =========================================================================
+       متغیرهای سه تم مجلل شیشه‌ای (Royal Obsidian, Emerald Crystal, Pearl Light)
+       ========================================================================= */
+    :root,
+    [data-theme="obsidian"] {
+      --bg-base: #050812;
+      --bg-mesh: radial-gradient(circle at 14% 16%, rgba(217, 175, 74, 0.17), transparent 42%),
+                 radial-gradient(circle at 86% 22%, rgba(16, 185, 129, 0.18), transparent 44%),
+                 radial-gradient(circle at 50% 90%, rgba(14, 165, 233, 0.14), transparent 46%),
+                 linear-gradient(145deg, #050811 0%, #0b1326 50%, #060b16 100%);
+      --orb-1: radial-gradient(circle, rgba(217, 175, 74, 0.34), transparent 68%);
+      --orb-2: radial-gradient(circle, rgba(16, 185, 129, 0.28), transparent 68%);
+      --orb-3: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 68%);
+      --glass-bg: rgba(15, 23, 42, 0.58);
+      --glass-bg-strong: rgba(10, 16, 31, 0.84);
+      --glass-surface: rgba(255, 255, 255, 0.048);
+      --glass-border: rgba(255, 255, 255, 0.13);
+      --glass-border-strong: rgba(229, 190, 92, 0.42);
+      --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.19);
+      --glass-shadow: 0 16px 42px -12px rgba(0, 0, 0, 0.68);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent: #e5be5c;
+      --accent-2: #10b981;
+      --accent-glow: 0 0 24px rgba(229, 190, 92, 0.35);
+      --chip-bg: rgba(255, 255, 255, 0.055);
+      --chip-hover: rgba(229, 190, 92, 0.15);
+      --chip-active-bg: linear-gradient(135deg, #ecc96e 0%, #c69632 100%);
+      --chip-active-text: #090d16;
+      --btn-primary-bg: linear-gradient(135deg, #f0cf78 0%, #c5932e 100%);
+      --btn-primary-text: #090d16;
+      --dock-bg: rgba(9, 14, 28, 0.82);
+      --bridge-bg: linear-gradient(135deg, rgba(16, 185, 129, 0.20) 0%, rgba(217, 175, 74, 0.18) 100%);
+      --bridge-border: rgba(52, 211, 153, 0.45);
+    }
+
+    [data-theme="emerald"] {
+      --bg-base: #041518;
+      --bg-mesh: radial-gradient(circle at 18% 14%, rgba(20, 184, 166, 0.28), transparent 44%),
+                 radial-gradient(circle at 84% 24%, rgba(56, 189, 248, 0.22), transparent 46%),
+                 radial-gradient(circle at 46% 88%, rgba(217, 175, 74, 0.18), transparent 46%),
+                 linear-gradient(150deg, #031215 0%, #07272e 52%, #041a21 100%);
+      --orb-1: radial-gradient(circle, rgba(45, 212, 191, 0.34), transparent 68%);
+      --orb-2: radial-gradient(circle, rgba(56, 189, 248, 0.28), transparent 68%);
+      --orb-3: radial-gradient(circle, rgba(236, 201, 110, 0.22), transparent 68%);
+      --glass-bg: rgba(6, 36, 42, 0.58);
+      --glass-bg-strong: rgba(4, 28, 34, 0.86);
+      --glass-surface: rgba(255, 255, 255, 0.055);
+      --glass-border: rgba(153, 246, 228, 0.18);
+      --glass-border-strong: rgba(45, 212, 191, 0.48);
+      --glass-highlight: inset 0 1px 0 rgba(204, 251, 241, 0.22);
+      --glass-shadow: 0 16px 42px -12px rgba(0, 15, 20, 0.68);
+      --text-primary: #f0fdfa;
+      --text-secondary: #ccfbf1;
+      --text-muted: #8ec5c1;
+      --accent: #2dd4bf;
+      --accent-2: #e5be5c;
+      --accent-glow: 0 0 24px rgba(45, 212, 191, 0.38);
+      --chip-bg: rgba(255, 255, 255, 0.06);
+      --chip-hover: rgba(45, 212, 191, 0.17);
+      --chip-active-bg: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
+      --chip-active-text: #042f2e;
+      --btn-primary-bg: linear-gradient(135deg, #34d399 0%, #0d9488 100%);
+      --btn-primary-text: #032221;
+      --dock-bg: rgba(4, 29, 35, 0.85);
+      --bridge-bg: linear-gradient(135deg, rgba(45, 212, 191, 0.22) 0%, rgba(229, 190, 92, 0.16) 100%);
+      --bridge-border: rgba(45, 212, 191, 0.52);
+    }
+
+    [data-theme="pearl"] {
+      --bg-base: #edf3fa;
+      --bg-mesh: radial-gradient(circle at 12% 14%, rgba(212, 175, 55, 0.16), transparent 44%),
+                 radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.18), transparent 46%),
+                 radial-gradient(circle at 50% 88%, rgba(16, 185, 129, 0.16), transparent 48%),
+                 linear-gradient(155deg, #f8fafc 0%, #e7effa 50%, #f1f5f9 100%);
+      --orb-1: radial-gradient(circle, rgba(14, 165, 233, 0.24), transparent 68%);
+      --orb-2: radial-gradient(circle, rgba(217, 175, 74, 0.24), transparent 68%);
+      --orb-3: radial-gradient(circle, rgba(16, 185, 129, 0.22), transparent 68%);
+      --glass-bg: rgba(255, 255, 255, 0.72);
+      --glass-bg-strong: rgba(255, 255, 255, 0.90);
+      --glass-surface: rgba(15, 23, 42, 0.038);
+      --glass-border: rgba(15, 23, 42, 0.10);
+      --glass-border-strong: rgba(2, 132, 199, 0.38);
+      --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.94);
+      --glass-shadow: 0 14px 36px -12px rgba(15, 23, 42, 0.14);
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --accent: #0284c7;
+      --accent-2: #0f766e;
+      --accent-glow: 0 0 22px rgba(2, 132, 199, 0.25);
+      --chip-bg: rgba(255, 255, 255, 0.78);
+      --chip-hover: rgba(2, 132, 199, 0.12);
+      --chip-active-bg: linear-gradient(135deg, #0369a1 0%, #0f766e 100%);
+      --chip-active-text: #ffffff;
+      --btn-primary-bg: linear-gradient(135deg, #0f172a 0%, #0369a1 100%);
+      --btn-primary-text: #ffffff;
+      --dock-bg: rgba(255, 255, 255, 0.88);
+      --bridge-bg: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(217, 175, 74, 0.16) 100%);
+      --bridge-border: rgba(5, 150, 105, 0.38);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background-color: var(--bg-base);
+      background-image: var(--bg-mesh);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* تنظیمات تمیز برای حالت تعبیه‌شده (iframe / embedded=1) داخل اپ پرستاری قلب */
+    body.embedded-mode #appShell {
+      padding-bottom: 8.5rem;
+    }
+    body.embedded-mode #mainHeaderWrap {
+      padding-top: 0.35rem;
+    }
+    body.embedded-mode #mainHeaderCard {
+      padding-top: 0.45rem;
+      padding-bottom: 0.45rem;
+      border-radius: 1.15rem;
+    }
+    body.embedded-mode #floatingStatusHud {
+      top: 56px;
+      padding-top: 0.35rem;
+    }
+    body.embedded-mode #floatingDock {
+      bottom: 0.5rem;
+    }
+    body.embedded-mode #speedDialWrap {
+      bottom: 4.5rem;
+    }
+
+    /* پس‌زمینه متحرک با گوی‌های نورانی شناور */
+    .ambient-stage {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .ambient-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(55px);
+      will-change: transform;
+    }
+    .orb-a {
+      width: 44vw; height: 44vw; max-width: 540px; max-height: 540px;
+      top: -12%; right: -8%;
+      background: var(--orb-1);
+      animation: floatOrbA 22s ease-in-out infinite alternate;
+    }
+    .orb-b {
+      width: 40vw; height: 40vw; max-width: 480px; max-height: 480px;
+      bottom: -10%; left: -10%;
+      background: var(--orb-2);
+      animation: floatOrbB 26s ease-in-out infinite alternate;
+    }
+    .orb-c {
+      width: 32vw; height: 32vw; max-width: 380px; max-height: 380px;
+      top: 38%; left: 32%;
+      background: var(--orb-3);
+      animation: floatOrbC 30s ease-in-out infinite alternate;
+    }
+    @keyframes floatOrbA {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-55px, 48px) scale(1.12); }
+    }
+    @keyframes floatOrbB {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(65px, -42px) scale(1.14); }
+    }
+    @keyframes floatOrbC {
+      0% { transform: translate(0, 0) scale(0.95); }
+      100% { transform: translate(-42px, -50px) scale(1.1); }
+    }
+
+    /* کارت‌ها و پنل‌های شیشه‌ای مات (Frosted Glassmorphism) */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), var(--glass-highlight);
+      transition: border-color 0.24s ease, transform 0.24s ease, box-shadow 0.24s ease;
+    }
+    .glass-card-strong {
+      background: var(--glass-bg-strong);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), var(--glass-highlight);
+    }
+    .glass-subpanel {
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-highlight);
+    }
+    .glass-hover:hover {
+      border-color: var(--glass-border-strong);
+      transform: translateY(-2px);
+    }
+    .bridge-banner {
+      background: var(--bridge-bg);
+      backdrop-filter: blur(20px) saturate(170%);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      border: 1px solid var(--bridge-border);
+      box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.28), var(--glass-highlight);
+    }
+
+    /* دکمه‌ها و چیپ‌های لمسی شیشه‌ای */
+    .lux-chip {
+      background: var(--chip-bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .lux-chip:hover {
+      background: var(--chip-hover);
+      border-color: var(--glass-border-strong);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+    .lux-chip.is-active {
+      background: var(--chip-active-bg);
+      color: var(--chip-active-text);
+      border-color: transparent;
+      box-shadow: var(--accent-glow);
+      font-weight: 800;
+    }
+
+    .btn-luxury-primary {
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
+      box-shadow: var(--accent-glow), 0 8px 20px -6px rgba(0, 0, 0, 0.35);
+      transition: all 0.22s ease;
+    }
+    .btn-luxury-primary:hover {
+      filter: brightness(1.07);
+      transform: translateY(-1px);
+    }
+    .btn-luxury-primary:active {
+      transform: scale(0.97);
+    }
+
+    .text-main { color: var(--text-primary); }
+    .text-sub { color: var(--text-secondary); }
+    .text-dim { color: var(--text-muted); }
+    .text-accent { color: var(--accent); }
+
+    /* انیمیشن نرم ورود صفحات */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-view { animation: fadeSlideUp 0.26s ease-out forwards; }
+
+    /* کشوی همبرگری شیشه‌ای راست‌به‌چپ */
+    #hamburgerDrawer {
+      transform: translateX(100%);
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #hamburgerDrawer.open { transform: translateX(0); }
+
+    /* تضمین عملکرد قطعی مخفی‌سازی در تمام تب‌ها و حالت آفلاین */
+    .hidden { display: none !important; }
+
+    /* رفع کامل تداخل کلیک دکمه شناور با دکمه‌های کارت آرشیو (به‌ویژه دکمه حذف) */
+    #speedDialWrap {
+      pointer-events: none !important;
+    }
+    #speedDialWrap > div {
+      pointer-events: none !important;
+    }
+    #fabMainBtn {
+      pointer-events: auto !important;
+    }
+    .speed-item {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(14px) scale(0.92);
+      pointer-events: none !important;
+      transition: opacity 0.22s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.22s ease;
+    }
+    .speed-dial-open .speed-item {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      pointer-events: auto !important;
+    }
+    .speed-dial-open .speed-item:nth-child(1) { transition-delay: 0.09s; }
+    .speed-dial-open .speed-item:nth-child(2) { transition-delay: 0.06s; }
+    .speed-dial-open .speed-item:nth-child(3) { transition-delay: 0.03s; }
+    .speed-dial-open .speed-item:nth-child(4) { transition-delay: 0.0s; }
+    .speed-dial-open #fabIcon { transform: rotate(45deg); }
+
+    /* لایه‌بندی دقیق مودال‌ها و اعلان‌ها */
+    #detailModal { z-index: 55 !important; }
+    #confirmModal { z-index: 70 !important; }
+    #toastContainer { z-index: 80 !important; }
+
+    /* افکت بصری مدرن برای کارت‌های آرشیو و هدر بخش‌ها */
+    .archive-card-pro {
+      position: relative;
+      overflow: hidden;
+      border-right-width: 4px !important;
+    }
+    .archive-card-pro::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+      pointer-events: none;
+    }
+    .edit-hud-active {
+      border-color: rgba(56, 189, 248, 0.65) !important;
+      box-shadow: 0 0 28px rgba(56, 189, 248, 0.22), var(--glass-highlight) !important;
+    }
+    .btn-del-card {
+      background: rgba(244, 63, 94, 0.14);
+      border: 1px solid rgba(244, 63, 94, 0.38);
+      color: #fda4af;
+      transition: all 0.18s ease;
+    }
+    .btn-del-card:hover {
+      background: rgba(244, 63, 94, 0.28);
+      border-color: rgba(244, 63, 94, 0.65);
+      color: #ffffff;
+    }
+    [data-theme="pearl"] .btn-del-card {
+      color: #be123c;
+      background: rgba(244, 63, 94, 0.10);
+      border-color: rgba(225, 29, 72, 0.35);
+    }
+    [data-theme="pearl"] .btn-del-card:hover {
+      background: #e11d48;
+      color: #ffffff;
+    }
+    .sec-badge {
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
+      box-shadow: var(--accent-glow);
+    }
+
+    /* داک کپسولی شناور پایین */
+    .floating-dock {
+      background: var(--dock-bg);
+      backdrop-filter: blur(24px) saturate(185%);
+      -webkit-backdrop-filter: blur(24px) saturate(185%);
+      border: 1px solid var(--glass-border-strong);
+      box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.55), var(--glass-highlight);
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* افکت پالس ضبط صوت */
+    @keyframes voicePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.55); }
+      50% { box-shadow: 0 0 0 14px rgba(244, 63, 94, 0); }
+    }
+    .voice-recording { animation: voicePulse 1.4s infinite; }
+
+    /* استایل اختصاصی چاپ رسمی A4 سیاه‌وسفید بیمارستانی */
+    #printArea { display: none; }
+    @media print {
+      body { background: #ffffff !important; color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+      .ambient-stage, #appShell, #hamburgerBackdrop, #hamburgerDrawer,
+      #floatingDock, #speedDialWrap, #sectionJumperPopover,
+      #detailModal, #confirmModal, #toastContainer { display: none !important; }
+      #printArea {
+        display: block !important;
+        width: 100% !important;
+        color: #000000 !important;
+        direction: rtl !important;
+        font-family: 'Vazirmatn', Tahoma, sans-serif !important;
+      }
+      @page { size: A4 portrait; margin: 12mm; }
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-amber-400/30">
+
+  <!-- پس‌زمینه متحرک گوی‌های نورانی -->
+  <div class="ambient-stage" aria-hidden="true">
+    <div class="ambient-orb orb-a"></div>
+    <div class="ambient-orb orb-b"></div>
+    <div class="ambient-orb orb-c"></div>
+  </div>
+
+  <!-- پوسته اصلی اپلیکیشن -->
+  <div id="appShell" class="relative z-10 min-h-screen flex flex-col pb-40">
+
+    <!-- نوار اتصال زنده به سیستم پرستاری قلب (CARDIAC_BRIDGE Banner) -->
+    <div id="cardiacBridgeBanner" class="hidden px-3 sm:px-5 pt-2.5">
+      <div class="max-w-6xl mx-auto bridge-banner rounded-2xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2.5">
+        <div class="flex flex-wrap items-center gap-2 min-w-0">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-black shrink-0">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>🔗 متصل به سیستم پرستاری قلب</span>
+          </span>
+          <div id="bridgeSyncedPills" class="flex flex-wrap items-center gap-1.5 text-[11px]"></div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+          <button id="bridgeSendSummaryBtn" type="button"
+            class="px-3 py-1.5 rounded-xl btn-luxury-primary text-[11px] sm:text-xs font-black inline-flex items-center gap-1.5">
+            <span>↩️ ارسال خلاصه به گزارش شیفت</span>
+          </button>
+          <button id="bridgeReturnOpenerBtn" type="button"
+            class="hidden px-3 py-1.5 rounded-xl lux-chip text-[11px] sm:text-xs font-extrabold">
+            بازگشت به اپ پرستاری
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- هدر شیشه‌ای ثابت بالا -->
+    <header id="mainHeaderWrap" class="sticky top-0 z-30 px-3 sm:px-5 pt-3">
+      <div id="mainHeaderCard" class="max-w-6xl mx-auto glass-card-strong rounded-3xl px-3.5 sm:px-5 py-3 flex items-center justify-between gap-3">
+        <!-- دکمه همبرگری و عنوان -->
+        <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <button id="openHamburgerBtn" type="button" aria-label="باز کردن منو"
+            class="w-11 h-11 rounded-2xl lux-chip flex items-center justify-center shrink-0 active:scale-95">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+            </svg>
+          </button>
+
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="hidden sm:flex w-11 h-11 rounded-2xl btn-luxury-primary items-center justify-center shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h1 class="text-xs sm:text-base font-black text-main truncate tracking-tight">سامانه جامع ثبت خطاهای بیمارستانی و ایمنی بیمار</h1>
+              <p class="text-[10px] sm:text-xs text-dim font-medium truncate">۱۰۰٪ لمسی بدون تایپ • NCC MERP & IPSG • اکسل دوشیته • پل دوطرفه قلب</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- دکمه تغییر تم + شمارنده کل گزارش‌ها -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="headerThemeBtn" type="button" title="تغییر تم ظاهری"
+            class="h-10 px-3 rounded-2xl lux-chip inline-flex items-center gap-1.5 text-xs font-bold active:scale-95">
+            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+            </svg>
+            <span id="headerThemeName" class="hidden md:inline">ابسیدین طلایی</span>
+          </button>
+
+          <button id="headerCountBtn" type="button"
+            class="h-10 px-3 rounded-2xl lux-chip inline-flex items-center gap-2 text-xs font-bold active:scale-95">
+            <span class="hidden sm:inline text-sub">گزارش‌ها</span>
+            <span id="headerTotalBadge" class="min-w-[1.5rem] h-6 px-1.5 rounded-full btn-luxury-primary text-[11px] font-black inline-flex items-center justify-center">۰</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- نوار وضعیت شناور شیشه‌ای HUD (در نمای ثبت گزارش) -->
+    <div id="floatingStatusHud" class="sticky top-[74px] sm:top-[82px] z-20 px-3 sm:px-5 pt-2.5">
+      <div id="floatingHudCard" class="max-w-6xl mx-auto glass-card rounded-2xl px-3.5 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition-all">
+        <div class="flex-1 min-w-0 space-y-1.5">
+          <div class="flex items-center justify-between gap-2 text-[11px] sm:text-xs font-bold">
+            <div class="flex items-center gap-2 truncate">
+              <span id="hudDot" class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+              <span id="hudStatusText" class="text-main truncate">تکمیل فیلدهای کلیدی گزارش (۰ از ۴)</span>
+            </div>
+            <span id="hudPercentText" class="text-accent font-black shrink-0">۰٪</span>
+          </div>
+          <div class="w-full h-2 rounded-full overflow-hidden" style="background: var(--glass-surface);">
+            <div id="hudProgressBar" class="h-full rounded-full transition-all duration-300" style="width:0%; background: var(--chip-active-bg); box-shadow: var(--accent-glow);"></div>
+          </div>
+          <div id="hudSelectedSummary" class="flex flex-wrap items-center gap-1.5 text-[11px]"></div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="hudCancelEditBtn" type="button" class="hidden px-3.5 py-2.5 rounded-xl lux-chip text-xs font-bold text-rose-400">
+            لغو ویرایش
+          </button>
+          <button id="hudSubmitBtn" type="button"
+            class="flex-1 md:flex-none px-5 py-2.5 rounded-xl btn-luxury-primary text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+            <span id="hudSubmitLabel">ثبت نهایی گزارش</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- بنر عملیات فوری پس از ثبت گزارش جدید (ارسال یک‌کلیکه به چالش‌های شیفت اپ پرستاری) -->
+    <div id="postSaveBanner" class="hidden px-3 sm:px-5 pt-3">
+      <div class="max-w-6xl mx-auto bridge-banner rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 animate-view">
+        <div class="min-w-0">
+          <div class="text-xs sm:text-sm font-black text-main">✅ گزارش <span id="postSaveCode" class="text-accent"></span> با موفقیت ذخیره شد</div>
+          <div id="postSaveSummaryText" class="text-[11px] sm:text-xs text-sub mt-0.5 truncate max-w-2xl"></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button id="postSaveSendChallengeBtn" type="button" class="px-3.5 py-2 rounded-xl btn-luxury-primary text-xs font-black">
+            📤 ارسال به چالش‌های شیفت (اپ پرستاری)
+          </button>
+          <button id="postSavePrintBtn" type="button" class="px-3 py-2 rounded-xl lux-chip text-xs font-bold">
+            🖨 چاپ A4
+          </button>
+          <button id="postSaveCloseBtn" type="button" class="w-8 h-8 rounded-xl lux-chip text-xs font-bold">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- محتوای اصلی صفحات ۴گانه -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-5 pt-4 space-y-5">
+
+      <!-- ===================================================================
+           نمای ۱: فرم ثبت گزارش ۶بخشی (۱۰۰٪ کلیکی بدون تایپ)
+           =================================================================== -->
+      <div id="view-form" class="view-panel space-y-5 animate-view">
+
+        <!-- بخش ۱: زمان شمسی، شیفت، بخش، بیمار/تخت متصل و نقش گزارش‌دهنده -->
+        <section id="form-sec-1" class="glass-card rounded-3xl p-4 sm:p-6 space-y-5 scroll-mt-44">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-3.5" style="border-color: var(--glass-border);">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-2xl btn-luxury-primary text-sm font-black flex items-center justify-center shrink-0">۱</span>
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-main">زمان، شیفت، بخش و زمینه بیمار</h2>
+                <p class="text-[11px] text-dim">تنظیم دقیق تاریخ شمسی و ساعت با استپرهای لمسی + پین بخش و شیفت</p>
+              </div>
+            </div>
+            <label class="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl glass-subpanel cursor-pointer select-none">
+              <span class="text-xs font-bold text-main">پین کردن بخش و شیفت</span>
+              <input id="pinWardShiftToggle" type="checkbox" class="sr-only peer" />
+              <div class="relative w-10 h-6 bg-slate-500/40 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:right-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:-translate-x-4"></div>
+            </label>
+          </div>
+
+          <!-- نشانگر «بیمار / تخت متصل» (در صورت دریافت از اپ پرستاری قلب یا تنظیم در بخش ۶) -->
+          <div id="sec1PatientBadgeWrap" class="hidden glass-subpanel rounded-2xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 border" style="border-color: var(--bridge-border);">
+            <div class="flex items-center gap-2 text-xs font-extrabold text-main">
+              <span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-400/35">🛏 بیمار / تخت متصل</span>
+              <span id="sec1PatientText" class="text-accent"></span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="sec1EditPatientBtn" type="button" class="px-2.5 py-1 rounded-lg lux-chip text-[11px] font-bold">ویرایش</button>
+              <button id="sec1ClearPatientBtn" type="button" class="px-2.5 py-1 rounded-lg text-rose-400 hover:bg-rose-500/15 text-[11px] font-bold">حذف</button>
+            </div>
+          </div>
+
+          <!-- تاریخ شمسی و استپرهای ۵گانه + شیفت و نقش -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div class="lg:col-span-7 glass-subpanel rounded-2xl p-4 space-y-3.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-extrabold text-accent">تاریخ شمسی و ساعت وقوع</span>
+                <div id="quickTimeBtns" class="flex flex-wrap gap-1.5"></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-2xl p-3 text-center" style="background: var(--glass-bg-strong); border: 1px solid var(--glass-border);">
+                  <div class="text-[10px] text-dim font-semibold">تاریخ شمسی</div>
+                  <div id="displayShamsiDate" class="text-lg sm:text-xl font-black text-main tracking-wider mt-0.5">---</div>
+                </div>
+                <div class="rounded-2xl p-3 text-center" style="background: var(--glass-bg-strong); border: 1px solid var(--glass-border);">
+                  <div class="text-[10px] text-dim font-semibold">ساعت وقوع</div>
+                  <div id="displayShamsiTime" class="text-lg sm:text-xl font-black text-accent tracking-wider mt-0.5">---</div>
+                </div>
+              </div>
+
+              <!-- ۵ استپر لمسی (سال، ماه، روز، ساعت، دقیقه) -->
+              <div class="grid grid-cols-5 gap-1.5 sm:gap-2">
+                <div class="rounded-xl p-1.5 text-center glass-subpanel">
+                  <div class="text-[10px] font-bold text-dim mb-1">سال</div>
+                  <div class="flex flex-col gap-1">
+                    <button type="button" data-step="jy:1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">+</button>
+                    <button type="button" data-step="jy:-1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">−</button>
+                  </div>
+                </div>
+                <div class="rounded-xl p-1.5 text-center glass-subpanel">
+                  <div class="text-[10px] font-bold text-dim mb-1">ماه</div>
+                  <div class="flex flex-col gap-1">
+                    <button type="button" data-step="jm:1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">+</button>
+                    <button type="button" data-step="jm:-1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">−</button>
+                  </div>
+                </div>
+                <div class="rounded-xl p-1.5 text-center glass-subpanel">
+                  <div class="text-[10px] font-bold text-dim mb-1">روز</div>
+                  <div class="flex flex-col gap-1">
+                    <button type="button" data-step="jd:1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">+</button>
+                    <button type="button" data-step="jd:-1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">−</button>
+                  </div>
+                </div>
+                <div class="rounded-xl p-1.5 text-center glass-subpanel">
+                  <div class="text-[10px] font-bold text-dim mb-1">ساعت</div>
+                  <div class="flex flex-col gap-1">
+                    <button type="button" data-step="hh:1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">+</button>
+                    <button type="button" data-step="hh:-1" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">−</button>
+                  </div>
+                </div>
+                <div class="rounded-xl p-1.5 text-center glass-subpanel">
+                  <div class="text-[10px] font-bold text-dim mb-1">دقیقه</div>
+                  <div class="flex flex-col gap-1">
+                    <button type="button" data-step="mm:5" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">+۵</button>
+                    <button type="button" data-step="mm:-5" class="step-btn py-1.5 rounded-lg lux-chip text-xs font-black">−۵</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- شیفت کاری و نقش گزارش‌دهنده -->
+            <div class="lg:col-span-5 space-y-4">
+              <div id="shiftFieldWrap" class="glass-subpanel rounded-2xl p-4 space-y-2.5 transition">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-main">شیفت کاری <span class="text-rose-400">*</span></span>
+                  <span class="text-[10px] text-dim">تک‌انتخابی</span>
+                </div>
+                <div id="shiftChips" class="grid grid-cols-3 gap-2"></div>
+              </div>
+
+              <div class="glass-subpanel rounded-2xl p-4 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-main">نقش گزارش‌دهنده</span>
+                  <span class="text-[10px] text-dim">اختیاری / محرمانه</span>
+                </div>
+                <div id="reporterRoleChips" class="flex flex-wrap gap-1.5"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- بخش‌های تخصصی قلب و بیمارستان -->
+          <div id="wardFieldWrap" class="space-y-2.5 rounded-2xl p-1 -m-1 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs sm:text-sm font-extrabold text-main">بخش محل وقوع <span class="text-rose-400">*</span></span>
+              <span class="text-[11px] text-dim">بخش‌های قلب و عمومی بیمارستان</span>
+            </div>
+            <div id="wardChips" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2"></div>
+          </div>
+        </section>
+
+        <!-- بخش ۲: دسته‌بندی تخصصی ۱۲گانه خطاها (Drill-Down) -->
+        <section id="form-sec-2" class="glass-card rounded-3xl p-4 sm:p-6 space-y-4 scroll-mt-44 transition">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3.5" style="border-color: var(--glass-border);">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-2xl btn-luxury-primary text-sm font-black flex items-center justify-center shrink-0">۲</span>
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-main">دسته‌بندی تخصصی ۱۲گانه خطاها <span class="text-rose-400">*</span></h2>
+                <p class="text-[11px] text-dim">ابتدا دسته اصلی را لمس کنید و سپس یک یا چند جزئیات خطا را انتخاب نمایید</p>
+              </div>
+            </div>
+            <span id="sec2Counter" class="px-3 py-1 rounded-xl glass-subpanel text-xs font-extrabold text-accent">۰ مورد انتخاب شده</span>
+          </div>
+
+          <div id="selectedErrorsBar" class="hidden glass-subpanel rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-accent">موارد انتخاب‌شده (برای حذف لمس کنید):</span>
+              <button id="clearAllErrorsBtn" type="button" class="text-xs font-bold text-rose-400 hover:underline">حذف همه</button>
+            </div>
+            <div id="selectedErrorsTags" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div id="categoriesGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5"></div>
+
+          <div id="subErrorsDrawer" class="hidden glass-subpanel rounded-2xl p-4 space-y-3 border-2 animate-view" style="border-color: var(--glass-border-strong);">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent); box-shadow: var(--accent-glow);"></span>
+                <h3 class="text-xs sm:text-sm font-black text-main">جزئیات تخصصی <span id="activeCatTitle" class="text-accent"></span></h3>
+              </div>
+              <span class="text-[11px] text-dim">امکان انتخاب چندگزینه‌ای</span>
+            </div>
+            <div id="subErrorsChips" class="flex flex-wrap gap-2"></div>
+          </div>
+        </section>
+
+        <!-- بخش ۳: شدت پیامد (NCC MERP A تا I) + ۲۸ خطای هرگز + IPSG 1-6 -->
+        <section id="form-sec-3" class="glass-card rounded-3xl p-4 sm:p-6 space-y-5 scroll-mt-44 transition">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3.5" style="border-color: var(--glass-border);">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-2xl btn-luxury-primary text-sm font-black flex items-center justify-center shrink-0">۳</span>
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-main">شدت پیامد (NCC MERP)، ۲۸ خطای هرگز و IPSG <span class="text-rose-400">*</span></h2>
+                <p class="text-[11px] text-dim">مقیاس استاندارد A تا I، چک‌لیست کامل ۲۸ خطای هرگز وزارت بهداشت و اهداف شش‌گانه ایمنی بیمار</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="severityFieldWrap" class="space-y-2.5 rounded-2xl p-1 -m-1 transition">
+            <div class="text-xs font-extrabold text-sub">سطح شدت پیامد را انتخاب کنید <span class="text-rose-400">*</span>:</div>
+            <div id="severityGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+          </div>
+
+          <!-- ۲۸ خطای هرگز (Never Events) -->
+          <div class="rounded-2xl p-4 space-y-3 border transition" style="background: rgba(225, 29, 72, 0.08); border-color: rgba(244, 63, 94, 0.35);">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                </div>
+                <div>
+                  <div class="text-xs sm:text-sm font-black text-main">آیا این مورد جزو «۲۸ خطای هرگز (Never Events)» است؟</div>
+                  <div class="text-[11px] text-dim">با فعال‌سازی، لیست کامل ۲۸گانه خطاهای هرگز در ۴ گروه باز می‌شود</div>
+                </div>
+              </div>
+              <button id="neverEventToggleBtn" type="button"
+                class="px-4 py-2.5 rounded-xl text-xs font-black border transition active:scale-95">
+                خیر (خطای عادی)
+              </button>
+            </div>
+
+            <div id="neverEventListWrap" class="hidden pt-3 border-t border-rose-400/25 space-y-3 animate-view">
+              <div id="neverEventGroupTabs" class="flex flex-wrap gap-1.5"></div>
+              <div id="neverEventChips" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+
+          <!-- اهداف شش‌گانه ایمنی بیمار (IPSG 1-6) -->
+          <div class="space-y-2.5">
+            <div class="text-xs font-extrabold text-sub">اهداف شش‌گانه بین‌المللی ایمنی بیمار (IPSG 1 تا 6):</div>
+            <div id="ipsgChips" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+          </div>
+        </section>
+
+        <!-- بخش ۴: علل ریشه‌ای و عوامل زمینه‌ساز -->
+        <section id="form-sec-4" class="glass-card rounded-3xl p-4 sm:p-6 space-y-4 scroll-mt-44">
+          <div class="flex items-center justify-between gap-2 border-b pb-3.5" style="border-color: var(--glass-border);">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-2xl btn-luxury-primary text-sm font-black flex items-center justify-center shrink-0">۴</span>
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-main">علل ریشه‌ای و عوامل زمینه‌ساز</h2>
+                <p class="text-[11px] text-dim">عوامل سیستمی، محیطی و انسانی دخیل در بروز رویداد (چندانتخابی)</p>
+              </div>
+            </div>
+            <span id="sec4Counter" class="px-3 py-1 rounded-xl glass-subpanel text-xs font-bold text-sub">۰ مورد</span>
+          </div>
+          <div id="rootCauseChips" class="flex flex-wrap gap-2"></div>
+        </section>
+
+        <!-- بخش ۵: اقدامات فوری و اطلاع‌رسانی -->
+        <section id="form-sec-5" class="glass-card rounded-3xl p-4 sm:p-6 space-y-5 scroll-mt-44">
+          <div class="flex items-center justify-between gap-2 border-b pb-3.5" style="border-color: var(--glass-border);">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-2xl btn-luxury-primary text-sm font-black flex items-center justify-center shrink-0">۵</span>
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-main">اقدامات فوری انجام‌شده و اطلاع‌رسانی</h2>
+                <p class="text-[11px] text-dim">اقدامات بالینی فوری جهت ایمن‌سازی بیمار و مراجع اطلاع‌رسانی‌شده</p>
+              </div>
+            </div>
+            <span id="sec5Counter" class="px-3 py-1 rounded-xl glass-subpanel text-xs font-bold text-sub">۰ مورد</span>
+          </div>
+
+          <div class="space-y-2.5">
+            <div class="text-xs font-extrabold text-accent">اقدامات فوری در صحنه:</div>
+            <div id="immediateActionChips" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="space-y-2.5 pt-3 border-t" style="border-color: var(--glass-border);">
+            <div class="text-xs font-extrabold text-accent">اطلاع‌رسانی و گزارش‌دهی به:</div>
+            <div id="notificationChips" class="flex flex-wrap gap-2"></div>
+          </div>
+        </section>
+
+        <!-- بخش ۶: پیشنهاد پیشگیرانه، زمینه بیمار/تخت و یادداشت صوتی فارسی -->
+        <section id="form-sec-6" class="glass-card rounded-3xl p-4 sm:p-6 space-y-5 scroll-mt-44">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-3.5" style="border-color: var(--glass-border);">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-2xl btn-luxury-primary text-sm font-black flex items-center justify-center shrink-0">۶</span>
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-main">پیشنهاد پیشگیرانه، شماره تخت/بیمار و یادداشت صوتی</h2>
+                <p class="text-[11px] text-dim">تکمیل کاملاً لمسی یا ضبط صوت فارسی بدون نیاز به تایپ</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- پیشنهادهای پیشگیرانه -->
+          <div class="space-y-2.5">
+            <div class="text-xs font-extrabold text-accent">پیشنهادهای پیشگیرانه (چندانتخابی):</div>
+            <div id="preventiveChips" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <!-- زمینه اختیاری بیمار / اتاق / تخت (متصل به اپ پرستاری قلب) -->
+          <div class="glass-subpanel rounded-2xl p-4 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-extrabold text-main">زمینه بیمار / اتاق / تخت (اختیاری — همگام‌سازی خودکار با اپ قلب)</span>
+              <button id="clearPatientInputBtn" type="button" class="text-[11px] font-bold text-rose-400 hover:underline">پاک کردن</button>
+            </div>
+            <div id="quickBedChips" class="flex flex-wrap gap-1.5"></div>
+            <input id="patientContextInput" type="text" placeholder="مثال: تخت ۴ CCU یا کد پرونده (در صورت اتصال از اپ پرستاری خودکار پر می‌شود)..."
+              class="w-full rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-main placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition"
+              style="background: var(--glass-bg-strong); border: 1px solid var(--glass-border);" />
+          </div>
+
+          <!-- یادداشت صوتی فارسی -->
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-extrabold text-accent">یادداشت صوتی اختیاری (تبدیل گفتار فارسی به متن):</span>
+              <div class="flex items-center gap-2">
+                <button id="voiceRecordBtn" type="button"
+                  class="px-4 py-2.5 rounded-2xl btn-luxury-primary text-xs font-black inline-flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
+                  <span id="voiceRecordLabel">شروع ضبط صوت فارسی</span>
+                </button>
+                <button id="clearVoiceNoteBtn" type="button" class="px-3.5 py-2.5 rounded-2xl lux-chip text-xs font-bold">پاک کردن</button>
+              </div>
+            </div>
+            <textarea id="voiceNoteArea" rows="3" placeholder="توضیح کوتاه یا متن ضبط‌شده صوتی اینجا نمایش داده می‌شود..."
+              class="w-full rounded-2xl p-3.5 text-sm text-main placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition"
+              style="background: var(--glass-surface); border: 1px solid var(--glass-border);"></textarea>
+          </div>
+
+          <!-- دکمه‌های نهایی پایین فرم -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+            <button id="formResetBottomBtn" type="button" class="px-5 py-3.5 rounded-2xl lux-chip text-xs sm:text-sm font-bold">
+              پاک‌سازی کامل فرم
+            </button>
+            <button id="formSubmitBottomBtn" type="button" class="px-8 py-3.5 rounded-2xl btn-luxury-primary text-sm sm:text-base font-black inline-flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+              <span id="formSubmitBottomLabel">ثبت و ذخیره در آرشیو ایمنی بیمار</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===================================================================
+           نمای ۲: آرشیو و فیلترهای کلیکی
+           =================================================================== -->
+      <div id="view-archive" class="view-panel hidden space-y-4 animate-view">
+        <!-- خلاصه سریع آماری آرشیو -->
+        <div id="archiveQuickKpis" class="grid grid-cols-3 gap-2.5"></div>
+
+        <section class="glass-card rounded-3xl p-4 sm:p-5 space-y-3.5">
+          <div class="flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm sm:text-base font-black text-main">📂 آرشیو گزارش‌های ثبت‌شده</h2>
+              <span id="archiveMatchCount" class="px-2.5 py-0.5 rounded-full btn-luxury-primary text-[11px] font-black">۰ مورد</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="toggleFiltersDrawerBtn" type="button" class="px-3 py-1.5 rounded-xl lux-chip text-xs font-extrabold inline-flex items-center gap-1.5">
+                <span>🎛 فیلترهای کلیکی</span>
+                <span id="activeFilterCountBadge" class="hidden min-w-[1.2rem] h-4 px-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black inline-flex items-center justify-center">۰</span>
+              </button>
+              <button id="resetFiltersBtn" type="button" class="px-3 py-1.5 rounded-xl lux-chip text-xs font-bold text-rose-400">پاک کردن</button>
+            </div>
+          </div>
+
+          <!-- جستجو + مرتب‌سازی سریع -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <div class="sm:col-span-8 relative">
+              <input id="archiveSearchInput" type="search" placeholder="🔍 جستجو در کد گزارش، بخش، نوع خطا، تخت یا یادداشت..."
+                class="w-full rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm text-main placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition"
+                style="background: var(--glass-bg-strong); border: 1px solid var(--glass-border);" />
+            </div>
+            <div class="sm:col-span-4 flex items-center gap-1.5">
+              <button type="button" id="sortNewestBtn" class="flex-1 py-2.5 px-2.5 rounded-2xl lux-chip text-[11px] font-extrabold is-active">🕒 جدیدترین</button>
+              <button type="button" id="sortSeverityBtn" class="flex-1 py-2.5 px-2.5 rounded-2xl lux-chip text-[11px] font-extrabold">🔥 شدیدترین</button>
+            </div>
+          </div>
+
+          <!-- پنل فیلترهای کلیکی (جمع‌شونده برای دید فوری کارت‌ها روی موبایل) -->
+          <div id="archiveFiltersPanel" class="hidden pt-3 border-t space-y-3 text-xs animate-view" style="border-color: var(--glass-border);">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="font-extrabold text-dim ml-1">فیلتر بحرانی:</span>
+              <div id="fltCritical" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="font-extrabold text-dim ml-1">شیفت:</span>
+              <div id="fltShift" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="font-extrabold text-dim ml-1">شدت NCC MERP:</span>
+              <div id="fltSeverity" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="font-extrabold text-dim ml-1">دسته خطا:</span>
+              <div id="fltCategory" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="font-extrabold text-dim ml-1">بخش:</span>
+              <div id="fltWard" class="flex flex-wrap gap-1.5"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="archiveCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></section>
+      </div>
+
+      <!-- ===================================================================
+           نمای ۳: داشبورد تحلیلی آفلاین
+           =================================================================== -->
+      <div id="view-analytics" class="view-panel hidden space-y-5 animate-view">
+        <div id="analyticsKpis" class="grid grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
+
+        <div id="analyticsEmpty" class="hidden glass-card rounded-3xl p-10 text-center space-y-4">
+          <div class="w-16 h-16 rounded-3xl glass-subpanel text-accent flex items-center justify-center mx-auto">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+          </div>
+          <h3 class="text-base font-black text-main">هنوز داده‌ای برای نمایش نمودارها ثبت نشده است</h3>
+          <p class="text-xs text-dim max-w-md mx-auto">برای مشاهده فوری داشبورد تحلیلی و تست خروجی اکسل دوشیته، ۵ گزارش نمونه بالینی (بخش قلب و بیمارستان) را بارگذاری کنید.</p>
+          <button id="analyticsDemoBtn" type="button" class="px-5 py-3 rounded-2xl btn-luxury-primary text-xs font-black">
+            بارگذاری ۵ نمونه آزمایشی قلب و بیمارستان
+          </button>
+        </div>
+
+        <div id="analyticsCharts" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-card rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-black text-main flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> فراوانی بر اساس دسته خطا
+            </h3>
+            <div id="chartCategory" class="space-y-3"></div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-black text-main flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> فراوانی بر اساس بخش بیمارستان
+            </h3>
+            <div id="chartWard" class="space-y-3"></div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-black text-main flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span> توزیع شدت پیامد (NCC MERP)
+            </h3>
+            <div id="chartSeverity" class="space-y-3"></div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-black text-main flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> توزیع بر اساس شیفت کاری
+            </h3>
+            <div id="chartShift" class="space-y-3"></div>
+          </div>
+
+          <div class="lg:col-span-2 glass-card rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-black text-main flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-violet-400"></span> پرتکرارترین علل ریشه‌ای و عوامل زمینه‌ساز
+            </h3>
+            <div id="chartRootCause" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           نمای ۴: خروجی اکسل دوشیته، پشتیبان JSON و وضعیت پل ارتباطی
+           =================================================================== -->
+      <div id="view-export" class="view-panel hidden space-y-5 animate-view">
+        <section class="glass-card rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-main">خروجی رسمی اکسل (.xlsx) دوشیته و راست‌به‌چپ</h2>
+              <p class="text-xs text-dim mt-1">شیت ۱: «گزارش تفصیلی خطاها» (۲۲ ستون شامل زمینه بیمار/تخت و منبع ثبت) + شیت ۲: «خلاصه آماری»</p>
+            </div>
+            <span id="exportReadyBadge" class="px-3.5 py-1.5 rounded-xl glass-subpanel text-accent text-xs font-black">۰ گزارش آماده</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button id="exportXlsxBtn" type="button" class="px-5 py-4 rounded-2xl btn-luxury-primary text-sm font-black inline-flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+              <span>دانلود اکسل جامع دوشیته (.xlsx)</span>
+            </button>
+
+            <button id="exportCsvBtn" type="button" class="px-5 py-4 rounded-2xl lux-chip text-sm font-extrabold inline-flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+              <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+              <span>دانلود CSV آفلاین (UTF-8 BOM فارسی)</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- وضعیت پل ارتباطی دوطرفه -->
+        <section class="glass-card rounded-3xl p-5 sm:p-6 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm sm:text-base font-black text-main">🔗 وضعیت پل ارتباطی با سیستم پرستاری قلب (CARDIAC_BRIDGE)</h3>
+            <span id="bridgeStatusPill" class="px-3 py-1 rounded-xl glass-subpanel text-xs font-bold text-sub">حالت مستقل</span>
+          </div>
+          <p class="text-xs text-dim leading-relaxed">
+            این سامانه از طریق پارامترهای آدرس (Query/Hash)، پروتکل دوطرفه <code class="text-accent">postMessage</code> و کلید اشتراکی <code class="text-accent">CARDIAC_ERROR_BRIDGE_SYNC</code> به‌صورت زنده با اپلیکیشن پرستاری قلب هماهنگ می‌شود.
+          </p>
+        </section>
+
+        <section class="glass-card rounded-3xl p-5 sm:p-6 space-y-4">
+          <h3 class="text-sm sm:text-base font-black text-main">پشتیبان‌گیری JSON و ادغام آرشیو بخش‌ها</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button id="exportJsonBtn" type="button" class="px-4 py-3.5 rounded-2xl lux-chip text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 disabled:opacity-40">
+              <span>💾 ذخیره فایل پشتیبان JSON</span>
+            </button>
+            <label class="px-4 py-3.5 rounded-2xl lux-chip text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 cursor-pointer">
+              <span>📂 بازیابی و ادغام فایل JSON</span>
+              <input id="importJsonInput" type="file" accept=".json,application/json" class="hidden" />
+            </label>
+          </div>
+        </section>
+
+        <section class="glass-card rounded-3xl p-5 sm:p-6 space-y-4">
+          <h3 class="text-sm sm:text-base font-black text-main">داده‌های آزمایشی و مدیریت حافظه</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button id="exportLoadDemoBtn" type="button" class="px-4 py-3.5 rounded-2xl lux-chip text-xs sm:text-sm font-extrabold text-accent">
+              ✨ بارگذاری ۵ نمونه آزمایشی قلب و بیمارستان
+            </button>
+            <button id="exportClearAllBtn" type="button" class="px-4 py-3.5 rounded-2xl border border-rose-500/40 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs sm:text-sm font-extrabold transition disabled:opacity-40">
+              🗑 پاک‌سازی کامل آرشیو دستگاه
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- =======================================================================
+       منوی همبرگری شیشه‌ای کشویی (راست‌به‌چپ)
+       ======================================================================= -->
+  <div id="hamburgerBackdrop" class="fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-md transition-opacity"></div>
+  <aside id="hamburgerDrawer" class="fixed top-0 right-0 bottom-0 z-50 w-[86vw] max-w-sm glass-card-strong border-l p-5 flex flex-col justify-between overflow-y-auto no-scrollbar">
+    <div class="space-y-5">
+      <div class="flex items-center justify-between gap-2 pb-4 border-b" style="border-color: var(--glass-border);">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl btn-luxury-primary flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+          </div>
+          <div>
+            <div class="text-sm font-black text-main">ایمنی بیمار رویال</div>
+            <div class="text-[11px] text-dim">تعداد کل ثبت‌ها: <span id="drawerTotalCount" class="text-accent font-black">۰</span></div>
+          </div>
+        </div>
+        <button id="closeHamburgerBtn" type="button" class="w-9 h-9 rounded-xl lux-chip flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- ناوبری سریع -->
+      <div class="space-y-1.5">
+        <div class="text-[11px] font-bold text-dim px-1 mb-1.5">بخش‌های سامانه</div>
+        <button type="button" data-drawer-tab="form" class="drawer-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-2xl lux-chip text-xs font-extrabold"><span>ثبت گزارش</span><span>←</span></button>
+        <button type="button" data-drawer-tab="archive" class="drawer-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-2xl lux-chip text-xs font-extrabold"><span>آرشیو و فیلتر</span><span>←</span></button>
+        <button type="button" data-drawer-tab="analytics" class="drawer-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-2xl lux-chip text-xs font-extrabold"><span>داشبورد تحلیلی</span><span>←</span></button>
+        <button type="button" data-drawer-tab="export" class="drawer-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-2xl lux-chip text-xs font-extrabold"><span>خروجی و پشتیبان</span><span>←</span></button>
+      </div>
+
+      <!-- انتخابگر ۳ تم مجلل -->
+      <div class="space-y-2">
+        <div class="text-[11px] font-bold text-dim px-1">انتخاب تم شیشه‌ای مجلل</div>
+        <div class="grid grid-cols-1 gap-2">
+          <button type="button" data-theme-pick="obsidian" class="theme-opt flex items-center justify-between px-3.5 py-2.5 rounded-2xl lux-chip text-xs font-bold">
+            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-gradient-to-br from-slate-900 to-amber-400 border border-amber-300"></span>رویال ابسیدین و طلایی</span>
+            <span class="theme-check text-[10px]"></span>
+          </button>
+          <button type="button" data-theme-pick="emerald" class="theme-opt flex items-center justify-between px-3.5 py-2.5 rounded-2xl lux-chip text-xs font-bold">
+            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-gradient-to-br from-teal-900 to-cyan-300 border border-teal-300"></span>کریستال زمردی</span>
+            <span class="theme-check text-[10px]"></span>
+          </button>
+          <button type="button" data-theme-pick="pearl" class="theme-opt flex items-center justify-between px-3.5 py-2.5 rounded-2xl lux-chip text-xs font-bold">
+            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-gradient-to-br from-white to-sky-400 border border-sky-300"></span>مروارید روشن</span>
+            <span class="theme-check text-[10px]"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- وضعیت پین بخش/شیفت -->
+      <div class="glass-subpanel rounded-2xl p-3.5 space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold">
+          <span class="text-dim">وضعیت پین بخش/شیفت:</span>
+          <button id="drawerResetPinBtn" type="button" class="text-[11px] text-rose-400 hover:underline">حذف پین</button>
+        </div>
+        <div id="drawerPinStatus" class="text-xs font-extrabold text-main">تنظیم نشده</div>
+      </div>
+
+      <!-- اکشن‌های سریع -->
+      <div class="space-y-2">
+        <div class="text-[11px] font-bold text-dim px-1">ابزارهای سریع</div>
+        <button id="drawerDemoBtn" type="button" class="w-full px-4 py-2.5 rounded-2xl lux-chip text-xs font-bold text-right">✨ بارگذاری ۵ نمونه آزمایشی قلب/بیمارستان</button>
+        <button id="drawerExcelBtn" type="button" class="w-full px-4 py-2.5 rounded-2xl btn-luxury-primary text-xs font-black text-right">📥 دانلود فوری اکسل (.xlsx)</button>
+        <button id="drawerJsonBtn" type="button" class="w-full px-4 py-2.5 rounded-2xl lux-chip text-xs font-bold text-right">💾 خروجی پشتیبان JSON</button>
+        <label class="block w-full px-4 py-2.5 rounded-2xl lux-chip text-xs font-bold text-right cursor-pointer">
+          📂 بازیابی/ادغام فایل JSON
+          <input id="drawerImportJsonInput" type="file" accept=".json,application/json" class="hidden" />
+        </label>
+        <button id="drawerClearBtn" type="button" class="w-full px-4 py-2.5 rounded-2xl border border-rose-500/35 bg-rose-500/10 text-rose-400 text-xs font-bold text-right">🗑 پاک‌سازی کل آرشیو</button>
+      </div>
+    </div>
+
+    <div class="pt-4 mt-4 border-t text-[10px] text-dim text-center" style="border-color: var(--glass-border);">
+      آفلاین و محرمانه • هماهنگ با سیستم پرستاری قلب
+    </div>
+  </aside>
+
+  <!-- =======================================================================
+       داک کپسولی شیشه‌ای پایین صفحه
+       ======================================================================= -->
+  <nav id="floatingDock" aria-label="ناوبری پایین"
+    class="fixed bottom-3.5 left-1/2 -translate-x-1/2 z-30 floating-dock rounded-full p-1.5 flex items-center gap-1 max-w-[95vw]">
+    <button type="button" data-dock-tab="form" class="dock-btn flex items-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-full text-xs font-extrabold transition active:scale-95 whitespace-nowrap">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+      <span>ثبت گزارش</span>
+    </button>
+    <button type="button" data-dock-tab="archive" class="dock-btn relative flex items-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-full text-xs font-extrabold transition active:scale-95 whitespace-nowrap">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+      <span>آرشیو</span>
+      <span id="dockArchiveBadge" class="min-w-[1.15rem] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black inline-flex items-center justify-center">۰</span>
+    </button>
+    <button type="button" data-dock-tab="analytics" class="dock-btn flex items-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-full text-xs font-extrabold transition active:scale-95 whitespace-nowrap">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+      <span>تحلیل</span>
+    </button>
+    <button type="button" data-dock-tab="export" class="dock-btn flex items-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-full text-xs font-extrabold transition active:scale-95 whitespace-nowrap">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+      <span>خروجی</span>
+    </button>
+  </nav>
+
+  <!-- =======================================================================
+       منوی شناور طلایی دسترسی سریع (Speed-Dial FAB)
+       ======================================================================= -->
+  <div id="speedDialWrap" class="fixed left-4 sm:left-6 bottom-20 sm:bottom-6 z-30 flex flex-col items-start gap-2.5">
+    <div class="flex flex-col items-start gap-2 mb-1">
+      <button id="fabJumpBtn" type="button" class="speed-item glass-card-strong px-3.5 py-2.5 rounded-2xl text-xs font-extrabold text-main hover:scale-105 inline-flex items-center gap-2 whitespace-nowrap">
+        <span>🧭</span><span>پرش سریع به بخش‌های ۱ تا ۶</span>
+      </button>
+      <button id="fabVoiceBtn" type="button" class="speed-item glass-card-strong px-3.5 py-2.5 rounded-2xl text-xs font-extrabold text-main hover:scale-105 inline-flex items-center gap-2 whitespace-nowrap">
+        <span>🎤</span><span>یادداشت صوتی فارسی</span>
+      </button>
+      <button id="fabNewBtn" type="button" class="speed-item glass-card-strong px-3.5 py-2.5 rounded-2xl text-xs font-extrabold text-main hover:scale-105 inline-flex items-center gap-2 whitespace-nowrap">
+        <span>✨</span><span>پاک‌سازی فرم جدید</span>
+      </button>
+      <button id="fabExcelBtn" type="button" class="speed-item glass-card-strong px-3.5 py-2.5 rounded-2xl text-xs font-extrabold text-accent hover:scale-105 inline-flex items-center gap-2 whitespace-nowrap">
+        <span>📥</span><span>دانلود فوری اکسل (.xlsx)</span>
+      </button>
+    </div>
+
+    <button id="fabMainBtn" type="button" aria-label="منوی دسترسی سریع"
+      class="w-14 h-14 rounded-full btn-luxury-primary flex items-center justify-center shadow-2xl border border-white/30">
+      <svg id="fabIcon" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- پاپ‌اور پرش سریع به ۶ بخش فرم -->
+  <div id="sectionJumperPopover" class="fixed left-4 sm:left-6 bottom-36 sm:bottom-24 z-40 hidden glass-card-strong rounded-3xl p-3.5 w-64 space-y-1.5 shadow-2xl animate-view">
+    <div class="flex items-center justify-between pb-2 mb-1 border-b" style="border-color: var(--glass-border);">
+      <span class="text-xs font-black text-accent">پرش سریع بخش‌های فرم</span>
+      <button id="closeJumperBtn" type="button" class="text-xs text-dim hover:text-main font-bold">✕</button>
+    </div>
+    <button type="button" data-jump="form-sec-1" class="jump-sec-btn w-full text-right px-3 py-2 rounded-xl lux-chip text-xs font-bold">۱. زمان، شیفت و بخش</button>
+    <button type="button" data-jump="form-sec-2" class="jump-sec-btn w-full text-right px-3 py-2 rounded-xl lux-chip text-xs font-bold">۲. دسته‌بندی ۱۲گانه خطا</button>
+    <button type="button" data-jump="form-sec-3" class="jump-sec-btn w-full text-right px-3 py-2 rounded-xl lux-chip text-xs font-bold">۳. شدت NCC MERP و ۲۸ خطای هرگز</button>
+    <button type="button" data-jump="form-sec-4" class="jump-sec-btn w-full text-right px-3 py-2 rounded-xl lux-chip text-xs font-bold">۴. علل ریشه‌ای</button>
+    <button type="button" data-jump="form-sec-5" class="jump-sec-btn w-full text-right px-3 py-2 rounded-xl lux-chip text-xs font-bold">۵. اقدامات فوری و اطلاع‌رسانی</button>
+    <button type="button" data-jump="form-sec-6" class="jump-sec-btn w-full text-right px-3 py-2 rounded-xl lux-chip text-xs font-bold">۶. پیشگیری، تخت و یادداشت صوتی</button>
+  </div>
+
+  <!-- مودال جزئیات کامل گزارش + چاپ A4 + ارسال به اپ پرستاری -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-md p-3 sm:p-5">
+    <div class="glass-card-strong rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-view">
+      <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color: var(--glass-border);">
+        <div class="flex items-center gap-2.5">
+          <span id="modalCodeBadge" class="px-3 py-1 rounded-xl btn-luxury-primary text-xs font-black">---</span>
+          <h3 class="text-sm sm:text-base font-black text-main">پرونده تفصیلی گزارش خطا</h3>
+        </div>
+        <button id="closeDetailBtn" type="button" class="w-9 h-9 rounded-xl lux-chip flex items-center justify-center">✕</button>
+      </div>
+      <div id="detailModalBody" class="p-5 overflow-y-auto space-y-3 text-xs sm:text-sm"></div>
+      <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 border-t" style="border-color: var(--glass-border);">
+        <div class="flex items-center gap-2">
+          <button id="modalEditBtn" type="button" class="px-3.5 py-2 rounded-xl lux-chip text-xs font-extrabold text-accent">✏️ ویرایش</button>
+          <button id="modalDeleteBtn" type="button" class="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-400 text-xs font-extrabold">حذف</button>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="modalSendChallengeBtn" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-black">📤 ارسال به اپ پرستاری</button>
+          <button id="modalPrintBtn" type="button" class="px-4 py-2 rounded-xl btn-luxury-primary text-xs font-black">🖨 چاپ A4</button>
+          <button id="modalCloseBtn" type="button" class="px-3.5 py-2 rounded-xl lux-chip text-xs font-bold">بستن</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال تایید عملیات حساس (جایگزین confirm) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-md p-4">
+    <div class="glass-card-strong rounded-3xl max-w-sm w-full p-5 space-y-4 animate-view">
+      <h3 id="confirmTitle" class="text-base font-black text-main">تایید عملیات</h3>
+      <p id="confirmMessage" class="text-xs sm:text-sm text-sub leading-relaxed"></p>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button id="confirmCancelBtn" type="button" class="px-4 py-2.5 rounded-xl lux-chip text-xs font-bold">انصراف</button>
+        <button id="confirmOkBtn" type="button" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black">تایید و ادامه</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- کانتینر اعلان‌های Toast -->
+  <div id="toastContainer" class="fixed top-4 left-4 right-4 sm:right-auto sm:left-5 sm:w-96 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ناحیه اختصاصی چاپ رسمی A4 -->
+  <div id="printArea"></div>
+
+  <script>
+    /* =========================================================================
+       ۱. موتور بومی تبدیل دقیق تاریخ میلادی به شمسی (بدون وابستگی بیرونی)
+       ========================================================================= */
+    function gregorianToJalali(gy, gm, gd) {
+      const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+      const gy2 = gm > 2 ? gy + 1 : gy;
+      let days = 355666 + (365 * gy)
+        + Math.floor((gy2 + 3) / 4)
+        - Math.floor((gy2 + 99) / 100)
+        + Math.floor((gy2 + 399) / 400)
+        + gd + g_d_m[gm - 1];
+      let jy = -1595 + (33 * Math.floor(days / 12053));
+      days %= 12053;
+      jy += 4 * Math.floor(days / 1461);
+      days %= 1461;
+      if (days > 365) {
+        jy += Math.floor((days - 1) / 365);
+        days = (days - 1) % 365;
+      }
+      const jm = days < 186 ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+      const jd = days < 186 ? 1 + (days % 31) : 1 + ((days - 186) % 30);
+      return { jy, jm, jd };
+    }
+
+    function isJalaliLeap(jy) {
+      const mod = ((jy - (jy > 0 ? 474 : 473)) % 2820 + 2820) % 2820 + 474;
+      return (((mod + 38) * 682) % 2816) < 682;
+    }
+
+    function jalaliMonthLength(jy, jm) {
+      if (jm <= 6) return 31;
+      if (jm <= 11) return 30;
+      return isJalaliLeap(jy) ? 30 : 29;
+    }
+
+    function dateToJalaliParts(d) {
+      const { jy, jm, jd } = gregorianToJalali(d.getFullYear(), d.getMonth() + 1, d.getDate());
+      return { jy, jm, jd, hh: d.getHours(), mm: d.getMinutes() };
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function toFaDigits(v) {
+      const fa = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      return String(v ?? '').replace(/\d/g, d => fa[d]);
+    }
+
+    function toEnDigits(v) {
+      return String(v ?? '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+    }
+
+    function formatParts(p) {
+      const latinDate = `${p.jy}/${pad2(p.jm)}/${pad2(p.jd)}`;
+      const latinTime = `${pad2(p.hh)}:${pad2(p.mm)}`;
+      return {
+        latinDate,
+        latinTime,
+        faDate: toFaDigits(latinDate),
+        faTime: toFaDigits(latinTime),
+        fileStamp: `${p.jy}-${pad2(p.jm)}-${pad2(p.jd)}`
+      };
+    }
+
+    function todayLatinShamsi() {
+      return formatParts(dateToJalaliParts(new Date())).latinDate;
+    }
+
+    function escHtml(s) {
+      return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function escAttr(s) { return String(s ?? '').replace(/"/g, '&quot;'); }
+
+    /* کپی ایمن به کلیپ‌بورد سازگار با iFrame و file:// */
+    function safeCopyText(text) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        ta.style.pointerEvents = 'none';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) return true;
+      } catch (e) { /* fallback */ }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch (e2) { /* ignore */ }
+      return false;
+    }
+
+    /* =========================================================================
+       ۲. ثابت‌ها و داده‌های استاندارد بالینی (شامل بخش‌های قلب و ۲۸ خطای هرگز)
+       ========================================================================= */
+    const STORAGE_KEY = 'HOSPITAL_SAFETY_REPORTS_V3';
+    const LEGACY_KEY = 'luxury_hospital_safety_v3';
+    const PREFS_KEY = 'HOSPITAL_SAFETY_PREFS_V3';
+    const BRIDGE_SYNC_KEY = 'CARDIAC_ERROR_BRIDGE_SYNC';
+
+    const THEME_META = {
+      obsidian: { name: 'ابسیدین طلایی' },
+      emerald: { name: 'کریستال زمردی' },
+      pearl: { name: 'مروارید روشن' }
+    };
+
+    const SHIFTS = ['صبح', 'عصر', 'شب'];
+
+    const WARDS = [
+      'CCU', 'Post-CCU', 'ICU قلب', 'جراحی قلب', 'بخش قلب', 'آنژیوگرافی/کت‌لب',
+      'اورژانس', 'ICU داخلی', 'داخلی', 'جراحی', 'اطفال', 'اتاق عمل',
+      'آزمایشگاه', 'رادیولوژی', 'داروخانه'
+    ];
+
+    const REPORTER_ROLES = [
+      'پرستار', 'پزشک', 'سوپروایزر', 'کارشناس اتاق عمل/کت‌لب',
+      'تکنسین آزمایشگاه', 'داروساز', 'ایمنی بیمار', 'ناشناس'
+    ];
+
+    const ERROR_CATEGORIES = [
+      {
+        id: 'medication',
+        title: 'خطای دارویی',
+        emoji: '💊',
+        subs: [
+          'دوز اشتباه', 'داروی اشتباه', 'بیمار اشتباه', 'زمان اشتباه',
+          'راه تجویز اشتباه', 'تداخل دارویی', 'اشتباه در رقیق‌سازی/تیتراسیون',
+          'عدم بررسی حساسیت دارویی', 'عدم ثبت یا ثبت تکراری دارو'
+        ]
+      },
+      {
+        id: 'falls_safety',
+        title: 'ایمنی بیمار و سقوط',
+        emoji: '🛡️',
+        subs: [
+          'سقوط از تخت', 'سقوط در سرویس/راهرو', 'ایجاد یا تشدید زخم فشاری',
+          'سوختگی/آسیب حرارتی', 'خروج غیرمجاز بیمار', 'آسیب حین جابه‌جایی'
+        ]
+      },
+      {
+        id: 'identification',
+        title: 'شناسایی بیمار',
+        emoji: '🪪',
+        subs: [
+          'نداشتن دستبند هویتی', 'دستبند هویتی اشتباه/ناخوانا',
+          'عدم تطبیق دو شناسه هویتی', 'جابه جایی پرونده یا تخت', 'تشابه اسمی بیماران'
+        ]
+      },
+      {
+        id: 'lines_pumps',
+        title: 'کاتتر/لوله/پمپ انفوزیون',
+        emoji: '💉',
+        subs: [
+          'خطای تنظیم سرعت پمپ انفوزیون', 'خروج ناخواسته لوله تراشه',
+          'کشیده شدن آنژیوکت/CVP/شیت شریانی', 'اکستراوازاسیون/نشت داروی پرخطر',
+          'انسداد یا قطع سوند فولی/درن', 'اتصال اشتباه لاین‌های وریدی'
+        ]
+      },
+      {
+        id: 'lab',
+        title: 'آزمایشگاه و پاراکلینیک',
+        emoji: '🧪',
+        subs: [
+          'لیبل اشتباه نمونه', 'همولیز/لخته شدن نمونه', 'مفقود شدن نمونه',
+          'تاخیر در گزارش مقادیر بحرانی', 'نمونه‌گیری از بیمار اشتباه', 'اشتباه در ثبت نتیجه آزمایش'
+        ]
+      },
+      {
+        id: 'blood',
+        title: 'خون و فرآورده‌های خونی',
+        emoji: '🩸',
+        subs: [
+          'اشتباه کراس‌مچ/گروه خونی', 'تزریق به بیمار اشتباه', 'واکنش ترانسفوزیون',
+          'نگهداری/ذوب نادرست کیسه خون', 'عدم چک دونفره فرآورده', 'تاخیر ارسال فرآورده بحرانی'
+        ]
+      },
+      {
+        id: 'equipment',
+        title: 'تجهیزات پزشکی و مانیتورینگ',
+        emoji: '📟',
+        subs: [
+          'خرابی مانیتور قلبی/تله‌متری', 'خرابی ونتیلاتور/پمپ سرنگ/شوک',
+          'خاموش یا نامناسب بودن آلارم مانیتور', 'اتمام شارژ/اکسیژن/لید ECG',
+          'عدم کالیبراسیون دستگاه', 'خطای کاربری تجهیزات'
+        ]
+      },
+      {
+        id: 'documentation',
+        title: 'مستندسازی و تحویل شیفت',
+        emoji: '📋',
+        subs: [
+          'تحویل شیفت ناقص (SBAR)', 'نقص ثبت گزارش پرستاری/DAR',
+          'عدم ثبت علائم حیاتی یا بیلان مایعات', 'خطای ثبت در HIS',
+          'نقص فرم رضایت آگاهانه', 'ناخوانایی دستور پزشک'
+        ]
+      },
+      {
+        id: 'infection',
+        title: 'عفونت و کنترل عفونت',
+        emoji: '🦠',
+        subs: [
+          'عدم رعایت بهداشت دست', 'نقض اصول ایزولاسیون', 'نیدل‌استیک پرسنل',
+          'آلودگی پک یا فیلد استریل', 'عفونت مرتبط با کاتتر/ونتیلاتور', 'دفع نادرست پسماند عفونی'
+        ]
+      },
+      {
+        id: 'procedure',
+        title: 'پروسیجر/آنژیوگرافی/جراحی',
+        emoji: '🫀',
+        subs: [
+          'نقص چک‌لیست ایمنی (Time-Out)', 'خونریزی یا هماتوم محل آنژیوگرافی',
+          'اشتباه شمارش گاز و ابزار', 'تاخیر غیرمجاز پروسیجر/عمل',
+          'عارضه بیهوشی یا سداسیون', 'خطای نمونه پاتولوژی'
+        ]
+      },
+      {
+        id: 'nutrition_npo',
+        title: 'تغذیه و NPO',
+        emoji: '🍽️',
+        subs: [
+          'عدم رعایت NPO پیش از آنژیو/جراحی', 'ارائه رژیم نامتناسب قلبی/دیابتی',
+          'خطای گاواژ یا تغذیه لوله‌ای', 'تاخیر غیرمجاز در شروع تغذیه', 'عدم ثبت وضعیت ناشتایی در تابلو'
+        ]
+      },
+      {
+        id: 'communication',
+        title: 'ارتباطات تیمی و اوردر',
+        emoji: '📞',
+        subs: [
+          'دستور شفاهی/تلفنی بدون Read-Back', 'تاخیر اطلاع‌رسانی بحران به پزشک',
+          'تاخیر پاسخ مشاوره تخصصی', 'ناهماهنگی انتقال بین‌بخشی', 'ابهام یا تعارض در اوردر درمانی'
+        ]
+      }
+    ];
+
+    const NCC_MERP = [
+      { code: 'A', title: 'شرایط مستعد خطا', desc: 'شرایطی که ظرفیت بروز خطا دارد (پیشگیری پیش از وقوع)', level: 'نزدیک به خطا', color: '#10b981' },
+      { code: 'B', title: 'نزدیک به خطا (Near Miss)', desc: 'خطا رخ داد اما پیش از رسیدن به بیمار متوقف شد', level: 'نزدیک به خطا', color: '#06b6d4' },
+      { code: 'C', title: 'بدون آسیب', desc: 'خطا به بیمار رسید اما هیچ آسیبی ایجاد نکرد', level: 'بدون آسیب', color: '#0ea5e9' },
+      { code: 'D', title: 'نیازمند پایش', desc: 'به بیمار رسید و برای اطمینان از ایمنی نیازمند پایش بود', level: 'نیازمند پایش', color: '#3b82f6' },
+      { code: 'E', title: 'آسیب موقت نیازمند مداخله', desc: 'موجب آسیب موقت شد و به مداخله درمانی نیاز پیدا کرد', level: 'آسیب‌دار', color: '#f59e0b' },
+      { code: 'F', title: 'بستری / طولانی‌شدن بستری', desc: 'منجر به بستری جدید یا افزایش مدت بستری گردید', level: 'آسیب‌دار', color: '#f97316' },
+      { code: 'G', title: 'آسیب دائمی', desc: 'موجب آسیب یا ناتوانی دائمی برای بیمار گردید', level: 'بحرانی', color: '#ef4444' },
+      { code: 'H', title: 'مداخله حیاتی نجات‌بخش', desc: 'نیازمند اقدام فوری نجات‌بخش (احیا/انتقال به ICU)', level: 'بحرانی', color: '#e11d48' },
+      { code: 'I', title: 'فوت بیمار', desc: 'خطا ممکن است در مرگ بیمار نقش داشته باشد (RCA فوری)', level: 'بحرانی', color: '#991b1b' }
+    ];
+
+    /* لیست کامل ۲۸ خطای هرگز (Never Events) استاندارد وزارت بهداشت در ۴ گروه */
+    const NEVER_EVENT_GROUPS = [
+      {
+        id: 'surgical',
+        title: 'جراحی و پروسیجر (۵ مورد)',
+        items: [
+          '۱. انجام عمل جراحی یا پروسیجر تهاجمی بر روی عضو اشتباه',
+          '۲. انجام عمل جراحی یا پروسیجر تهاجمی بر روی بیمار اشتباه',
+          '۳. انجام عمل جراحی یا پروسیجر اشتباه بر روی بیمار',
+          '۴. جا ماندن جسم خارجی (گاز، ابزار و...) پس از عمل جراحی یا پروسیجر',
+          '۵. مرگ حین عمل یا بلافاصله پس از آن در بیمار سالم (ASA کلاس ۱)'
+        ]
+      },
+      {
+        id: 'products',
+        title: 'دارو، خون و تجهیزات (۷ مورد)',
+        items: [
+          '۶. مرگ یا ناتوانی شدید ناشی از داروی آلوده یا تجهیزات غیراستریل',
+          '۷. مرگ یا ناتوانی شدید ناشی از عملکرد نادرست تجهیزات پزشکی',
+          '۸. مرگ یا ناتوانی شدید ناشی از آمبولی هوای درون‌عروقی',
+          '۹. مرگ یا ناتوانی شدید ناشی از خطای دارویی (دوز/دارو/راه اشتباه)',
+          '۱۰. مرگ یا ناتوانی شدید ناشی از واکنش همولیتیک تزریق خون ناسازگار',
+          '۱۱. مرگ یا ناتوانی شدید ناشی از افت قند خون (هیپوگلیسمی) در بیمارستان',
+          '۱۲. مرگ یا ناتوانی شدید ناشی از عدم درمان زردی شدید نوزاد (کرن‌ایکتروس)'
+        ]
+      },
+      {
+        id: 'care',
+        title: 'مراقبت و مدیریت بیمار (۹ مورد)',
+        items: [
+          '۱۳. تحویل نوزاد یا بیمار فاقد صلاحیت به فرد غیرمجاز',
+          '۱۴. مرگ یا ناتوانی شدید ناشی از فرار یا گم شدن بیمار',
+          '۱۵. خودکشی یا اقدام به خودکشی منجر به ناتوانی شدید در مرکز درمانی',
+          '۱۶. مرگ یا ناتوانی مادر در بارداری کم‌خطر',
+          '۱۷. زخم فشاری مرحله ۳ یا ۴ اکتسابی پس از پذیرش در بیمارستان',
+          '۱۸. تلقیح یا انتقال اسپرم/تخمک از اهداکننده اشتباه',
+          '۱۹. مرگ یا ناتوانی شدید ناشی از سقوط بیمار در مرکز درمانی',
+          '۲۰. مرگ یا ناتوانی شدید ناشی از دستکاری ستون فقرات',
+          '۲۱. مرگ یا ناتوانی شدید ناشی از عدم پیگیری نتیجه بحرانی آزمایش/پاتولوژی'
+        ]
+      },
+      {
+        id: 'environment',
+        title: 'محیطی، اکسیژن و حفاظتی (۷ مورد)',
+        items: [
+          '۲۲. مرگ یا ناتوانی شدید ناشی از شوک الکتریکی در مرکز درمانی',
+          '۲۳. رساندن گاز پزشکی اشتباه یا فاقد اکسیژن به بیمار',
+          '۲۴. سوختگی بیمار ناشی از هر منبع حرارتی/الکتروکوتر در مرکز درمانی',
+          '۲۵. مرگ یا ناتوانی شدید ناشی از استفاده از مهار فیزیکی یا نرده تخت',
+          '۲۶. ورود جسم فلزی به اتاق MRI منجر به آسیب یا مرگ',
+          '۲۷. مراقبت توسط فرد فاقد صلاحیت با جعل هویت پزشک/پرستار',
+          '۲۸. ربایش، تعرض جسمی یا خشونت منجر به مرگ/ناتوانی در بیمارستان'
+        ]
+      }
+    ];
+
+    const IPSG_GOALS = [
+      'IPSG 1: شناسایی صحیح بیمار',
+      'IPSG 2: بهبود ارتباطات مؤثر (SBAR/Read-Back)',
+      'IPSG 3: ایمنی داروهای پرخطر (High-Alert)',
+      'IPSG 4: اطمینان از جراحی و پروسیجر ایمن',
+      'IPSG 5: کاهش خطر عفونت‌های مرتبط با مراقبت',
+      'IPSG 6: کاهش خطر آسیب ناشی از سقوط'
+    ];
+
+    const ROOT_CAUSES = [
+      'حجم کار بالا',
+      'کمبود نیرو',
+      'تشابه اسمی/ظاهری دارو (LASA)',
+      'اختلال ارتباطی/تحویل شیفت',
+      'خستگی شیفت',
+      'خرابی تجهیز',
+      'عدم رعایت چک‌لیست',
+      'اورژانسی بودن شرایط',
+      'خطای HIS',
+      'نقص آموزش'
+    ];
+
+    const IMMEDIATE_ACTIONS = [
+      'توقف فوری دارو/مداخله',
+      'پایش دقیق علائم حیاتی و ECG',
+      'مداخله درمانی اصلاحی/آنتی‌دوت',
+      'قرنطینه دارو/تجهیز معیوب',
+      'ارزیابی آسیب و معاینه بالینی',
+      'نمونه‌گیری یا آزمایش مجدد',
+      'ایمن‌سازی تخت و محیط بیمار',
+      'ثبت دقیق در پرونده بالینی'
+    ];
+
+    const NOTIFICATIONS = [
+      'اطلاع به پزشک',
+      'سوپروایزر',
+      'سرپرستار',
+      'دفتر ایمنی بیمار',
+      'خانواده بیمار',
+      'ثبت در HIS'
+    ];
+
+    const PREVENTIVE_SUGGESTIONS = [
+      'برگزاری آموزش بازآموزی',
+      'اصلاح فرآیند و چک‌لیست',
+      'برچسب‌گذاری داروهای LASA',
+      'چک دونفره داروهای پرخطر',
+      'بازنگری چیدمان نیرو',
+      'سرویس و کالیبراسیون تجهیزات',
+      'بهبود تحویل شیفت SBAR'
+    ];
+
+    const QUICK_BEDS = ['تخت ۱', 'تخت ۲', 'تخت ۳', 'تخت ۴', 'تخت ۵', 'تخت ۶', 'تخت ۷', 'تخت ۸', 'تخت ۹', 'تخت ۱۰'];
+
+    /* =========================================================================
+       ۳. وضعیت مرکزی برنامه و پل ارتباطی CARDIAC_BRIDGE
+       ========================================================================= */
+    function detectShift() {
+      const h = new Date().getHours();
+      if (h >= 7 && h < 13) return 'صبح';
+      if (h >= 13 && h < 19) return 'عصر';
+      return 'شب';
+    }
+
+    const state = {
+      activeTab: 'form',
+      theme: 'obsidian',
+      pinWardShift: true,
+      pinnedWard: '',
+      pinnedShift: '',
+      customWards: [],
+      records: [],
+      editingId: null,
+      lastSavedId: null,
+      activeNeverGroup: 'surgical',
+      form: null,
+      filters: { critical: 'all', shift: 'all', severity: 'all', category: 'all', ward: 'all', query: '', sort: 'newest' },
+      filtersOpen: false,
+      activeDetailId: null,
+      confirmCb: null,
+      speedDialOpen: false,
+      recognition: null,
+      isRecording: false,
+      bridge: {
+        connected: false,
+        embedded: false,
+        fromApp: '',
+        hasOpener: false,
+        syncedShift: '',
+        syncedWard: '',
+        syncedPatient: '',
+        syncedMed: ''
+      }
+    };
+
+    function allWards() {
+      return [...WARDS, ...state.customWards.filter(w => !WARDS.includes(w))];
+    }
+
+    function createBlankForm(respectPin = true) {
+      const p = dateToJalaliParts(new Date());
+      return {
+        parts: p,
+        quickTime: 'now',
+        shift: (respectPin && state.pinWardShift && state.pinnedShift) ? state.pinnedShift : (state.bridge.syncedShift || detectShift()),
+        ward: (respectPin && state.pinWardShift && state.pinnedWard) ? state.pinnedWard : (state.bridge.syncedWard || ''),
+        reporterRole: '',
+        activeCatId: '',
+        selectedErrors: [],
+        severityCode: '',
+        isNeverEvent: false,
+        neverEvents: [],
+        ipsg: [],
+        rootCauses: [],
+        immediateActions: [],
+        notifications: [],
+        preventive: [],
+        patientContext: state.bridge.syncedPatient || '',
+        note: ''
+      };
+    }
+
+    function loadStorage() {
+      try {
+        let raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          // انتقال خودکار از کلید نسخه قبل در صورت وجود
+          const legacy = localStorage.getItem(LEGACY_KEY);
+          if (legacy) {
+            raw = legacy;
+            localStorage.setItem(STORAGE_KEY, legacy);
+          }
+        }
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) state.records = parsed;
+        }
+        const prefsRaw = localStorage.getItem(PREFS_KEY);
+        if (prefsRaw) {
+          const prefs = JSON.parse(prefsRaw);
+          if (prefs.theme && THEME_META[prefs.theme]) state.theme = prefs.theme;
+          if (typeof prefs.pinWardShift === 'boolean') state.pinWardShift = prefs.pinWardShift;
+          if (prefs.pinnedWard) state.pinnedWard = prefs.pinnedWard;
+          if (prefs.pinnedShift) state.pinnedShift = prefs.pinnedShift;
+        }
+      } catch (e) {
+        console.warn('Storage read warning:', e);
+      }
+    }
+
+    function saveRecords() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+      } catch (e) {
+        showToast('فضای ذخیره‌سازی مرورگر در دسترس نیست.', 'error');
+      }
+      CARDIAC_BRIDGE.syncSharedStorage();
+    }
+
+    function savePrefs() {
+      try {
+        localStorage.setItem(PREFS_KEY, JSON.stringify({
+          theme: state.theme,
+          pinWardShift: state.pinWardShift,
+          pinnedWard: state.pinnedWard,
+          pinnedShift: state.pinnedShift
+        }));
+      } catch (e) { /* ignore */ }
+    }
+
+    function nextReportCode(jy) {
+      const prefix = `HSP-${jy}-`;
+      let maxNum = 0;
+      state.records.forEach(r => {
+        if (r.code && r.code.startsWith(prefix)) {
+          const n = parseInt(r.code.slice(prefix.length), 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      });
+      return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+    }
+
+    function formatRecordSummary(r) {
+      const cat = (r.categories || []).join('/');
+      const subs = (r.selectedErrors || []).map(e => e.sub).slice(0, 2).join('، ');
+      const pat = r.patientContext ? ` | بیمار/تخت: ${r.patientContext}` : '';
+      const nev = r.isNeverEvent ? ' [خطای هرگز]' : '';
+      return `⚠️ [${r.code}/کد ${r.severityCode}${nev}] ${cat} - ${subs} (${r.ward}، شیفت ${r.shift}، ساعت ${r.time})${pat}`;
+    }
+
+    function computeBridgeStats() {
+      const today = todayLatinShamsi();
+      const totalCount = state.records.length;
+      const todayCount = state.records.filter(r => r.latinDate === today || toEnDigits(r.shamsiDate) === today).length;
+      const criticalCount = state.records.filter(r => r.isNeverEvent || ['G', 'H', 'I'].includes(r.severityCode)).length;
+      const recentSummaries = state.records.slice(0, 6).map(formatRecordSummary);
+      return {
+        totalCount,
+        todayCount,
+        criticalCount,
+        lastSummary: recentSummaries[0] || '',
+        recentSummaries
+      };
+    }
+
+    /* =========================================================================
+       ۴. پل ارتباطی دوطرفه با سیستم پرستاری قلب (CARDIAC_BRIDGE)
+       ========================================================================= */
+    const CARDIAC_BRIDGE = {
+      parseParams() {
+        const params = {};
+        const readStr = (str) => {
+          if (!str) return;
+          const cleaned = str.replace(/^[?#]+/, '');
+          if (!cleaned) return;
+          const sp = new URLSearchParams(cleaned);
+          sp.forEach((val, key) => {
+            if (val !== null && val !== undefined && val !== '') {
+              params[key.toLowerCase()] = val;
+            }
+          });
+        };
+        readStr(window.location.search);
+        if (window.location.hash && window.location.hash.includes('=')) {
+          readStr(window.location.hash.replace(/^#\/?\??/, ''));
+        }
+        return params;
+      },
+
+      init() {
+        const params = this.parseParams();
+        let isInIframe = false;
+        let hasOpener = false;
+        try { isInIframe = (window.parent && window.parent !== window); } catch (e) { isInIframe = true; }
+        try { hasOpener = Boolean(window.opener && !window.opener.closed); } catch (e) { hasOpener = false; }
+
+        state.bridge.embedded = params.embedded === '1' || params.embedded === 'true' || isInIframe;
+        state.bridge.fromApp = params.from || '';
+        state.bridge.hasOpener = hasOpener;
+        state.bridge.connected = (params.from === 'cardiac_app') || isInIframe || hasOpener;
+
+        if (state.bridge.embedded) {
+          document.body.classList.add('embedded-mode');
+          document.documentElement.classList.add('embedded-mode');
+        }
+
+        // اعمال پارامترهای اولیه دریافتی از URL / Hash
+        const hasContextParams = Boolean(params.shift || params.ward || params.patient || params.med || params.note || params.cat);
+        if (hasContextParams) {
+          this.applyContext(params, false);
+        }
+
+        // هماهنگی اولیه تم از پارامتر URL در صورت وجود
+        if (params.theme) {
+          const mappedInitTheme = this.mapHostTheme(params.theme);
+          if (mappedInitTheme) state.theme = mappedInitTheme;
+        }
+
+        this.renderBanner();
+        this.syncSharedStorage();
+        this.broadcast({ type: 'ERROR_APP_READY', source: 'error_app' });
+        this.broadcastStats();
+
+        // شنونده دوطرفه postMessage
+        window.addEventListener('message', (event) => {
+          const data = event.data;
+          if (!data || typeof data !== 'object' || !data.type) return;
+
+          if (data.type === 'CARDIAC_SYNC_THEME') {
+            const mapped = this.mapHostTheme(data.theme || data.v12Theme);
+            if (mapped) applyTheme(mapped, true);
+          } else if (data.type === 'CARDIAC_SYNC_CONTEXT') {
+            state.bridge.connected = true;
+            const payload = data.payload && typeof data.payload === 'object' ? data.payload : data;
+            this.applyContext(payload, true);
+            this.renderBanner();
+            showToast('🔗 اطلاعات شیفت از اپ پرستاری قلب همگام‌سازی شد', 'info');
+          } else if (data.type === 'CARDIAC_REQUEST_STATS') {
+            state.bridge.connected = true;
+            this.renderBanner();
+            const stats = computeBridgeStats();
+            const payload = {
+              total: stats.totalCount,
+              critical: stats.criticalCount,
+              today: stats.todayCount,
+              ...stats
+            };
+            const msg = { type: 'ERROR_STATS_RESPONSE', payload, ...payload };
+            try {
+              if (event.source && typeof event.source.postMessage === 'function') {
+                event.source.postMessage(msg, '*');
+              }
+            } catch (e) { /* ignore */ }
+            this.broadcast(msg);
+          } else if (data.type === 'CARDIAC_TRIGGER_EXCEL') {
+            exportExcel();
+          }
+        });
+      },
+
+      applyContext(ctx, shouldRender = true) {
+        if (!state.form) return;
+
+        // ۱. شیفت
+        if (ctx.shift) {
+          const sh = String(ctx.shift).trim();
+          const matchedShift = SHIFTS.find(s => sh.includes(s));
+          if (matchedShift) {
+            state.form.shift = matchedShift;
+            state.bridge.syncedShift = matchedShift;
+          }
+        }
+
+        // ۲. بخش
+        if (ctx.ward) {
+          const rawWard = String(ctx.ward).trim();
+          let matchedWard = allWards().find(w => w.toLowerCase() === rawWard.toLowerCase())
+            || allWards().find(w => rawWard.toLowerCase().includes(w.toLowerCase()) || w.toLowerCase().includes(rawWard.toLowerCase()));
+          if (!matchedWard && rawWard) {
+            state.customWards.push(rawWard);
+            matchedWard = rawWard;
+          }
+          if (matchedWard) {
+            state.form.ward = matchedWard;
+            state.bridge.syncedWard = matchedWard;
+          }
+        }
+
+        // ۳. بیمار / تخت
+        if (ctx.patient !== undefined && String(ctx.patient).trim() !== '') {
+          const pat = String(ctx.patient).trim();
+          state.form.patientContext = pat;
+          state.bridge.syncedPatient = pat;
+        }
+
+        // ۴. دارو (از کتابخانه دارو یا ماشین‌حساب دوز)
+        if (ctx.med) {
+          const med = String(ctx.med).trim();
+          state.bridge.syncedMed = med;
+          state.form.activeCatId = 'medication';
+          const medLine = `داروی مرتبط: ${med}`;
+          if (!state.form.note.includes(medLine)) {
+            state.form.note = state.form.note ? `${state.form.note}\n${medLine}` : medLine;
+          }
+        }
+
+        // ۵. دسته خطای پیش‌انتخاب‌شده
+        if (ctx.cat) {
+          const rawCat = String(ctx.cat).trim().toLowerCase();
+          const foundCat = ERROR_CATEGORIES.find(c =>
+            c.id.toLowerCase() === rawCat || c.title.toLowerCase().includes(rawCat)
+          );
+          if (foundCat) state.form.activeCatId = foundCat.id;
+        }
+
+        // ۶. یادداشت
+        if (ctx.note) {
+          const n = String(ctx.note).trim();
+          if (n && !state.form.note.includes(n)) {
+            state.form.note = state.form.note ? `${state.form.note}\n${n}` : n;
+          }
+        }
+
+        if (shouldRender) {
+          renderFullForm();
+        }
+      },
+
+      renderBanner() {
+        const banner = document.getElementById('cardiacBridgeBanner');
+        const pillBox = document.getElementById('bridgeSyncedPills');
+        const retBtn = document.getElementById('bridgeReturnOpenerBtn');
+        const exportStatus = document.getElementById('bridgeStatusPill');
+
+        if (state.bridge.connected) {
+          banner.classList.remove('hidden');
+          const pills = [];
+          const sh = state.form?.shift || state.bridge.syncedShift;
+          const wd = state.form?.ward || state.bridge.syncedWard;
+          const pt = state.form?.patientContext || state.bridge.syncedPatient;
+          if (wd) pills.push(`<span class="px-2 py-0.5 rounded-lg glass-subpanel text-main font-bold">🏥 ${escHtml(wd)}</span>`);
+          if (sh) pills.push(`<span class="px-2 py-0.5 rounded-lg glass-subpanel text-main font-bold">🕒 شیفت ${escHtml(sh)}</span>`);
+          if (pt) pills.push(`<span class="px-2 py-0.5 rounded-lg bg-amber-400/20 text-amber-200 border border-amber-400/35 font-bold">🛏 ${escHtml(pt)}</span>`);
+          pillBox.innerHTML = pills.join('');
+
+          retBtn.classList.toggle('hidden', !state.bridge.hasOpener);
+          if (exportStatus) {
+            exportStatus.textContent = state.bridge.embedded ? 'متصل (حالت تعبیه‌شده درون اپ قلب)' : 'متصل به سیستم پرستاری قلب';
+            exportStatus.className = 'px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-black';
+          }
+        } else {
+          banner.classList.add('hidden');
+          if (exportStatus) {
+            exportStatus.textContent = 'حالت مستقل (آماده اتصال خودکار)';
+            exportStatus.className = 'px-3 py-1 rounded-xl glass-subpanel text-xs font-bold text-sub';
+          }
+        }
+      },
+
+      broadcast(payload) {
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(payload, '*');
+          }
+        } catch (e) { /* ignore cross-origin */ }
+        try {
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(payload, '*');
+          }
+        } catch (e) { /* ignore */ }
+      },
+
+      mapHostTheme(t) {
+        const s = String(t || '').toLowerCase();
+        if (!s) return '';
+        if (s.includes('pearl') || s.includes('light')) return 'pearl';
+        if (s.includes('emerald')) return 'emerald';
+        if (s.includes('obsidian') || s.includes('sapphire') || s.includes('dark')) return 'obsidian';
+        return THEME_META[s] ? s : '';
+      },
+
+      syncSharedStorage() {
+        try {
+          const stats = computeBridgeStats();
+          const lastRec = state.records[0] || null;
+          localStorage.setItem(BRIDGE_SYNC_KEY, JSON.stringify({
+            updatedAt: new Date().toISOString(),
+            total: stats.totalCount,
+            critical: stats.criticalCount,
+            today: stats.todayCount,
+            summaryText: stats.lastSummary,
+            lastReport: lastRec ? { ...lastRec, summaryText: stats.lastSummary } : null,
+            ...stats
+          }));
+        } catch (e) { /* ignore */ }
+      },
+
+      broadcastStats() {
+        const stats = computeBridgeStats();
+        const payload = {
+          total: stats.totalCount,
+          critical: stats.criticalCount,
+          today: stats.todayCount,
+          ...stats
+        };
+        this.broadcast({ type: 'ERROR_STATS_RESPONSE', payload, ...payload });
+      },
+
+      broadcastSaved(record) {
+        const stats = computeBridgeStats();
+        const summaryText = formatRecordSummary(record);
+        const enriched = { ...record, summaryText, text: summaryText };
+        this.broadcast({
+          type: 'ERROR_REPORT_SAVED',
+          report: enriched,
+          payload: { report: enriched, total: stats.totalCount, critical: stats.criticalCount, summaryText },
+          summaryText,
+          total: stats.totalCount,
+          critical: stats.criticalCount,
+          totalCount: stats.totalCount,
+          todayCount: stats.todayCount,
+          criticalCount: stats.criticalCount
+        });
+      },
+
+      sendToChallenges(recordOrText) {
+        let text = '';
+        let report = null;
+        if (typeof recordOrText === 'string') {
+          text = recordOrText;
+        } else if (recordOrText && typeof recordOrText === 'object') {
+          report = recordOrText;
+          text = formatRecordSummary(recordOrText);
+        } else if (state.records.length > 0) {
+          report = state.records[0];
+          text = formatRecordSummary(state.records[0]);
+        } else {
+          showToast('ابتدا یک گزارش ثبت کنید تا خلاصه آن ارسال شود.', 'error');
+          return;
+        }
+
+        const challengePayload = {
+          id: report ? report.id : ('ch_' + Date.now()),
+          text,
+          summaryText: text,
+          report,
+          ward: report?.ward || state.form?.ward || '',
+          shift: report?.shift || state.form?.shift || '',
+          severity: report?.severityCode || '',
+          category: report ? (report.categories || []).join(' / ') : ''
+        };
+        this.broadcast({
+          type: 'SEND_TO_CHALLENGES',
+          payload: challengePayload,
+          ...challengePayload
+        });
+        const copied = safeCopyText(text);
+        if (state.bridge.connected) {
+          showToast('📤 خلاصه خطا به چالش‌های شیفت اپ پرستاری ارسال (و در کلیپ‌بورد کپی) شد.', 'success');
+        } else if (copied) {
+          showToast('📋 خلاصه خطا آماده ارسال در کلیپ‌بورد کپی شد (در چالش‌های شیفت Paste کنید).', 'success');
+        } else {
+          showToast('خلاصه خطا ارسال شد.', 'info');
+        }
+      },
+
+      returnToOpener() {
+        try {
+          if (window.opener && !window.opener.closed) {
+            window.opener.focus();
+            window.close();
+          }
+        } catch (e) { /* ignore */ }
+      }
+    };
+    window.CARDIAC_BRIDGE = CARDIAC_BRIDGE;
+
+    /* =========================================================================
+       ۵. مدیریت تم‌ها، منوی همبرگری، داک شناور و Speed-Dial
+       ========================================================================= */
+    function applyTheme(themeKey, silent = false) {
+      if (!THEME_META[themeKey]) return;
+      state.theme = themeKey;
+      document.documentElement.setAttribute('data-theme', themeKey);
+      const lbl = document.getElementById('headerThemeName');
+      if (lbl) lbl.textContent = THEME_META[themeKey].name;
+
+      document.querySelectorAll('.theme-opt').forEach(btn => {
+        const active = btn.dataset.themePick === themeKey;
+        btn.classList.toggle('is-active', active);
+        const chk = btn.querySelector('.theme-check');
+        if (chk) chk.textContent = active ? 'فعال ✓' : '';
+      });
+      if (!silent) savePrefs();
+    }
+
+    function cycleTheme() {
+      const order = ['obsidian', 'emerald', 'pearl'];
+      const next = order[(order.indexOf(state.theme) + 1) % order.length];
+      applyTheme(next);
+      showToast(`تم «${THEME_META[next].name}» فعال شد.`, 'info');
+    }
+
+    function openDrawer() {
+      document.getElementById('hamburgerBackdrop').classList.remove('hidden');
+      document.getElementById('hamburgerDrawer').classList.add('open');
+      updateDrawerPinText();
+    }
+
+    function closeDrawer() {
+      document.getElementById('hamburgerBackdrop').classList.add('hidden');
+      document.getElementById('hamburgerDrawer').classList.remove('open');
+    }
+
+    function updateDrawerPinText() {
+      const el = document.getElementById('drawerPinStatus');
+      if (state.pinWardShift && (state.pinnedWard || state.pinnedShift)) {
+        el.textContent = `${state.pinnedWard || 'بدون بخش'} • شیفت ${state.pinnedShift || 'خودکار'}`;
+      } else {
+        el.textContent = 'پین غیرفعال / تنظیم نشده';
+      }
+    }
+
+    function toggleSpeedDial(forceState) {
+      state.speedDialOpen = typeof forceState === 'boolean' ? forceState : !state.speedDialOpen;
+      document.getElementById('speedDialWrap').classList.toggle('speed-dial-open', state.speedDialOpen);
+      if (!state.speedDialOpen) {
+        document.getElementById('sectionJumperPopover').classList.add('hidden');
+      }
+    }
+
+    function closeAllFloatingMenus() {
+      toggleSpeedDial(false);
+      const jmp = document.getElementById('sectionJumperPopover');
+      if (jmp) jmp.classList.add('hidden');
+      closeDrawer();
+    }
+
+    function switchTab(tab) {
+      if (!document.getElementById(`view-${tab}`)) return;
+      state.activeTab = tab;
+
+      // بستن کامل تمام منوهای شناور، کشو و بنرها هنگام تغییر تب
+      closeAllFloatingMenus();
+      closeDetail();
+      closeConfirm();
+
+      document.querySelectorAll('.view-panel').forEach(v => v.classList.add('hidden'));
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+
+      // نوار HUD و بنر پس‌از-ثبت فقط در تب ثبت گزارش نمایش داده می‌شوند
+      const hud = document.getElementById('floatingStatusHud');
+      if (hud) hud.classList.toggle('hidden', tab !== 'form');
+      if (tab !== 'form') {
+        const psb = document.getElementById('postSaveBanner');
+        if (psb) psb.classList.add('hidden');
+      }
+
+      document.querySelectorAll('.dock-btn').forEach(btn => {
+        const active = btn.dataset.dockTab === tab;
+        btn.classList.toggle('btn-luxury-primary', active);
+        btn.classList.toggle('text-sub', !active);
+      });
+
+      document.querySelectorAll('.drawer-nav-btn').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.drawerTab === tab);
+      });
+
+      if (tab === 'archive') renderArchive();
+      if (tab === 'analytics') renderAnalytics();
+      if (tab === 'export') updateExportButtons();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* =========================================================================
+       ۶. سیستم اعلان‌های Toast و مودال تایید
+       ========================================================================= */
+    function showToast(msg, type = 'success') {
+      const box = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      const border = type === 'error' ? 'border-rose-500' : (type === 'info' ? 'border-sky-400' : 'border-emerald-400');
+      const icon = type === 'error' ? '⚠️' : (type === 'info' ? '✨' : '✅');
+      el.className = `pointer-events-auto glass-card-strong rounded-2xl px-4 py-3 border-r-4 ${border} flex items-center gap-2.5 text-xs sm:text-sm font-bold text-main transition-all duration-300 -translate-y-2 opacity-0`;
+      el.innerHTML = `<span>${icon}</span><span class="leading-snug">${escHtml(msg)}</span>`;
+      box.appendChild(el);
+      requestAnimationFrame(() => el.classList.remove('-translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        el.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => el.remove(), 300);
+      }, 3400);
+    }
+
+    function openConfirm(title, message, cb) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      state.confirmCb = cb;
+      const m = document.getElementById('confirmModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeConfirm() {
+      const m = document.getElementById('confirmModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+      state.confirmCb = null;
+    }
+
+    /* =========================================================================
+       ۷. رندر ۶ بخش فرم کلیکی و HUD شناور
+       ========================================================================= */
+    function toggleArr(arr, val) {
+      const idx = arr.indexOf(val);
+      if (idx > -1) arr.splice(idx, 1);
+      else arr.push(val);
+    }
+
+    function updateTimeReadout() {
+      const fmt = formatParts(state.form.parts);
+      document.getElementById('displayShamsiDate').textContent = fmt.faDate;
+      document.getElementById('displayShamsiTime').textContent = fmt.faTime;
+    }
+
+    function stepShamsiPart(field, delta) {
+      state.form.quickTime = 'custom';
+      const p = state.form.parts;
+      if (field === 'jy') {
+        p.jy = Math.max(1395, Math.min(1430, p.jy + delta));
+        p.jd = Math.min(p.jd, jalaliMonthLength(p.jy, p.jm));
+      } else if (field === 'jm') {
+        p.jm += delta;
+        if (p.jm > 12) { p.jm = 1; p.jy += 1; }
+        if (p.jm < 1) { p.jm = 12; p.jy -= 1; }
+        p.jd = Math.min(p.jd, jalaliMonthLength(p.jy, p.jm));
+      } else if (field === 'jd') {
+        p.jd += delta;
+        const maxD = jalaliMonthLength(p.jy, p.jm);
+        if (p.jd > maxD) {
+          p.jd = 1;
+          stepShamsiPart('jm', 1);
+          return;
+        }
+        if (p.jd < 1) {
+          p.jm -= 1;
+          if (p.jm < 1) { p.jm = 12; p.jy -= 1; }
+          p.jd = jalaliMonthLength(p.jy, p.jm);
+        }
+      } else if (field === 'hh') {
+        p.hh = (p.hh + delta + 24) % 24;
+      } else if (field === 'mm') {
+        p.mm = (p.mm + delta + 60) % 60;
+      }
+      renderQuickTimeButtons();
+      updateTimeReadout();
+    }
+
+    function applyQuickTime(mode) {
+      state.form.quickTime = mode;
+      const d = new Date();
+      if (mode === 'minus30m') d.setMinutes(d.getMinutes() - 30);
+      if (mode === 'prevShift') d.setHours(d.getHours() - 6);
+      state.form.parts = dateToJalaliParts(d);
+      renderQuickTimeButtons();
+      updateTimeReadout();
+    }
+
+    function renderQuickTimeButtons() {
+      const items = [
+        { id: 'now', label: 'همین الان' },
+        { id: 'minus30m', label: '۳۰ دقیقه قبل' },
+        { id: 'prevShift', label: 'شیفت قبل' }
+      ];
+      const wrap = document.getElementById('quickTimeBtns');
+      wrap.innerHTML = items.map(it => `
+        <button type="button" data-qt="${it.id}" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold lux-chip ${state.form.quickTime === it.id ? 'is-active' : ''}">
+          ${it.label}
+        </button>
+      `).join('');
+      wrap.querySelectorAll('button').forEach(b => b.addEventListener('click', () => applyQuickTime(b.dataset.qt)));
+    }
+
+    function syncPatientBadgeUI() {
+      const val = (state.form.patientContext || '').trim();
+      const wrap = document.getElementById('sec1PatientBadgeWrap');
+      const txt = document.getElementById('sec1PatientText');
+      const inp = document.getElementById('patientContextInput');
+      if (inp && inp.value !== state.form.patientContext) inp.value = state.form.patientContext;
+
+      if (val) {
+        wrap.classList.remove('hidden');
+        txt.textContent = val;
+      } else {
+        wrap.classList.add('hidden');
+      }
+      CARDIAC_BRIDGE.renderBanner();
+    }
+
+    function renderSec1() {
+      renderQuickTimeButtons();
+      updateTimeReadout();
+      syncPatientBadgeUI();
+      document.getElementById('pinWardShiftToggle').checked = state.pinWardShift;
+
+      // شیفت‌ها
+      const shiftEl = document.getElementById('shiftChips');
+      shiftEl.innerHTML = SHIFTS.map(sh => `
+        <button type="button" data-sh="${escAttr(sh)}" class="py-2.5 px-2.5 rounded-xl text-xs font-extrabold lux-chip ${state.form.shift === sh ? 'is-active' : ''}">
+          ${state.form.shift === sh ? '✓ ' : ''}${sh}
+        </button>
+      `).join('');
+      shiftEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.form.shift = b.dataset.sh;
+        if (state.pinWardShift) { state.pinnedShift = state.form.shift; savePrefs(); }
+        clearHighlight('shiftFieldWrap');
+        renderSec1();
+        updateHud();
+      }));
+
+      // نقش گزارش‌دهنده
+      const roleEl = document.getElementById('reporterRoleChips');
+      roleEl.innerHTML = REPORTER_ROLES.map(r => `
+        <button type="button" data-role="${escAttr(r)}" class="px-3 py-1.5 rounded-xl text-[11px] font-bold lux-chip ${state.form.reporterRole === r ? 'is-active' : ''}">
+          ${r}
+        </button>
+      `).join('');
+      roleEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.form.reporterRole = state.form.reporterRole === b.dataset.role ? '' : b.dataset.role;
+        renderSec1();
+      }));
+
+      // بخش‌ها
+      const wardEl = document.getElementById('wardChips');
+      wardEl.innerHTML = allWards().map(w => `
+        <button type="button" data-w="${escAttr(w)}" class="py-2.5 px-2.5 rounded-xl text-xs font-bold lux-chip truncate ${state.form.ward === w ? 'is-active' : ''}">
+          ${state.form.ward === w ? '✓ ' : ''}${escHtml(w)}
+        </button>
+      `).join('');
+      wardEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.form.ward = b.dataset.w;
+        if (state.pinWardShift) { state.pinnedWard = state.form.ward; savePrefs(); }
+        clearHighlight('wardFieldWrap');
+        renderSec1();
+        updateHud();
+      }));
+    }
+
+    function renderSec2() {
+      const count = state.form.selectedErrors.length;
+      document.getElementById('sec2Counter').textContent = `${toFaDigits(count)} مورد انتخاب شده`;
+
+      const bar = document.getElementById('selectedErrorsBar');
+      const tags = document.getElementById('selectedErrorsTags');
+      if (count > 0) {
+        bar.classList.remove('hidden');
+        tags.innerHTML = state.form.selectedErrors.map((e, i) => `
+          <button type="button" data-rm-err="${i}" class="px-3 py-1.5 rounded-xl btn-luxury-primary text-xs font-extrabold inline-flex items-center gap-1.5">
+            <span>${escHtml(e.catTitle)}: ${escHtml(e.sub)}</span><span class="opacity-70">✕</span>
+          </button>
+        `).join('');
+        tags.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+          state.form.selectedErrors.splice(Number(b.dataset.rmErr), 1);
+          renderSec2();
+          updateHud();
+        }));
+      } else {
+        bar.classList.add('hidden');
+      }
+
+      const grid = document.getElementById('categoriesGrid');
+      grid.innerHTML = ERROR_CATEGORIES.map(cat => {
+        const picked = state.form.selectedErrors.filter(e => e.catId === cat.id).length;
+        const active = state.form.activeCatId === cat.id;
+        return `
+          <button type="button" data-cat="${cat.id}"
+            class="relative rounded-2xl p-3.5 text-center flex flex-col items-center justify-center gap-2 lux-chip glass-hover ${active ? 'is-active' : ''}"
+            style="${!active && picked > 0 ? 'border-color: var(--glass-border-strong);' : ''}">
+            ${picked > 0 ? `<span class="absolute top-2 left-2 min-w-[1.35rem] h-5 px-1 rounded-full bg-emerald-500 text-slate-950 text-[11px] font-black flex items-center justify-center">${toFaDigits(picked)}</span>` : ''}
+            <span class="text-2xl leading-none">${cat.emoji}</span>
+            <span class="text-xs font-extrabold leading-snug">${cat.title}</span>
+          </button>
+        `;
+      }).join('');
+      grid.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.form.activeCatId = b.dataset.cat;
+        clearHighlight('form-sec-2');
+        renderSec2();
+        document.getElementById('subErrorsDrawer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }));
+
+      const drawer = document.getElementById('subErrorsDrawer');
+      const activeCat = ERROR_CATEGORIES.find(c => c.id === state.form.activeCatId);
+      if (activeCat) {
+        drawer.classList.remove('hidden');
+        document.getElementById('activeCatTitle').textContent = `«${activeCat.title}»`;
+        const subBox = document.getElementById('subErrorsChips');
+        subBox.innerHTML = activeCat.subs.map(sub => {
+          const picked = state.form.selectedErrors.some(e => e.catId === activeCat.id && e.sub === sub);
+          return `
+            <button type="button" data-sub="${escAttr(sub)}" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold lux-chip ${picked ? 'is-active' : ''}">
+              ${picked ? '✓ ' : ''}${sub}
+            </button>
+          `;
+        }).join('');
+        subBox.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+          const sub = b.dataset.sub;
+          const idx = state.form.selectedErrors.findIndex(e => e.catId === activeCat.id && e.sub === sub);
+          if (idx > -1) state.form.selectedErrors.splice(idx, 1);
+          else state.form.selectedErrors.push({ catId: activeCat.id, catTitle: activeCat.title, sub });
+          clearHighlight('form-sec-2');
+          renderSec2();
+          updateHud();
+        }));
+      } else {
+        drawer.classList.add('hidden');
+      }
+    }
+
+    function renderSec3() {
+      const sevGrid = document.getElementById('severityGrid');
+      sevGrid.innerHTML = NCC_MERP.map(s => {
+        const active = state.form.severityCode === s.code;
+        return `
+          <button type="button" data-sev="${s.code}"
+            class="rounded-2xl p-3.5 text-right flex items-start gap-3 transition active:scale-[0.98]"
+            style="background: ${active ? s.color : 'var(--chip-bg)'}; color: ${active ? '#ffffff' : 'var(--text-primary)'}; border: 1.5px solid ${active ? s.color : s.color + '55'}; box-shadow: ${active ? '0 0 22px ' + s.color + '66' : 'none'};">
+            <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
+              style="background: ${active ? 'rgba(255,255,255,0.22)' : s.color + '25'}; color: ${active ? '#ffffff' : s.color};">
+              ${s.code}
+            </span>
+            <div class="min-w-0">
+              <div class="text-xs font-black leading-snug">${s.title}</div>
+              <div class="text-[11px] mt-0.5 leading-relaxed" style="opacity: ${active ? '0.92' : '0.72'};">${s.desc}</div>
+            </div>
+          </button>
+        `;
+      }).join('');
+      sevGrid.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.form.severityCode = b.dataset.sev;
+        clearHighlight('severityFieldWrap');
+        renderSec3();
+        updateHud();
+      }));
+
+      // کلید ۲۸ خطای هرگز
+      const nBtn = document.getElementById('neverEventToggleBtn');
+      const nWrap = document.getElementById('neverEventListWrap');
+      if (state.form.isNeverEvent) {
+        nBtn.textContent = `⚠ بله — خطای هرگز (${toFaDigits(state.form.neverEvents.length)} مورد)`;
+        nBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-black bg-rose-600 text-white border border-rose-400 shadow-lg shadow-rose-600/35 transition active:scale-95';
+        nWrap.classList.remove('hidden');
+      } else {
+        nBtn.textContent = 'خیر (خطای عادی)';
+        nBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold lux-chip transition active:scale-95';
+        nWrap.classList.add('hidden');
+      }
+
+      // تب‌های ۴گانه برای ۲۸ خطای هرگز
+      const tabsEl = document.getElementById('neverEventGroupTabs');
+      tabsEl.innerHTML = NEVER_EVENT_GROUPS.map(g => {
+        const pickedInGroup = g.items.filter(it => state.form.neverEvents.includes(it)).length;
+        const active = state.activeNeverGroup === g.id;
+        return `
+          <button type="button" data-ng="${g.id}" class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition ${
+            active ? 'bg-rose-600 text-white shadow' : 'lux-chip'
+          }">
+            ${g.title}${pickedInGroup ? ` (${toFaDigits(pickedInGroup)})` : ''}
+          </button>
+        `;
+      }).join('');
+      tabsEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.activeNeverGroup = b.dataset.ng;
+        renderSec3();
+      }));
+
+      const activeGroup = NEVER_EVENT_GROUPS.find(g => g.id === state.activeNeverGroup) || NEVER_EVENT_GROUPS[0];
+      const nChips = document.getElementById('neverEventChips');
+      nChips.innerHTML = activeGroup.items.map(ev => {
+        const picked = state.form.neverEvents.includes(ev);
+        return `
+          <button type="button" data-nev="${escAttr(ev)}"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold text-right border transition active:scale-95 ${
+              picked ? 'bg-rose-600 text-white border-rose-400 shadow-md' : 'lux-chip'
+            }">
+            ${picked ? '✓ ' : ''}${ev}
+          </button>
+        `;
+      }).join('');
+      nChips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        toggleArr(state.form.neverEvents, b.dataset.nev);
+        renderSec3();
+      }));
+
+      // اهداف IPSG
+      const ipsgBox = document.getElementById('ipsgChips');
+      ipsgBox.innerHTML = IPSG_GOALS.map(g => {
+        const picked = state.form.ipsg.includes(g);
+        return `
+          <button type="button" data-ipsg="${escAttr(g)}" class="px-3.5 py-2.5 rounded-xl text-xs font-bold text-right lux-chip ${picked ? 'is-active' : ''}">
+            ${picked ? '✓ ' : ''}${g}
+          </button>
+        `;
+      }).join('');
+      ipsgBox.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        toggleArr(state.form.ipsg, b.dataset.ipsg);
+        renderSec3();
+      }));
+    }
+
+    function renderSec4to6() {
+      const renderChips = (id, list, selected, onClick) => {
+        const el = document.getElementById(id);
+        el.innerHTML = list.map(item => {
+          const active = selected.includes(item);
+          return `
+            <button type="button" data-v="${escAttr(item)}" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold lux-chip ${active ? 'is-active' : ''}">
+              ${active ? '✓ ' : ''}${item}
+            </button>
+          `;
+        }).join('');
+        el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => onClick(b.dataset.v)));
+      };
+
+      renderChips('rootCauseChips', ROOT_CAUSES, state.form.rootCauses, v => {
+        toggleArr(state.form.rootCauses, v);
+        renderSec4to6();
+      });
+      document.getElementById('sec4Counter').textContent = `${toFaDigits(state.form.rootCauses.length)} مورد`;
+
+      renderChips('immediateActionChips', IMMEDIATE_ACTIONS, state.form.immediateActions, v => {
+        toggleArr(state.form.immediateActions, v);
+        renderSec4to6();
+      });
+      renderChips('notificationChips', NOTIFICATIONS, state.form.notifications, v => {
+        toggleArr(state.form.notifications, v);
+        renderSec4to6();
+      });
+      document.getElementById('sec5Counter').textContent = `${toFaDigits(state.form.immediateActions.length + state.form.notifications.length)} مورد`;
+
+      renderChips('preventiveChips', PREVENTIVE_SUGGESTIONS, state.form.preventive, v => {
+        toggleArr(state.form.preventive, v);
+        renderSec4to6();
+      });
+
+      // چیپ‌های سریع شماره تخت
+      const bedBox = document.getElementById('quickBedChips');
+      bedBox.innerHTML = QUICK_BEDS.map(b => `
+        <button type="button" data-bed="${escAttr(b)}" class="px-2.5 py-1 rounded-lg text-[11px] font-bold lux-chip ${state.form.patientContext === b ? 'is-active' : ''}">
+          ${b}
+        </button>
+      `).join('');
+      bedBox.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+        state.form.patientContext = btn.dataset.bed;
+        syncPatientBadgeUI();
+        renderSec4to6();
+      }));
+    }
+
+    function updateHud() {
+      const checks = [
+        { label: 'شیفت', ok: Boolean(state.form.shift), val: state.form.shift },
+        { label: 'بخش', ok: Boolean(state.form.ward), val: state.form.ward },
+        { label: 'خطا', ok: state.form.selectedErrors.length > 0, val: state.form.selectedErrors[0]?.catTitle },
+        { label: 'شدت', ok: Boolean(state.form.severityCode), val: state.form.severityCode ? `کد ${state.form.severityCode}` : '' }
+      ];
+      const done = checks.filter(c => c.ok).length;
+      const pct = Math.round((done / checks.length) * 100);
+
+      document.getElementById('hudProgressBar').style.width = `${pct}%`;
+      document.getElementById('hudPercentText').textContent = `${toFaDigits(pct)}٪`;
+      const dot = document.getElementById('hudDot');
+      const txt = document.getElementById('hudStatusText');
+      const hudCard = document.getElementById('floatingHudCard');
+      if (hudCard) hudCard.classList.toggle('edit-hud-active', Boolean(state.editingId));
+      if (state.editingId) {
+        const editRec = state.records.find(x => String(x.id) === String(state.editingId));
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse shrink-0';
+        txt.textContent = editRec ? `✏️ در حال ویرایش گزارش ${editRec.code}` : '✏️ در حال ویرایش گزارش ذخیره‌شده';
+      } else if (done === 4) {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0';
+        txt.textContent = 'گزارش کامل و آماده ثبت نهایی است (۴ از ۴)';
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0';
+        txt.textContent = `تکمیل فیلدهای کلیدی گزارش (${toFaDigits(done)} از ۴)`;
+      }
+
+      document.getElementById('hudSelectedSummary').innerHTML = checks.map(c => `
+        <span class="px-2.5 py-0.5 rounded-lg font-bold ${c.ok ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' : 'glass-subpanel text-dim'}">
+          ${c.ok ? '✓ ' + escHtml(c.val) : '○ ' + c.label}
+        </span>
+      `).join('');
+
+      document.getElementById('hudCancelEditBtn').classList.toggle('hidden', !state.editingId);
+      document.getElementById('hudSubmitLabel').textContent = state.editingId ? 'ذخیره تغییرات گزارش' : 'ثبت نهایی گزارش';
+      document.getElementById('formSubmitBottomLabel').textContent = state.editingId ? 'ذخیره تغییرات و به‌روزرسانی آرشیو' : 'ثبت و ذخیره در آرشیو ایمنی بیمار';
+    }
+
+    function renderFullForm() {
+      renderSec1();
+      renderSec2();
+      renderSec3();
+      renderSec4to6();
+      document.getElementById('voiceNoteArea').value = state.form.note;
+      document.getElementById('patientContextInput').value = state.form.patientContext;
+      updateHud();
+    }
+
+    function highlightInvalid(elId) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.classList.add('ring-2', 'ring-rose-500');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function clearHighlight(elId) {
+      const el = document.getElementById(elId);
+      if (el) el.classList.remove('ring-2', 'ring-rose-500');
+    }
+
+    function submitReport() {
+      if (!state.form.shift) { highlightInvalid('shiftFieldWrap'); showToast('لطفاً شیفت کاری را انتخاب کنید.', 'error'); return; }
+      if (!state.form.ward) { highlightInvalid('wardFieldWrap'); showToast('لطفاً بخش محل وقوع را انتخاب کنید.', 'error'); return; }
+      if (state.form.selectedErrors.length === 0) { highlightInvalid('form-sec-2'); showToast('لطفاً حداقل یک دسته و جزئیات خطا را انتخاب کنید.', 'error'); return; }
+      if (!state.form.severityCode) { highlightInvalid('severityFieldWrap'); showToast('لطفاً شدت پیامد (NCC MERP) را انتخاب کنید.', 'error'); return; }
+
+      if (!state.editingId && state.form.quickTime === 'now') {
+        state.form.parts = dateToJalaliParts(new Date());
+      }
+      const fmt = formatParts(state.form.parts);
+      const sev = NCC_MERP.find(s => s.code === state.form.severityCode);
+      const cats = [...new Set(state.form.selectedErrors.map(e => e.catTitle))];
+      const catIds = [...new Set(state.form.selectedErrors.map(e => e.catId))];
+      const patientCtx = document.getElementById('patientContextInput').value.trim();
+      const noteVal = document.getElementById('voiceNoteArea').value.trim();
+
+      const existing = state.editingId ? state.records.find(r => String(r.id) === String(state.editingId)) : null;
+      const code = existing ? existing.code : nextReportCode(state.form.parts.jy);
+
+      const rec = {
+        id: existing ? existing.id : `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        code,
+        createdAt: existing ? existing.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        sourceApp: existing ? existing.sourceApp : (state.bridge.connected ? 'سیستم پرستاری قلب' : 'سامانه مستقل ایمنی بیمار'),
+        parts: { ...state.form.parts },
+        shamsiDate: fmt.faDate,
+        latinDate: fmt.latinDate,
+        time: fmt.faTime,
+        shift: state.form.shift,
+        ward: state.form.ward,
+        patientContext: patientCtx,
+        reporterRole: state.form.reporterRole || 'ثبت نشده',
+        catIds,
+        categories: cats,
+        selectedErrors: state.form.selectedErrors.map(e => ({ ...e })),
+        severityCode: sev.code,
+        severityTitle: sev.title,
+        severityDesc: sev.desc,
+        severityLevel: sev.level,
+        isNeverEvent: state.form.isNeverEvent,
+        neverEvents: state.form.isNeverEvent ? [...state.form.neverEvents] : [],
+        ipsg: [...state.form.ipsg],
+        rootCauses: [...state.form.rootCauses],
+        immediateActions: [...state.form.immediateActions],
+        notifications: [...state.form.notifications],
+        preventive: [...state.form.preventive],
+        note: noteVal
+      };
+
+      if (existing) {
+        const idx = state.records.findIndex(r => String(r.id) === String(existing.id));
+        state.records[idx] = rec;
+        state.editingId = null;
+      } else {
+        state.records.unshift(rec);
+      }
+
+      state.lastSavedId = rec.id;
+      saveRecords();
+      updateBadges();
+      CARDIAC_BRIDGE.broadcastSaved(rec);
+
+      // نمایش بنر عملیات فوری پس از ثبت
+      document.getElementById('postSaveCode').textContent = rec.code;
+      document.getElementById('postSaveSummaryText').textContent = formatRecordSummary(rec);
+      document.getElementById('postSaveBanner').classList.remove('hidden');
+
+      state.form = createBlankForm(true);
+      renderFullForm();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast(existing ? `تغییرات گزارش ${code} ذخیره شد.` : `گزارش با کد ${code} با موفقیت ثبت شد.`, 'success');
+    }
+
+    function startEditReport(id) {
+      const r = state.records.find(x => String(x.id) === String(id));
+      if (!r) return;
+      const psb = document.getElementById('postSaveBanner');
+      if (psb) psb.classList.add('hidden');
+      closeAllFloatingMenus();
+      state.editingId = r.id;
+      if (r.ward && !allWards().includes(r.ward)) state.customWards.push(r.ward);
+
+      let parts = r.parts ? { ...r.parts } : dateToJalaliParts(new Date());
+      if (!r.parts && r.latinDate) {
+        const dp = r.latinDate.split('/').map(Number);
+        const tp = toEnDigits(r.time || '08:00').split(':').map(Number);
+        if (dp.length === 3 && !dp.some(isNaN)) {
+          parts = { jy: dp[0], jm: dp[1], jd: dp[2], hh: tp[0] || 0, mm: tp[1] || 0 };
+        }
+      }
+
+      state.form = {
+        parts,
+        quickTime: 'custom',
+        shift: r.shift || detectShift(),
+        ward: r.ward || '',
+        reporterRole: r.reporterRole === 'ثبت نشده' ? '' : (r.reporterRole || ''),
+        activeCatId: r.catIds?.[0] || '',
+        selectedErrors: (r.selectedErrors || []).map(e => ({ ...e })),
+        severityCode: r.severityCode || '',
+        isNeverEvent: Boolean(r.isNeverEvent),
+        neverEvents: [...(r.neverEvents || [])],
+        ipsg: [...(r.ipsg || [])],
+        rootCauses: [...(r.rootCauses || [])],
+        immediateActions: [...(r.immediateActions || [])],
+        notifications: [...(r.notifications || [])],
+        preventive: [...(r.preventive || [])],
+        patientContext: r.patientContext || '',
+        note: r.note || ''
+      };
+
+      closeDetail();
+      switchTab('form');
+      renderFullForm();
+      showToast(`گزارش ${r.code} برای ویرایش بارگذاری شد.`, 'info');
+    }
+
+    function resetFormAll(silent = false) {
+      const wasEditing = Boolean(state.editingId);
+      state.editingId = null;
+      const psb = document.getElementById('postSaveBanner');
+      if (psb) psb.classList.add('hidden');
+      state.form = createBlankForm(wasEditing);
+      ['shiftFieldWrap', 'wardFieldWrap', 'form-sec-2', 'severityFieldWrap'].forEach(clearHighlight);
+      renderFullForm();
+      if (!silent) showToast(wasEditing ? 'ویرایش لغو شد و فرم به حالت ثبت جدید برگشت.' : 'فرم برای ثبت گزارش جدید پاک‌سازی شد.', 'info');
+    }
+
+    function updateBadges() {
+      const n = state.records.length;
+      const faN = toFaDigits(n);
+      document.getElementById('headerTotalBadge').textContent = faN;
+      document.getElementById('dockArchiveBadge').textContent = faN;
+      document.getElementById('drawerTotalCount').textContent = faN;
+      document.getElementById('exportReadyBadge').textContent = `${faN} گزارش آماده`;
+      updateExportButtons();
+    }
+
+    function updateExportButtons() {
+      const empty = state.records.length === 0;
+      ['exportXlsxBtn', 'exportCsvBtn', 'exportJsonBtn', 'exportClearAllBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = empty;
+      });
+    }
+
+    /* =========================================================================
+       ۸. یادداشت صوتی فارسی (Web Speech API fa-IR)
+       ========================================================================= */
+    let voiceSession = null;
+
+    function joinVoiceChunks(base, add) {
+      const b = String(base || '').trim();
+      const a = String(add || '').trim();
+      if (!a) return b;
+      if (!b) return a;
+      if (b.slice(-a.length) === a) return b;
+      return b + ' ' + a;
+    }
+
+    function stopVoiceRecording(silent = false) {
+      if (!voiceSession) return;
+      const s = voiceSession;
+      s.userStopped = true;
+      clearTimeout(s.restartTimer);
+      voiceSession = null;
+      state.isRecording = false;
+      state.recognition = null;
+      if (s.rec) {
+        try { s.rec.stop(); } catch (e) { /* ignore */ }
+      }
+      const btn = document.getElementById('voiceRecordBtn');
+      const lbl = document.getElementById('voiceRecordLabel');
+      if (lbl) lbl.textContent = 'شروع ضبط صوت فارسی';
+      if (btn) btn.classList.remove('voice-recording', 'bg-rose-600', 'text-white');
+      if (!silent) showToast('⏹ ضبط صوت متوقف شد.', 'info');
+    }
+
+    function toggleVoiceRecording() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        showToast('مرورگر شما از تبدیل گفتار به متن پشتیبانی نمی‌کند (Chrome/Edge توصیه می‌شود).', 'error');
+        return;
+      }
+
+      if (state.isRecording || voiceSession) {
+        stopVoiceRecording(false);
+        return;
+      }
+
+      const btn = document.getElementById('voiceRecordBtn');
+      const lbl = document.getElementById('voiceRecordLabel');
+      const area = document.getElementById('voiceNoteArea');
+
+      const session = {
+        rec: null,
+        userStopped: false,
+        fatalError: false,
+        restartTimer: null,
+        emptyRestarts: 0,
+        committed: area ? area.value.trim() : ''
+      };
+      voiceSession = session;
+      state.isRecording = true;
+      if (lbl) lbl.textContent = '⏹ توقف ضبط (در حال شنیدن...)';
+      if (btn) btn.classList.add('voice-recording', 'bg-rose-600', 'text-white');
+
+      function launchRec() {
+        if (voiceSession !== session || session.userStopped || session.fatalError) return;
+        if (area) session.committed = area.value.trim();
+
+        let sessionFinal = '';
+        let lastInterim = '';
+        let gotResult = false;
+        let rec;
+        try {
+          rec = new SR();
+        } catch (err) {
+          session.fatalError = true;
+          stopVoiceRecording(true);
+          showToast('امکان فعال‌سازی میکروفون وجود ندارد.', 'error');
+          return;
+        }
+        session.rec = rec;
+        state.recognition = rec;
+        rec.lang = 'fa-IR';
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.maxAlternatives = 1;
+
+        rec.onresult = (e) => {
+          if (voiceSession !== session) return;
+          gotResult = true;
+          session.emptyRestarts = 0;
+          let finalAccum = '';
+          let interimAccum = '';
+          for (let i = 0; i < e.results.length; i++) {
+            const res = e.results[i];
+            const tr = (res && res[0] && res[0].transcript) ? String(res[0].transcript).trim() : '';
+            if (!tr) continue;
+            if (res.isFinal) {
+              if (!finalAccum) finalAccum = tr;
+              else if (tr.indexOf(finalAccum) === 0) finalAccum = tr;
+              else if (finalAccum.slice(-tr.length) !== tr) finalAccum += ' ' + tr;
+            } else {
+              interimAccum = interimAccum ? (interimAccum + ' ' + tr) : tr;
+            }
+          }
+          sessionFinal = finalAccum;
+          lastInterim = interimAccum;
+          const combined = joinVoiceChunks(session.committed, joinVoiceChunks(sessionFinal, lastInterim));
+          if (area) area.value = combined;
+          state.form.note = combined;
+        };
+
+        rec.onerror = (ev) => {
+          if (voiceSession !== session) return;
+          const err = ev && ev.error ? ev.error : '';
+          if (err === 'no-speech' || err === 'aborted') return;
+          session.fatalError = true;
+          stopVoiceRecording(true);
+          const msg = (err === 'not-allowed' || err === 'service-not-allowed')
+            ? 'دسترسی میکروفون مسدود است.'
+            : (err === 'network' ? 'تشخیص گفتار مرورگر به اینترنت نیاز دارد.' : 'خطا در تشخیص گفتار.');
+          showToast(msg, 'error');
+        };
+
+        rec.onend = () => {
+          if (voiceSession !== session) return;
+          const chunk = joinVoiceChunks(sessionFinal, lastInterim);
+          if (chunk) {
+            session.committed = joinVoiceChunks(session.committed, chunk);
+            if (area) area.value = session.committed;
+            state.form.note = session.committed;
+          }
+          if (session.userStopped || session.fatalError) {
+            stopVoiceRecording(true);
+            return;
+          }
+          if (!gotResult) {
+            session.emptyRestarts++;
+            if (session.emptyRestarts >= 12) {
+              stopVoiceRecording(true);
+              showToast('به دلیل سکوت طولانی، ضبط صوت متوقف شد.', 'info');
+              return;
+            }
+          }
+          clearTimeout(session.restartTimer);
+          session.restartTimer = setTimeout(launchRec, 160);
+        };
+
+        try {
+          rec.start();
+        } catch (err) {
+          clearTimeout(session.restartTimer);
+          session.restartTimer = setTimeout(launchRec, 320);
+        }
+      }
+
+      launchRec();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && voiceSession) stopVoiceRecording(true);
+    });
+
+    /* =========================================================================
+       ۹. آرشیو کلیکی، جزئیات، ویرایش، ارسال به چالش‌های شیفت و چاپ A4
+       ========================================================================= */
+    function renderFilterRow(id, opts, activeVal, onPick) {
+      const box = document.getElementById(id);
+      box.innerHTML = opts.map(o => `
+        <button type="button" data-fv="${escAttr(o.id)}" class="px-3 py-1.5 rounded-xl font-bold lux-chip ${activeVal === o.id ? 'is-active' : ''}">
+          ${o.label}
+        </button>
+      `).join('');
+      box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => onPick(b.dataset.fv)));
+    }
+
+    const SEV_ORDER = { I: 9, H: 8, G: 7, F: 6, E: 5, D: 4, C: 3, B: 2, A: 1 };
+
+    function renderArchive() {
+      const f = state.filters;
+      const stats = computeBridgeStats();
+
+      // خلاصه آماری سریع بالای آرشیو
+      const kpiEl = document.getElementById('archiveQuickKpis');
+      if (kpiEl) {
+        kpiEl.innerHTML = `
+          <button type="button" data-qk="all" class="glass-card glass-hover rounded-2xl p-3 text-center transition ${f.critical === 'all' ? 'ring-1 ring-amber-400/50' : ''}">
+            <div class="text-[10px] font-bold text-dim">کل گزارش‌ها</div>
+            <div class="text-lg font-black text-accent mt-0.5">${toFaDigits(stats.totalCount)}</div>
+          </button>
+          <div class="glass-card rounded-2xl p-3 text-center">
+            <div class="text-[10px] font-bold text-dim">ثبت امروز</div>
+            <div class="text-lg font-black text-emerald-400 mt-0.5">${toFaDigits(stats.todayCount)}</div>
+          </div>
+          <button type="button" data-qk="critical" class="glass-card glass-hover rounded-2xl p-3 text-center transition ${f.critical === 'critical' ? 'ring-1 ring-rose-500/70' : ''}">
+            <div class="text-[10px] font-bold text-dim">بحرانی / هرگز</div>
+            <div class="text-lg font-black text-rose-400 mt-0.5">${toFaDigits(stats.criticalCount)}</div>
+          </button>
+        `;
+        kpiEl.querySelectorAll('[data-qk]').forEach(b => b.addEventListener('click', () => {
+          f.critical = b.dataset.qk;
+          renderArchive();
+        }));
+      }
+
+      // شمارنده فیلترهای فعال
+      const activeCnt = [f.critical !== 'all', f.shift !== 'all', f.severity !== 'all', f.category !== 'all', f.ward !== 'all'].filter(Boolean).length;
+      const cntBadge = document.getElementById('activeFilterCountBadge');
+      if (cntBadge) {
+        cntBadge.textContent = toFaDigits(activeCnt);
+        cntBadge.classList.toggle('hidden', activeCnt === 0);
+      }
+      const fPanel = document.getElementById('archiveFiltersPanel');
+      if (fPanel) fPanel.classList.toggle('hidden', !state.filtersOpen);
+
+      // وضعیت دکمه‌های مرتب‌سازی
+      const sNew = document.getElementById('sortNewestBtn');
+      const sSev = document.getElementById('sortSeverityBtn');
+      if (sNew) sNew.classList.toggle('is-active', f.sort !== 'severity');
+      if (sSev) sSev.classList.toggle('is-active', f.sort === 'severity');
+
+      renderFilterRow('fltCritical', [
+        { id: 'all', label: 'همه موارد' },
+        { id: 'critical', label: 'فقط بحرانی / Never Events' }
+      ], f.critical, v => { f.critical = v; renderArchive(); });
+
+      renderFilterRow('fltShift', [
+        { id: 'all', label: 'همه' }, ...SHIFTS.map(s => ({ id: s, label: s }))
+      ], f.shift, v => { f.shift = v; renderArchive(); });
+
+      renderFilterRow('fltSeverity', [
+        { id: 'all', label: 'همه' }, ...NCC_MERP.map(s => ({ id: s.code, label: `کد ${s.code}` }))
+      ], f.severity, v => { f.severity = v; renderArchive(); });
+
+      const usedCats = ERROR_CATEGORIES.filter(c => state.records.some(r => (r.catIds || []).includes(c.id)));
+      renderFilterRow('fltCategory', [
+        { id: 'all', label: 'همه دسته‌ها' }, ...usedCats.map(c => ({ id: c.id, label: c.title }))
+      ], f.category, v => { f.category = v; renderArchive(); });
+
+      const usedWards = [...new Set(state.records.map(r => r.ward).filter(Boolean))];
+      renderFilterRow('fltWard', [
+        { id: 'all', label: 'همه بخش‌ها' }, ...usedWards.map(w => ({ id: w, label: w }))
+      ], f.ward, v => { f.ward = v; renderArchive(); });
+
+      const q = (f.query || '').trim().toLowerCase();
+      const list = state.records.filter(r => {
+        if (f.critical === 'critical' && !(r.isNeverEvent || ['G', 'H', 'I'].includes(r.severityCode))) return false;
+        if (f.shift !== 'all' && r.shift !== f.shift) return false;
+        if (f.severity !== 'all' && r.severityCode !== f.severity) return false;
+        if (f.category !== 'all' && !(r.catIds || []).includes(f.category)) return false;
+        if (f.ward !== 'all' && r.ward !== f.ward) return false;
+        if (q) {
+          const hay = [
+            r.code, r.ward, r.shift, r.patientContext, r.note, r.shamsiDate, r.severityTitle,
+            (r.categories || []).join(' '),
+            (r.selectedErrors || []).map(e => e.sub).join(' ')
+          ].join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      if (f.sort === 'severity') {
+        list.sort((a, b) => {
+          const scoreA = (a.isNeverEvent ? 20 : 0) + (SEV_ORDER[a.severityCode] || 0);
+          const scoreB = (b.isNeverEvent ? 20 : 0) + (SEV_ORDER[b.severityCode] || 0);
+          return scoreB - scoreA;
+        });
+      }
+
+      document.getElementById('archiveMatchCount').textContent = `${toFaDigits(list.length)} مورد`;
+      const grid = document.getElementById('archiveCardsGrid');
+
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="md:col-span-2 glass-card rounded-3xl p-10 text-center space-y-3">
+            <div class="text-3xl">📭</div>
+            <p class="text-sm font-black text-main">${state.records.length === 0 ? 'هنوز گزارشی ثبت نشده است' : 'موردی با فیلتر یا جستجوی فعلی یافت نشد'}</p>
+            <p class="text-xs text-dim">می‌توانید گزارش جدیدی ثبت کنید یا از بخش خروجی، ۵ نمونه آزمایشی بارگذاری نمایید.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(r => {
+        const sev = NCC_MERP.find(s => s.code === r.severityCode) || NCC_MERP[0];
+        const rid = escAttr(String(r.id));
+        const borderAccent = r.isNeverEvent ? '#f43f5e' : sev.color;
+        return `
+          <article class="glass-card glass-hover archive-card-pro rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3.5"
+            style="border-right-color: ${borderAccent} !important;">
+            <div class="space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-1.5">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2.5 py-0.5 rounded-lg btn-luxury-primary text-[11px] font-black">${escHtml(r.code)}</span>
+                  <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-black text-white" style="background:${sev.color};">کد ${sev.code}: ${sev.title}</span>
+                  ${r.isNeverEvent ? '<span class="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white text-[11px] font-black">⚠ خطای هرگز</span>' : ''}
+                </div>
+                <span class="text-[10.5px] text-dim font-semibold">📅 ${r.shamsiDate} • ${r.time}</span>
+              </div>
+
+              <div>
+                <h3 class="text-sm font-black text-main leading-snug">${escHtml((r.categories || []).join(' / '))}</h3>
+                <p class="text-xs text-sub mt-1 leading-relaxed">${escHtml((r.selectedErrors || []).map(e => e.sub).join(' • '))}</p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-dim pt-0.5">
+                <span class="px-2.5 py-0.5 rounded-lg glass-subpanel text-main font-bold">🏥 ${escHtml(r.ward)}</span>
+                <span class="px-2.5 py-0.5 rounded-lg glass-subpanel text-sub font-bold">🕒 شیفت ${escHtml(r.shift)}</span>
+                ${r.patientContext ? `<span class="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 font-bold">🛏 ${escHtml(r.patientContext)}</span>` : ''}
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-3 border-t" style="border-color: var(--glass-border);">
+              <button type="button" data-action="challenge" data-id="${rid}"
+                class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 text-emerald-300 text-xs font-black transition active:scale-[0.99]">
+                📤 ارسال به چالش‌های شیفت (اپ پرستاری)
+              </button>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button type="button" data-action="open" data-id="${rid}" class="py-2 px-1.5 rounded-xl lux-chip text-[11.5px] font-extrabold text-accent text-center">👁 جزئیات</button>
+                <button type="button" data-action="edit" data-id="${rid}" class="py-2 px-1.5 rounded-xl lux-chip text-[11.5px] font-bold text-center">✏️ ویرایش</button>
+                <button type="button" data-action="print" data-id="${rid}" class="py-2 px-1.5 rounded-xl lux-chip text-[11.5px] font-bold text-center">🖨 چاپ</button>
+                <button type="button" data-action="delete" data-id="${rid}" class="py-2 px-1.5 rounded-xl btn-del-card text-[11.5px] font-extrabold text-center">🗑 حذف</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function openDetail(id) {
+      const r = state.records.find(x => String(x.id) === String(id));
+      if (!r) return;
+      state.activeDetailId = r.id;
+      const sev = NCC_MERP.find(s => s.code === r.severityCode) || NCC_MERP[0];
+      document.getElementById('modalCodeBadge').textContent = r.code;
+
+      const cell = (k, v) => `
+        <div class="glass-subpanel rounded-2xl p-3">
+          <div class="text-[10px] font-bold text-dim mb-1">${k}</div>
+          <div class="text-xs font-extrabold text-main leading-relaxed">${v || '—'}</div>
+        </div>
+      `;
+
+      document.getElementById('detailModalBody').innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          ${cell('تاریخ و ساعت شمسی', `${r.shamsiDate} — ${r.time}`)}
+          ${cell('شیفت کاری', escHtml(r.shift))}
+          ${cell('بخش محل وقوع', escHtml(r.ward))}
+          ${cell('زمینه بیمار / تخت', escHtml(r.patientContext || 'ثبت نشده'))}
+          ${cell('نقش گزارش‌دهنده', escHtml(r.reporterRole))}
+          ${cell('منبع ثبت', escHtml(r.sourceApp || 'سامانه مستقل'))}
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          ${cell('شدت NCC MERP', `<span class="px-2 py-0.5 rounded-md text-white" style="background:${sev.color};">کد ${sev.code} — ${sev.title}</span>`)}
+          ${cell('خطای هرگز', r.isNeverEvent ? '<span class="text-rose-400">بله (گزارش فوری RCA)</span>' : 'خیر')}
+        </div>
+        ${cell('دسته‌ها و جزئیات خطا', escHtml((r.selectedErrors || []).map(e => `${e.catTitle}: ${e.sub}`).join(' | ')))}
+        ${r.isNeverEvent ? cell('نوع Never Event', escHtml((r.neverEvents || []).join(' / ') || 'انتخاب نشده')) : ''}
+        ${cell('اهداف ایمنی بیمار (IPSG)', escHtml((r.ipsg || []).join(' / ')))}
+        ${cell('علل ریشه‌ای و عوامل زمینه‌ساز', escHtml((r.rootCauses || []).join('، ')))}
+        ${cell('اقدامات فوری', escHtml((r.immediateActions || []).join('، ')))}
+        ${cell('اطلاع‌رسانی انجام‌شده', escHtml((r.notifications || []).join('، ')))}
+        ${cell('پیشنهادهای پیشگیرانه', escHtml((r.preventive || []).join('، ')))}
+        ${r.note ? cell('یادداشت صوتی / تکمیلی', escHtml(r.note)) : ''}
+      `;
+
+      const m = document.getElementById('detailModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeDetail() {
+      const m = document.getElementById('detailModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+      state.activeDetailId = null;
+    }
+
+    function requestDelete(id) {
+      const r = state.records.find(x => String(x.id) === String(id));
+      if (!r) return;
+      openConfirm(`حذف گزارش ${r.code}`, 'این گزارش به صورت دائمی از حافظه دستگاه حذف می‌شود. ادامه می‌دهید؟', () => {
+        state.records = state.records.filter(x => String(x.id) !== String(id));
+        if (state.editingId && String(state.editingId) === String(id)) resetFormAll(true);
+        if (state.lastSavedId && String(state.lastSavedId) === String(id)) {
+          state.lastSavedId = null;
+          const psb = document.getElementById('postSaveBanner');
+          if (psb) psb.classList.add('hidden');
+        }
+        saveRecords();
+        updateBadges();
+        CARDIAC_BRIDGE.broadcastStats();
+        closeDetail();
+        if (state.activeTab === 'archive') renderArchive();
+        if (state.activeTab === 'analytics') renderAnalytics();
+        showToast(`گزارش ${r.code} با موفقیت حذف شد.`, 'info');
+      });
+    }
+
+    function printReportA4(id) {
+      const r = state.records.find(x => String(x.id) === String(id));
+      if (!r) return;
+      const nowFmt = formatParts(dateToJalaliParts(new Date()));
+      const area = document.getElementById('printArea');
+      area.innerHTML = `
+        <div style="border:2px solid #000; padding:18px; border-radius:6px; font-size:12px; line-height:1.85; color:#000;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:14px;">
+            <div>
+              <div style="font-size:16px; font-weight:900;">فرم رسمی گزارش خطای بالینی و ایمنی بیمار (محرمانه)</div>
+              <div style="font-size:11px;">کمیته بهبود کیفیت و ایمنی بیمار — منطبق با استاندارد NCC MERP و IPSG</div>
+            </div>
+            <div style="text-align:left;">
+              <div style="font-weight:900; font-size:13px;">کد گزارش: ${escHtml(r.code)}</div>
+              <div style="font-size:11px;">تاریخ چاپ: ${nowFmt.faDate} - ${nowFmt.faTime}</div>
+            </div>
+          </div>
+          <table style="width:100%; border-collapse:collapse;">
+            <tbody>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700; width:22%;">تاریخ و ساعت وقوع</td>
+                <td style="border:1px solid #333; padding:6px 8px; width:28%;">${r.shamsiDate} — ${r.time}</td>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700; width:22%;">شیفت کاری</td>
+                <td style="border:1px solid #333; padding:6px 8px; width:28%;">${escHtml(r.shift)}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">بخش محل وقوع</td>
+                <td style="border:1px solid #333; padding:6px 8px;">${escHtml(r.ward)}</td>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">زمینه بیمار / تخت</td>
+                <td style="border:1px solid #333; padding:6px 8px;">${escHtml(r.patientContext || 'ثبت نشده')}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">نقش گزارش‌دهنده</td>
+                <td style="border:1px solid #333; padding:6px 8px;">${escHtml(r.reporterRole)}</td>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">منبع ثبت</td>
+                <td style="border:1px solid #333; padding:6px 8px;">${escHtml(r.sourceApp || 'سامانه مستقل')}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">دسته و جزئیات خطا</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px; font-weight:700;">${escHtml((r.selectedErrors || []).map(e => `${e.catTitle} (${e.sub})`).join(' | '))}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">شدت پیامد (NCC MERP)</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px; font-weight:700;">کد ${r.severityCode}: ${escHtml(r.severityTitle)} — ${escHtml(r.severityDesc)}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">وضعیت خطای هرگز</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px;">${r.isNeverEvent ? `بله — ${escHtml((r.neverEvents || []).join(' / ') || 'نیازمند RCA')}` : 'خیر'}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">اهداف ایمنی (IPSG)</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px;">${escHtml((r.ipsg || []).join(' / ') || 'ثبت نشده')}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">علل ریشه‌ای</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px;">${escHtml((r.rootCauses || []).join('، ') || 'ثبت نشده')}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">اقدامات فوری و اطلاع‌رسانی</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px;">${escHtml([...(r.immediateActions || []), ...(r.notifications || [])].join('، ') || 'ثبت نشده')}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">پیشنهاد پیشگیرانه</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px;">${escHtml((r.preventive || []).join('، ') || 'ثبت نشده')}</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #333; padding:6px 8px; background:#f2f2f2; font-weight:700;">یادداشت تکمیلی</td>
+                <td colspan="3" style="border:1px solid #333; padding:6px 8px;">${escHtml(r.note || '—')}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="display:flex; justify-content:space-between; margin-top:34px; padding-top:14px; border-top:1px dashed #333; text-align:center;">
+            <div style="width:30%;">سرپرستار / مسئول بخش<br/><br/>....................</div>
+            <div style="width:30%;">کارشناس ایمنی بیمار<br/><br/>....................</div>
+            <div style="width:30%;">مصوبه کمیته ایمنی / RCA<br/><br/>....................</div>
+          </div>
+        </div>`;
+      window.print();
+    }
+
+    /* =========================================================================
+       ۱۰. داشبورد تحلیلی آفلاین (KPI + ۵ نمودار میله‌ای)
+       ========================================================================= */
+    function computeAnalytics() {
+      const base = computeBridgeStats();
+      const byCat = {}, byWard = {}, bySev = {}, byShift = {}, byRoot = {};
+
+      state.records.forEach(r => {
+        (r.categories || []).forEach(c => byCat[c] = (byCat[c] || 0) + 1);
+        if (r.ward) byWard[r.ward] = (byWard[r.ward] || 0) + 1;
+        if (r.severityCode) bySev[r.severityCode] = (bySev[r.severityCode] || 0) + 1;
+        if (r.shift) byShift[r.shift] = (byShift[r.shift] || 0) + 1;
+        (r.rootCauses || []).forEach(rc => byRoot[rc] = (byRoot[rc] || 0) + 1);
+      });
+
+      const sortObj = o => Object.entries(o).sort((a, b) => b[1] - a[1]);
+      const catList = sortObj(byCat);
+      const wardList = sortObj(byWard);
+
+      return {
+        total: base.totalCount,
+        today: base.todayCount,
+        critical: base.criticalCount,
+        topCat: catList[0] ? catList[0][0] : '—',
+        topWard: wardList[0] ? wardList[0][0] : '—',
+        catList,
+        wardList,
+        sevList: NCC_MERP.map(s => [`کد ${s.code}: ${s.title}`, bySev[s.code] || 0, s.color]).filter(x => x[1] > 0),
+        shiftList: sortObj(byShift),
+        rootList: sortObj(byRoot)
+      };
+    }
+
+    function renderBarChart(id, rows, fallbackColor, total) {
+      const el = document.getElementById(id);
+      if (!rows.length) {
+        el.innerHTML = '<p class="text-xs text-dim">موردی ثبت نشده است.</p>';
+        return;
+      }
+      const max = Math.max(...rows.map(r => r[1]), 1);
+      el.innerHTML = rows.map(([label, val, col]) => {
+        const w = Math.max(Math.round((val / max) * 100), 7);
+        const pct = Math.round((val / Math.max(total, 1)) * 100);
+        const c = col || fallbackColor;
+        return `
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between gap-2 text-xs">
+              <span class="font-bold text-main truncate">${escHtml(label)}</span>
+              <span class="font-black text-accent shrink-0">${toFaDigits(val)} مورد <span class="text-dim font-medium">(${toFaDigits(pct)}٪)</span></span>
+            </div>
+            <div class="w-full h-2.5 rounded-full overflow-hidden" style="background: var(--glass-surface);">
+              <div class="h-full rounded-full transition-all duration-500" style="width:${w}%; background:${c}; box-shadow: 0 0 12px ${c}88;"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderAnalytics() {
+      const st = computeAnalytics();
+      const kpis = [
+        { title: 'کل گزارش‌ها', val: toFaDigits(st.total), sub: `امروز: ${toFaDigits(st.today)} مورد`, color: '#e5be5c' },
+        { title: 'بحرانی و خطای هرگز', val: toFaDigits(st.critical), sub: 'کدهای G/H/I یا Never Event', color: '#f43f5e' },
+        { title: 'پرتکرارترین دسته خطا', val: st.topCat, sub: 'بیشترین فراوانی ثبت‌شده', color: '#10b981' },
+        { title: 'پرتکرارترین بخش', val: st.topWard, sub: 'نیازمند مداخله هدفمند', color: '#38bdf8' }
+      ];
+
+      document.getElementById('analyticsKpis').innerHTML = kpis.map(k => `
+        <div class="glass-card glass-hover rounded-3xl p-4 sm:p-5 space-y-1.5">
+          <div class="text-[11px] font-bold text-dim">${k.title}</div>
+          <div class="text-lg sm:text-2xl font-black truncate" style="color:${k.color};">${escHtml(k.val)}</div>
+          <div class="text-[10px] text-dim">${escHtml(k.sub)}</div>
+        </div>
+      `).join('');
+
+      const empty = st.total === 0;
+      document.getElementById('analyticsEmpty').classList.toggle('hidden', !empty);
+      document.getElementById('analyticsCharts').classList.toggle('hidden', empty);
+      if (empty) return;
+
+      renderBarChart('chartCategory', st.catList, '#e5be5c', st.total);
+      renderBarChart('chartWard', st.wardList, '#10b981', st.total);
+      renderBarChart('chartSeverity', st.sevList, '#f43f5e', st.total);
+      renderBarChart('chartShift', st.shiftList, '#38bdf8', st.total);
+      renderBarChart('chartRootCause', st.rootList, '#a78bfa', st.total);
+    }
+
+    /* =========================================================================
+       ۱۱. خروجی اکسل دوشیته (.xlsx)، CSV آفلاین و پشتیبان JSON
+       ========================================================================= */
+    function buildExcelRows() {
+      return [...state.records].reverse().map((r, i) => ({
+        'ردیف': i + 1,
+        'کد گزارش': r.code,
+        'تاریخ شمسی': r.shamsiDate,
+        'ساعت': r.time,
+        'شیفت': r.shift,
+        'بخش': r.ward,
+        'بیمار / تخت (زمینه)': r.patientContext || '—',
+        'منبع ثبت': r.sourceApp || 'سامانه مستقل ایمنی بیمار',
+        'نقش گزارش‌دهنده': r.reporterRole || 'ثبت نشده',
+        'دسته اصلی خطا': (r.categories || []).join(' / '),
+        'جزئیات خطا': (r.selectedErrors || []).map(e => `${e.catTitle}: ${e.sub}`).join(' | '),
+        'کد NCC MERP': r.severityCode,
+        'شرح شدت': `${r.severityTitle} (${r.severityDesc})`,
+        'سطح خطر': r.severityLevel,
+        'خطای هرگز': r.isNeverEvent ? 'بله' : 'خیر',
+        'نوع Never Event': r.isNeverEvent ? ((r.neverEvents || []).join(' / ') || 'ثبت نشده') : '—',
+        'اهداف IPSG': (r.ipsg || []).join(' / ') || 'ثبت نشده',
+        'علل ریشه‌ای': (r.rootCauses || []).join(' / ') || 'ثبت نشده',
+        'اقدامات فوری': (r.immediateActions || []).join(' / ') || 'ثبت نشده',
+        'اطلاع‌رسانی': (r.notifications || []).join(' / ') || 'ثبت نشده',
+        'پیشنهاد پیشگیرانه': (r.preventive || []).join(' / ') || 'ثبت نشده',
+        'یادداشت صوتی/تکمیلی': r.note || '—',
+        'زمان ثبت سیستمی': r.createdAt
+      }));
+    }
+
+    function buildSummaryAoA() {
+      const st = computeAnalytics();
+      const nowFmt = formatParts(dateToJalaliParts(new Date()));
+      const out = [
+        ['خلاصه آماری سامانه جامع ثبت خطاهای بیمارستانی', '', ''],
+        ['تاریخ تهیه خروجی', nowFmt.faDate, `ساعت ${nowFmt.faTime}`],
+        ['', '', ''],
+        ['شاخص کلیدی', 'مقدار', 'درصد'],
+        ['کل گزارش‌ها', st.total, '100%'],
+        ['گزارش‌های امروز', st.today, `${Math.round((st.today / Math.max(st.total, 1)) * 100)}%`],
+        ['خطاهای بحرانی و Never Events', st.critical, `${Math.round((st.critical / Math.max(st.total, 1)) * 100)}%`],
+        ['پرتکرارترین دسته خطا', st.topCat, '—'],
+        ['پرتکرارترین بخش', st.topWard, '—'],
+        ['', '', '']
+      ];
+      const addTbl = (title, items) => {
+        out.push([title, 'تعداد', 'درصد']);
+        if (!items.length) out.push(['ثبت نشده', 0, '0%']);
+        else items.forEach(it => out.push([it[0], it[1], `${Math.round((it[1] / Math.max(st.total, 1)) * 100)}%`]));
+        out.push(['', '', '']);
+      };
+      addTbl('فراوانی بر اساس دسته خطا', st.catList);
+      addTbl('توزیع شدت پیامد (NCC MERP)', st.sevList);
+      addTbl('فراوانی بر اساس بخش بیمارستان', st.wardList);
+      addTbl('توزیع بر اساس شیفت کاری', st.shiftList);
+      addTbl('پرتکرارترین علل ریشه‌ای', st.rootList);
+      return out;
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        try { document.body.removeChild(a); } catch (e) { /* ignore */ }
+        URL.revokeObjectURL(url);
+      }, 2000);
+    }
+
+    function exportOfflineHtmlXls() {
+      const rows = buildExcelRows();
+      const headers = Object.keys(rows[0]);
+      const th = headers.map(h => `<th style="background:#0f172a;color:#fff;padding:6px;">${escHtml(h)}</th>`).join('');
+      const trs = rows.map(r => '<tr>' + headers.map(h => `<td style="padding:5px;">${escHtml(r[h])}</td>`).join('') + '</tr>').join('');
+      const htmlXls = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body dir="rtl"><table border="1"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table></body></html>`;
+      const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
+      const fname = `Hospital_Safety_Report_${stamp}.xls`;
+      downloadBlob(new Blob(['\uFEFF' + htmlXls], { type: 'application/vnd.ms-excel;charset=utf-8' }), fname);
+      CARDIAC_BRIDGE.broadcast({ type: 'ERROR_EXCEL_EXPORTED', filename: fname });
+      showToast(`فایل اکسل آفلاین (${fname}) در پوشه Download ذخیره شد.`, 'success');
+    }
+
+    function exportExcel() {
+      if (state.records.length === 0) {
+        showToast('ابتدا حداقل یک گزارش ثبت کنید یا نمونه‌های آزمایشی را بارگذاری نمایید.', 'error');
+        return;
+      }
+      if (typeof XLSX === 'undefined') {
+        exportOfflineHtmlXls();
+        return;
+      }
+      try {
+        const rows = buildExcelRows();
+        const ws1 = XLSX.utils.json_to_sheet(rows);
+        ws1['!views'] = [{ rightToLeft: true }];
+        const keys = Object.keys(rows[0]);
+        ws1['!cols'] = keys.map(k => ({
+          wch: Math.min(Math.max(k.length, ...rows.map(r => String(r[k] || '').length)) + 5, 44)
+        }));
+
+        const ws2 = XLSX.utils.aoa_to_sheet(buildSummaryAoA());
+        ws2['!views'] = [{ rightToLeft: true }];
+        ws2['!cols'] = [{ wch: 44 }, { wch: 18 }, { wch: 14 }];
+
+        const wb = XLSX.utils.book_new();
+        wb.Workbook = { Views: [{ RTL: true }] };
+        XLSX.utils.book_append_sheet(wb, ws1, 'گزارش تفصیلی خطاها');
+        XLSX.utils.book_append_sheet(wb, ws2, 'خلاصه آماری');
+
+        const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
+        const fname = `Hospital_Safety_Report_${stamp}.xlsx`;
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        downloadBlob(new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname);
+        CARDIAC_BRIDGE.broadcast({ type: 'ERROR_EXCEL_EXPORTED', filename: fname });
+        showToast(`فایل اکسل دوشیته (${fname}) در پوشه Download ذخیره شد.`, 'success');
+      } catch (err) {
+        console.error(err);
+        exportOfflineHtmlXls();
+      }
+    }
+
+    function exportCsv() {
+      if (state.records.length === 0) return;
+      const rows = buildExcelRows();
+      const headers = Object.keys(rows[0]);
+      const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const csv = [headers.map(q).join(','), ...rows.map(r => headers.map(h => q(r[h])).join(','))].join('\r\n');
+      const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
+      const fname = `Hospital_Safety_${stamp}.csv`;
+      downloadBlob(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }), fname);
+      CARDIAC_BRIDGE.broadcast({ type: 'ERROR_EXCEL_EXPORTED', filename: fname });
+      showToast(`فایل CSV فارسی (${fname}) در پوشه Download ذخیره شد.`, 'success');
+    }
+
+    function exportJson() {
+      if (state.records.length === 0) return;
+      const payload = { app: 'HospitalSafetyCardiacBridge', version: 3, exportedAt: new Date().toISOString(), records: state.records };
+      const stamp = formatParts(dateToJalaliParts(new Date())).fileStamp;
+      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' }), `Hospital_Safety_Backup_${stamp}.json`);
+      showToast('فایل پشتیبان JSON ذخیره شد.', 'success');
+    }
+
+    function importJson(ev) {
+      const file = ev.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(String(reader.result));
+          const list = Array.isArray(data) ? data : (Array.isArray(data.records) ? data.records : null);
+          if (!list) throw new Error('Invalid JSON');
+          const seen = new Set(state.records.map(r => r.id));
+          let added = 0;
+          list.forEach(item => {
+            if (item && item.id && item.ward && item.severityCode && !seen.has(item.id)) {
+              state.records.push(item);
+              seen.add(item.id);
+              added++;
+            }
+          });
+          state.records.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+          saveRecords();
+          updateBadges();
+          CARDIAC_BRIDGE.broadcastStats();
+          if (state.activeTab === 'archive') renderArchive();
+          if (state.activeTab === 'analytics') renderAnalytics();
+          showToast(`${toFaDigits(added)} گزارش جدید از فایل پشتیبان ادغام شد.`, 'success');
+        } catch (e) {
+          showToast('ساختار فایل پشتیبان معتبر نیست.', 'error');
+        } finally {
+          ev.target.value = '';
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    /* =========================================================================
+       ۱۲. بارگذاری ۵ نمونه بالینی واقعی قلب و بیمارستان
+       ========================================================================= */
+    function loadDemoCases() {
+      const mkFmt = (hrsAgo) => {
+        const d = new Date(Date.now() - hrsAgo * 3600000);
+        const p = dateToJalaliParts(d);
+        return { d, p, f: formatParts(p) };
+      };
+      const t1 = mkFmt(1), t2 = mkFmt(5), t3 = mkFmt(13), t4 = mkFmt(22), t5 = mkFmt(36);
+      const samples = [
+        {
+          t: t1, shift: 'عصر', ward: 'CCU', patientContext: 'تخت ۳ CCU', reporterRole: 'پرستار',
+          catIds: ['medication', 'lines_pumps'], categories: ['خطای دارویی', 'کاتتر/لوله/پمپ انفوزیون'],
+          selectedErrors: [
+            { catId: 'medication', catTitle: 'خطای دارویی', sub: 'اشتباه در رقیق‌سازی/تیتراسیون' },
+            { catId: 'lines_pumps', catTitle: 'کاتتر/لوله/پمپ انفوزیون', sub: 'خطای تنظیم سرعت پمپ انفوزیون' }
+          ],
+          severityCode: 'B', isNeverEvent: false, neverEvents: [],
+          ipsg: ['IPSG 3: ایمنی داروهای پرخطر (High-Alert)'],
+          rootCauses: ['حجم کار بالا', 'تشابه اسمی/ظاهری دارو (LASA)'],
+          immediateActions: ['توقف فوری دارو/مداخله', 'پایش دقیق علائم حیاتی و ECG'],
+          notifications: ['سرپرستار', 'دفتر ایمنی بیمار'],
+          preventive: ['چک دونفره داروهای پرخطر', 'برچسب‌گذاری داروهای LASA'],
+          note: 'پیش از اتصال پمپ هپارین در چک دونفره شیفت عصر شناسایی و اصلاح شد.'
+        },
+        {
+          t: t2, shift: 'شب', ward: 'Post-CCU', patientContext: 'تخت ۶ Post-CCU', reporterRole: 'سوپروایزر',
+          catIds: ['falls_safety'], categories: ['ایمنی بیمار و سقوط'],
+          selectedErrors: [{ catId: 'falls_safety', catTitle: 'ایمنی بیمار و سقوط', sub: 'سقوط از تخت' }],
+          severityCode: 'E', isNeverEvent: false, neverEvents: [],
+          ipsg: ['IPSG 6: کاهش خطر آسیب ناشی از سقوط'],
+          rootCauses: ['کمبود نیرو', 'خستگی شیفت'],
+          immediateActions: ['ارزیابی آسیب و معاینه بالینی', 'پایش دقیق علائم حیاتی و ECG', 'ایمن‌سازی تخت و محیط بیمار'],
+          notifications: ['اطلاع به پزشک', 'سوپروایزر', 'ثبت در HIS'],
+          preventive: ['اصلاح فرآیند و چک‌لیست', 'برگزاری آموزش بازآموزی'],
+          note: 'معاینه نورولوژیک و گرافی بدون شکستگی؛ نرده‌های تخت و زنگ احضار چک شد.'
+        },
+        {
+          t: t3, shift: 'صبح', ward: 'آنژیوگرافی/کت‌لب', patientContext: 'اتاق کت‌لب ۱', reporterRole: 'کارشناس اتاق عمل/کت‌لب',
+          catIds: ['procedure'], categories: ['پروسیجر/آنژیوگرافی/جراحی'],
+          selectedErrors: [
+            { catId: 'procedure', catTitle: 'پروسیجر/آنژیوگرافی/جراحی', sub: 'خونریزی یا هماتوم محل آنژیوگرافی' },
+            { catId: 'procedure', catTitle: 'پروسیجر/آنژیوگرافی/جراحی', sub: 'نقص چک‌لیست ایمنی (Time-Out)' }
+          ],
+          severityCode: 'F', isNeverEvent: false, neverEvents: [],
+          ipsg: ['IPSG 4: اطمینان از جراحی و پروسیجر ایمن'],
+          rootCauses: ['اورژانسی بودن شرایط', 'عدم رعایت چک‌لیست'],
+          immediateActions: ['مداخله درمانی اصلاحی/آنتی‌دوت', 'پایش دقیق علائم حیاتی و ECG', 'ثبت دقیق در پرونده بالینی'],
+          notifications: ['اطلاع به پزشک', 'سرپرستار', 'دفتر ایمنی بیمار'],
+          preventive: ['اصلاح فرآیند و چک‌لیست', 'بهبود تحویل شیفت SBAR'],
+          note: 'فشار موضعی و پایش هموگلوبین و نبض دیستال انجام شد؛ همودینامیک پایدار گردید.'
+        },
+        {
+          t: t4, shift: 'صبح', ward: 'بخش قلب', patientContext: 'اتاق ۲۰۴ - تخت ۲', reporterRole: 'تکنسین آزمایشگاه',
+          catIds: ['lab', 'identification'], categories: ['آزمایشگاه و پاراکلینیک', 'شناسایی بیمار'],
+          selectedErrors: [
+            { catId: 'lab', catTitle: 'آزمایشگاه و پاراکلینیک', sub: 'لیبل اشتباه نمونه' },
+            { catId: 'identification', catTitle: 'شناسایی بیمار', sub: 'عدم تطبیق دو شناسه هویتی' }
+          ],
+          severityCode: 'C', isNeverEvent: false, neverEvents: [],
+          ipsg: ['IPSG 1: شناسایی صحیح بیمار'],
+          rootCauses: ['اختلال ارتباطی/تحویل شیفت', 'خطای HIS'],
+          immediateActions: ['نمونه‌گیری یا آزمایش مجدد', 'ثبت دقیق در پرونده بالینی'],
+          notifications: ['سرپرستار', 'ثبت در HIS'],
+          preventive: ['برگزاری آموزش بازآموزی', 'اصلاح فرآیند و چک‌لیست'],
+          note: 'نمونه تروپونین پیش از گزارش‌دهی توسط آزمایشگاه رد و مجدداً با تطبیق دو شناسه گرفته شد.'
+        },
+        {
+          t: t5, shift: 'شب', ward: 'ICU قلب', patientContext: 'تخت ۲ ICU قلب', reporterRole: 'پزشک',
+          catIds: ['equipment'], categories: ['تجهیزات پزشکی و مانیتورینگ'],
+          selectedErrors: [{ catId: 'equipment', catTitle: 'تجهیزات پزشکی و مانیتورینگ', sub: 'خرابی مانیتور قلبی/تله‌متری' }],
+          severityCode: 'D', isNeverEvent: false, neverEvents: [],
+          ipsg: ['IPSG 2: بهبود ارتباطات مؤثر (SBAR/Read-Back)'],
+          rootCauses: ['خرابی تجهیز'],
+          immediateActions: ['قرنطینه دارو/تجهیز معیوب', 'پایش دقیق علائم حیاتی و ECG'],
+          notifications: ['سوپروایزر', 'دفتر ایمنی بیمار'],
+          preventive: ['سرویس و کالیبراسیون تجهیزات'],
+          note: 'مانیتور جایگزین بلافاصله نصب و دستگاه معیوب به مهندسی پزشکی ارجاع شد.'
+        }
+      ];
+
+      samples.forEach((s, idx) => {
+        const sev = NCC_MERP.find(x => x.code === s.severityCode);
+        const rec = {
+          id: `demo-${Date.now()}-${idx}`,
+          code: nextReportCode(s.t.p.jy),
+          createdAt: s.t.d.toISOString(),
+          sourceApp: state.bridge.connected ? 'سیستم پرستاری قلب' : 'نمونه آموزشی',
+          parts: s.t.p,
+          shamsiDate: s.t.f.faDate,
+          latinDate: s.t.f.latinDate,
+          time: s.t.f.faTime,
+          shift: s.shift,
+          ward: s.ward,
+          patientContext: s.patientContext,
+          reporterRole: s.reporterRole,
+          catIds: s.catIds,
+          categories: s.categories,
+          selectedErrors: s.selectedErrors,
+          severityCode: sev.code,
+          severityTitle: sev.title,
+          severityDesc: sev.desc,
+          severityLevel: sev.level,
+          isNeverEvent: s.isNeverEvent,
+          neverEvents: s.neverEvents,
+          ipsg: s.ipsg,
+          rootCauses: s.rootCauses,
+          immediateActions: s.immediateActions,
+          notifications: s.notifications,
+          preventive: s.preventive,
+          note: s.note
+        };
+        state.records.unshift(rec);
+      });
+
+      saveRecords();
+      updateBadges();
+      CARDIAC_BRIDGE.broadcastStats();
+      if (state.activeTab === 'archive') renderArchive();
+      if (state.activeTab === 'analytics') renderAnalytics();
+      showToast('۵ نمونه بالینی قلب و بیمارستان بارگذاری شد!', 'success');
+    }
+
+    function requestClearAll() {
+      if (state.records.length === 0) return;
+      openConfirm('پاک‌سازی کل آرشیو', 'تمامی گزارش‌های ثبت‌شده از حافظه مرورگر پاک خواهند شد. پیشنهاد می‌شود ابتدا فایل اکسل یا پشتیبان JSON بگیرید.', () => {
+        state.records = [];
+        saveRecords();
+        updateBadges();
+        CARDIAC_BRIDGE.broadcastStats();
+        if (state.activeTab === 'archive') renderArchive();
+        if (state.activeTab === 'analytics') renderAnalytics();
+        showToast('کل آرشیو با موفقیت پاک شد.', 'info');
+      });
+    }
+
+    /* =========================================================================
+       ۱۳. راه‌اندازی کامل و اتصال رویدادها
+       ========================================================================= */
+    function init() {
+      loadStorage();
+      state.form = createBlankForm(true);
+      CARDIAC_BRIDGE.init();
+      applyTheme(state.theme);
+      updateBadges();
+      renderFullForm();
+      switchTab('form');
+
+      // به‌روزرسانی خودکار ساعت در حالت «همین الان»
+      setInterval(() => {
+        if (!state.editingId && state.form.quickTime === 'now') {
+          state.form.parts = dateToJalaliParts(new Date());
+          updateTimeReadout();
+        }
+      }, 30000);
+
+      // دکمه‌های بنر پل ارتباطی
+      document.getElementById('bridgeSendSummaryBtn').addEventListener('click', () => {
+        if (state.records.length > 0) {
+          CARDIAC_BRIDGE.sendToChallenges(state.records[0]);
+        } else if (state.form.ward && state.form.selectedErrors.length > 0) {
+          const fmt = formatParts(state.form.parts);
+          const draftTxt = `⚠️ [پیش‌نویس/${state.form.severityCode || '-'}] ${state.form.selectedErrors[0].catTitle} - ${state.form.selectedErrors.map(e => e.sub).join('، ')} (${state.form.ward}، شیفت ${state.form.shift}، ساعت ${fmt.faTime})`;
+          CARDIAC_BRIDGE.sendToChallenges(draftTxt);
+        } else {
+          showToast('ابتدا گزارشی ثبت کنید یا فیلدهای خطا را انتخاب نمایید.', 'error');
+        }
+      });
+      document.getElementById('bridgeReturnOpenerBtn').addEventListener('click', () => CARDIAC_BRIDGE.returnToOpener());
+
+      // بنر پس از ثبت
+      document.getElementById('postSaveSendChallengeBtn').addEventListener('click', () => {
+        const rec = state.records.find(r => String(r.id) === String(state.lastSavedId)) || state.records[0];
+        if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
+      });
+      document.getElementById('postSavePrintBtn').addEventListener('click', () => {
+        const id = state.lastSavedId || state.records[0]?.id;
+        if (id) printReportA4(id);
+      });
+      document.getElementById('postSaveCloseBtn').addEventListener('click', () => {
+        document.getElementById('postSaveBanner').classList.add('hidden');
+      });
+
+      // هدر و همبرگری
+      document.getElementById('openHamburgerBtn').addEventListener('click', openDrawer);
+      document.getElementById('closeHamburgerBtn').addEventListener('click', closeDrawer);
+      document.getElementById('hamburgerBackdrop').addEventListener('click', closeDrawer);
+      document.getElementById('headerThemeBtn').addEventListener('click', cycleTheme);
+      document.getElementById('headerCountBtn').addEventListener('click', () => switchTab('archive'));
+
+      document.querySelectorAll('.drawer-nav-btn').forEach(b => b.addEventListener('click', () => {
+        switchTab(b.dataset.drawerTab);
+        closeDrawer();
+      }));
+      document.querySelectorAll('.theme-opt').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.themePick)));
+
+      document.getElementById('drawerResetPinBtn').addEventListener('click', () => {
+        state.pinnedWard = ''; state.pinnedShift = ''; state.pinWardShift = false;
+        savePrefs();
+        document.getElementById('pinWardShiftToggle').checked = false;
+        updateDrawerPinText();
+        showToast('پین بخش و شیفت حذف شد.', 'info');
+      });
+      document.getElementById('drawerDemoBtn').addEventListener('click', () => { closeDrawer(); loadDemoCases(); });
+      document.getElementById('drawerExcelBtn').addEventListener('click', () => { closeDrawer(); exportExcel(); });
+      document.getElementById('drawerJsonBtn').addEventListener('click', () => { closeDrawer(); exportJson(); });
+      document.getElementById('drawerImportJsonInput').addEventListener('change', (ev) => { closeDrawer(); importJson(ev); });
+      document.getElementById('drawerClearBtn').addEventListener('click', () => { closeDrawer(); requestClearAll(); });
+
+      // داک پایین
+      document.querySelectorAll('.dock-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.dockTab)));
+
+      // Speed-Dial FAB
+      document.getElementById('fabMainBtn').addEventListener('click', () => toggleSpeedDial());
+      document.getElementById('fabExcelBtn').addEventListener('click', () => { toggleSpeedDial(false); exportExcel(); });
+      document.getElementById('fabNewBtn').addEventListener('click', () => { toggleSpeedDial(false); switchTab('form'); resetFormAll(); });
+      document.getElementById('fabVoiceBtn').addEventListener('click', () => {
+        toggleSpeedDial(false);
+        switchTab('form');
+        setTimeout(() => {
+          document.getElementById('form-sec-6').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          toggleVoiceRecording();
+        }, 180);
+      });
+      document.getElementById('fabJumpBtn').addEventListener('click', () => {
+        document.getElementById('sectionJumperPopover').classList.toggle('hidden');
+      });
+      document.getElementById('closeJumperBtn').addEventListener('click', () => {
+        document.getElementById('sectionJumperPopover').classList.add('hidden');
+      });
+      document.querySelectorAll('.jump-sec-btn').forEach(b => b.addEventListener('click', () => {
+        const target = b.dataset.jump;
+        document.getElementById('sectionJumperPopover').classList.add('hidden');
+        toggleSpeedDial(false);
+        switchTab('form');
+        setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+      }));
+
+      // استپرهای شمسی و پین بخش/شیفت
+      document.querySelectorAll('.step-btn').forEach(b => b.addEventListener('click', () => {
+        const [field, d] = b.dataset.step.split(':');
+        stepShamsiPart(field, Number(d));
+      }));
+      document.getElementById('pinWardShiftToggle').addEventListener('change', (e) => {
+        state.pinWardShift = e.target.checked;
+        if (state.pinWardShift) {
+          state.pinnedWard = state.form.ward;
+          state.pinnedShift = state.form.shift;
+        }
+        savePrefs();
+        updateDrawerPinText();
+      });
+
+      // زمینه بیمار / تخت متصل
+      document.getElementById('patientContextInput').addEventListener('input', (e) => {
+        state.form.patientContext = e.target.value;
+        syncPatientBadgeUI();
+      });
+      document.getElementById('clearPatientInputBtn').addEventListener('click', () => {
+        state.form.patientContext = '';
+        syncPatientBadgeUI();
+        renderSec4to6();
+      });
+      document.getElementById('sec1ClearPatientBtn').addEventListener('click', () => {
+        state.form.patientContext = '';
+        syncPatientBadgeUI();
+        renderSec4to6();
+      });
+      document.getElementById('sec1EditPatientBtn').addEventListener('click', () => {
+        const inp = document.getElementById('patientContextInput');
+        inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => inp.focus(), 250);
+      });
+
+      // رویدادهای فرم
+      document.getElementById('clearAllErrorsBtn').addEventListener('click', () => {
+        state.form.selectedErrors = [];
+        renderSec2();
+        updateHud();
+      });
+      document.getElementById('neverEventToggleBtn').addEventListener('click', () => {
+        state.form.isNeverEvent = !state.form.isNeverEvent;
+        if (!state.form.isNeverEvent) state.form.neverEvents = [];
+        renderSec3();
+      });
+      document.getElementById('voiceRecordBtn').addEventListener('click', toggleVoiceRecording);
+      document.getElementById('clearVoiceNoteBtn').addEventListener('click', () => {
+        state.form.note = '';
+        document.getElementById('voiceNoteArea').value = '';
+      });
+      document.getElementById('voiceNoteArea').addEventListener('input', (e) => { state.form.note = e.target.value; });
+
+      document.getElementById('hudSubmitBtn').addEventListener('click', submitReport);
+      document.getElementById('hudCancelEditBtn').addEventListener('click', () => resetFormAll());
+      document.getElementById('formSubmitBottomBtn').addEventListener('click', submitReport);
+      document.getElementById('formResetBottomBtn').addEventListener('click', () => resetFormAll());
+
+      // فیلتر، جستجو، مرتب‌سازی و رویداد متمرکز کارت‌های آرشیو (Event Delegation)
+      document.getElementById('toggleFiltersDrawerBtn').addEventListener('click', () => {
+        state.filtersOpen = !state.filtersOpen;
+        document.getElementById('archiveFiltersPanel').classList.toggle('hidden', !state.filtersOpen);
+      });
+      document.getElementById('archiveSearchInput').addEventListener('input', (e) => {
+        state.filters.query = e.target.value || '';
+        renderArchive();
+      });
+      document.getElementById('sortNewestBtn').addEventListener('click', () => {
+        state.filters.sort = 'newest';
+        renderArchive();
+      });
+      document.getElementById('sortSeverityBtn').addEventListener('click', () => {
+        state.filters.sort = 'severity';
+        renderArchive();
+      });
+      document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+        state.filters = { critical: 'all', shift: 'all', severity: 'all', category: 'all', ward: 'all', query: '', sort: 'newest' };
+        const sInp = document.getElementById('archiveSearchInput');
+        if (sInp) sInp.value = '';
+        renderArchive();
+      });
+      document.getElementById('archiveCardsGrid').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action][data-id]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const act = btn.dataset.action;
+        const rid = btn.dataset.id;
+        if (act === 'open') openDetail(rid);
+        else if (act === 'edit') startEditReport(rid);
+        else if (act === 'print') printReportA4(rid);
+        else if (act === 'delete') requestDelete(rid);
+        else if (act === 'challenge') {
+          const rec = state.records.find(x => String(x.id) === String(rid));
+          if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
+        }
+      });
+
+      // بستن منوی شناور و پاپ‌اور با کلیک بیرون و کلید Escape
+      document.addEventListener('click', (e) => {
+        if (state.speedDialOpen && !e.target.closest('#speedDialWrap') && !e.target.closest('#sectionJumperPopover')) {
+          toggleSpeedDial(false);
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeConfirm();
+          closeDetail();
+          closeAllFloatingMenus();
+        }
+      });
+
+      // مودال جزئیات و تایید
+      document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
+      document.getElementById('modalCloseBtn').addEventListener('click', closeDetail);
+      document.getElementById('detailModal').addEventListener('click', (e) => { if (e.target.id === 'detailModal') closeDetail(); });
+      document.getElementById('modalPrintBtn').addEventListener('click', () => { if (state.activeDetailId) printReportA4(state.activeDetailId); });
+      document.getElementById('modalEditBtn').addEventListener('click', () => { if (state.activeDetailId) startEditReport(state.activeDetailId); });
+      document.getElementById('modalDeleteBtn').addEventListener('click', () => { if (state.activeDetailId) requestDelete(state.activeDetailId); });
+      document.getElementById('modalSendChallengeBtn').addEventListener('click', () => {
+        const rec = state.records.find(r => String(r.id) === String(state.activeDetailId));
+        if (rec) CARDIAC_BRIDGE.sendToChallenges(rec);
+      });
+
+      document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirm);
+      document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target.id === 'confirmModal') closeConfirm(); });
+      document.getElementById('confirmOkBtn').addEventListener('click', () => {
+        const cb = state.confirmCb;
+        closeConfirm();
+        if (typeof cb === 'function') cb();
+      });
+
+      // خروجی، پشتیبان و دموی آزمایشی
+      document.getElementById('exportXlsxBtn').addEventListener('click', exportExcel);
+      document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+      document.getElementById('exportJsonBtn').addEventListener('click', exportJson);
+      document.getElementById('importJsonInput').addEventListener('change', importJson);
+      document.getElementById('exportLoadDemoBtn').addEventListener('click', loadDemoCases);
+      document.getElementById('analyticsDemoBtn').addEventListener('click', loadDemoCases);
+      document.getElementById('exportClearAllBtn').addEventListener('click', requestClearAll);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
