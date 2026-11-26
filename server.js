@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.json({ limit: '16mb' }));
 
-// CORS کامل برای GitHub Pages، موبایل، PWA و حالت آفلاین
+// CORS کامل
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -18,8 +18,12 @@ const GEMINI_FREE_MODELS = [
   'gemini-3.6-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
-  'gemini-3-flash-preview'
+  'gemini-3-flash-preview',
+  'gemini-2.5-flash'
 ];
+
+// کش کردن مدل و اندپوینت سالم برای پاسخ‌دهی فوری در درخواست‌های بعدی
+let cachedRoute = null; // { model, isVertex, endpointLabel }
 
 function checkSecret(req) {
   const secret = (process.env.APP_SECRET || '').trim();
@@ -39,272 +43,181 @@ function splitKeys(...rawVals) {
   return out;
 }
 
-function getServerGeminiKeys() { return splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY); }
-function getServerTavilyKeys() { return splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY); }
-function getServerExaKeys() { return splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY); }
+const getGeminiKeys = (extra = []) => splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...extra);
+const getTavilyKeys = (extra = '') => splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY, extra);
+const getExaKeys    = (extra = '') => splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY, extra);
 
-// 1) Tavily AI Medical Search (1000 free searches/month)
-async function queryTavily(query, tavilyKeys, maxResults = 5) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// جستجوی موازی فوق‌سریع (Tavily و Exa هم‌زمان اجرا می‌شوند، هرکدام زودتر جواب داد برنده است — سقف ۴.۵ ثانیه)
+async function fastLiveSearch(query, tavilyKeys, exaKeys, maxResults = 4) {
   const q = String(query || '').trim();
-  if (!q || !tavilyKeys.length) return { ok: false, sources: [] };
-  let lastErr = '';
-  for (const apiKey of tavilyKeys) {
-    try {
-      const r = await fetch('https://api.tavily.com/search', {
+  if (!q) return { ok: false, sources: [], answer: '', provider: '' };
+
+  const tasks = [];
+
+  if (tavilyKeys.length) {
+    tasks.push((async () => {
+      const r = await fetchWithTimeout('https://api.tavily.com/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          api_key: apiKey,
+          api_key: tavilyKeys[0],
           query: q,
           search_depth: 'basic',
           max_results: maxResults,
           include_answer: true
         })
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const results = Array.isArray(data.results) ? data.results : [];
-        const sources = results.map(it => ({
-          title: it.title || '',
-          link: it.url || '',
-          snippet: it.content || ''
-        }));
-        return { ok: true, sources, answer: data.answer || '', provider: 'Tavily' };
-      }
-      lastErr = `Tavily HTTP ${r.status}`;
-      if (![429, 403, 401].includes(r.status)) break;
-    } catch (e) {
-      lastErr = e.message || 'Tavily error';
-    }
+      }, 4500);
+      if (!r.ok) throw new Error('Tavily ' + r.status);
+      const data = await r.json();
+      const sources = (Array.isArray(data.results) ? data.results : []).map(it => ({
+        title: it.title || '',
+        link: it.url || '',
+        snippet: (it.content || '').slice(0, 260)
+      }));
+      if (!sources.length) throw new Error('Tavily empty');
+      return { ok: true, sources, answer: data.answer || '', provider: 'Tavily' };
+    })());
   }
-  return { ok: false, sources: [], error: lastErr };
-}
 
-// 2) Exa AI Neural Medical Search (1000 free searches/month)
-async function queryExa(query, exaKeys, numResults = 5) {
-  const q = String(query || '').trim();
-  if (!q || !exaKeys.length) return { ok: false, sources: [] };
-  let lastErr = '';
-  for (const apiKey of exaKeys) {
-    try {
-      const r = await fetch('https://api.exa.ai/search', {
+  if (exaKeys.length) {
+    tasks.push((async () => {
+      const r = await fetchWithTimeout('https://api.exa.ai/search', {
         method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'x-api-key': exaKeys[0], 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: q,
-          numResults,
+          numResults: maxResults,
           type: 'auto',
-          contents: {
-            highlights: { numSentences: 3, highlightsPerUrl: 1 }
-          }
+          contents: { highlights: { numSentences: 2, highlightsPerUrl: 1 } }
         })
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const results = Array.isArray(data.results) ? data.results : [];
-        const sources = results.map(it => ({
-          title: it.title || it.url || '',
-          link: it.url || '',
-          snippet: (Array.isArray(it.highlights) && it.highlights[0]) ? it.highlights[0] : (it.text ? String(it.text).slice(0, 260) : '')
-        }));
-        return { ok: true, sources, provider: 'Exa AI' };
-      }
-      lastErr = `Exa HTTP ${r.status}`;
-      if (![429, 403, 401].includes(r.status)) break;
-    } catch (e) {
-      lastErr = e.message || 'Exa error';
-    }
+      }, 4500);
+      if (!r.ok) throw new Error('Exa ' + r.status);
+      const data = await r.json();
+      const sources = (Array.isArray(data.results) ? data.results : []).map(it => ({
+        title: it.title || it.url || '',
+        link: it.url || '',
+        snippet: (Array.isArray(it.highlights) && it.highlights[0]) ? it.highlights[0] : ''
+      }));
+      if (!sources.length) throw new Error('Exa empty');
+      return { ok: true, sources, answer: '', provider: 'Exa AI' };
+    })());
   }
-  return { ok: false, sources: [], error: lastErr };
+
+  if (!tasks.length) return { ok: false, sources: [], answer: '', provider: '' };
+
+  try {
+    return await Promise.any(tasks);
+  } catch (e) {
+    return { ok: false, sources: [], answer: '', provider: '' };
+  }
 }
 
-// 3) Gemini Vision + Built-in Google Search Grounding
-// Supports BOTH Google AI Studio keys (AIza...) AND Vertex AI Express keys (AQ....)
-async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch }) {
-  if (!keys.length) throw new Error('کلید Gemini تعریف نشده است');
-  const primaryModel = (model || process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0]).trim();
-  const candidateModels = [primaryModel, ...GEMINI_FREE_MODELS]
-    .filter((v, i, a) => v && a.indexOf(v) === i);
+// فراخوانی سریع و تمیز Gemini با تایم‌اوت مشخص و کش مدل سالم
+async function callGeminiFast({ keys, model, userText, images }) {
+  if (!keys.length) throw new Error('کلید Gemini API تنظیم نشده است.');
+
+  const preferred = (model || process.env.GEMINI_MODEL || (cachedRoute && cachedRoute.model) || GEMINI_FREE_MODELS[0]).trim();
+  const modelsToTry = [preferred, ...(cachedRoute ? [cachedRoute.model] : []), ...GEMINI_FREE_MODELS]
+    .filter((v, i, a) => v && a.indexOf(v) === i)
+    .slice(0, 4); // حداکثر ۴ مدل تا هرگز کند و گیر نکند
 
   const parts = [{ text: userText }];
   if (Array.isArray(images)) {
     images.slice(0, 4).forEach(im => {
       if (im && im.base64) {
-        parts.push({
-          inline_data: { mime_type: im.mimeType || 'image/jpeg', data: im.base64 }
-        });
+        parts.push({ inline_data: { mime_type: im.mimeType || 'image/jpeg', data: im.base64 } });
       }
     });
   }
 
-  async function sendGeminiRequest(endpointUrl, cleanKey, withSearch) {
-    const payload = { contents: [{ role: 'user', parts }] };
-    if (withSearch) {
-      payload.tools = [{ google_search: {} }];
-    }
-    const r = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': cleanKey
-      },
-      body: JSON.stringify(payload)
-    });
-    if (r.ok) {
-      const data = await r.json();
-      const cand = data?.candidates?.[0] || {};
-      const text = cand?.content?.parts?.map(p => p.text).filter(Boolean).join('\n') || '';
-      const chunks = cand?.groundingMetadata?.groundingChunks || [];
-      const gSources = chunks
-        .filter(c => c && c.web && c.web.uri)
-        .slice(0, 5)
-        .map(c => ({
-          title: c.web.title || c.web.uri,
-          link: c.web.uri,
-          snippet: 'منبع تأییدشده از جستجوی زنده Google Search'
-        }));
-      if (text) return { ok: true, text, groundingSources: gSources };
-      return { ok: false, status: 502, body: 'پاسخ متنی خالی از Gemini' };
-    }
-    const errBody = await r.text().catch(() => '');
-    return { ok: false, status: r.status, body: errBody.slice(0, 220) };
-  }
+  const payload = {
+    contents: [{ role: 'user', parts }],
+    generationConfig: { temperature: 0.2, maxOutputTokens: 1600 }
+  };
 
   let lastErr = '';
   for (const apiKey of keys) {
-    const cleanKey = apiKey.replace(/^["']+|["']+$/g, '').trim();
-    const isVertexExpress = cleanKey.startsWith('AQ.');
+    const isVertex = apiKey.startsWith('AQ.');
+    for (const gemModel of modelsToTry) {
+      const url = isVertex
+        ? `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(apiKey)}`
+        : `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-    for (const gemModel of candidateModels) {
-      const endpoints = isVertexExpress
-        ? [
-            { label: 'Vertex', url: `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(cleanKey)}` },
-            { label: 'AIStudio', url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(cleanKey)}` }
-          ]
-        : [
-            { label: 'AIStudio', url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(cleanKey)}` }
-          ];
+      try {
+        const r = await fetchWithTimeout(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(payload)
+        }, 18000);
 
-      let stopModelsForThisKey = false;
-      for (const ep of endpoints) {
-        let resObj = await sendGeminiRequest(ep.url, cleanKey, Boolean(enableGoogleSearch));
-        if (!resObj.ok && resObj.status === 400 && enableGoogleSearch) {
-          resObj = await sendGeminiRequest(ep.url, cleanKey, false);
+        if (r.ok) {
+          const data = await r.json();
+          const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join('\n') || '';
+          if (text) {
+            cachedRoute = { model: gemModel, isVertex };
+            return { text: text.trim(), provider: `Gemini (${gemModel})` };
+          }
+          lastErr = 'پاسخ خالی از Gemini';
+          continue;
         }
-        if (resObj.ok) {
-          return {
-            text: resObj.text,
-            provider: `Gemini ${gemModel} (${ep.label})`,
-            groundingSources: resObj.groundingSources
-          };
-        }
-        lastErr = `Gemini/${ep.label} (${gemModel}) HTTP ${resObj.status}: ${resObj.body}`;
-        if ([401, 403, 429].includes(resObj.status)) {
-          if (isVertexExpress && ep.label === 'Vertex') continue;
-          stopModelsForThisKey = true;
-          break;
-        }
-        if (resObj.status === 404) break;
+        const body = await r.text().catch(() => '');
+        lastErr = `Gemini (${gemModel}) HTTP ${r.status}: ${body.slice(0, 140)}`;
+        if (r.status === 404) continue; // مدل بعدی را تست کن
+        break; // خطای کلید/سهمیه -> سراغ کلید بعدی
+      } catch (e) {
+        lastErr = `Gemini (${gemModel}): ${e.name === 'AbortError' ? 'زمان پاسخ تمام شد (Timeout)' : e.message}`;
+        continue;
       }
-      if (stopModelsForThisKey) break;
     }
   }
-  throw new Error(lastErr || 'Gemini failed');
+  throw new Error(lastErr || 'اتصال به Gemini ناموفق بود.');
 }
 
-// صفحه وضعیت اصلی
-app.get('/', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'Cardiac Clinical AI Server (v30 — Gemini + Tavily + Exa AI)',
-    endpoints: ['/health', '/webhook/clinical-interpret', '/webhook/medical-search'],
-    geminiConfigured: getServerGeminiKeys().length > 0,
-    tavilyConfigured: getServerTavilyKeys().length > 0,
-    exaConfigured: getServerExaKeys().length > 0,
-    model: process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0],
-    models: GEMINI_FREE_MODELS
-  });
-});
-
-// مسیر سلامت
-app.get('/health', (req, res) => {
+app.get(['/', '/health'], (req, res) => {
   res.json({
     ok: true,
     status: 'running',
-    version: 'v30',
-    geminiConfigured: getServerGeminiKeys().length > 0,
-    tavilyConfigured: getServerTavilyKeys().length > 0,
-    exaConfigured: getServerExaKeys().length > 0,
-    model: process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0]
+    version: 'v31',
+    geminiConfigured: getGeminiKeys().length > 0,
+    tavilyConfigured: getTavilyKeys().length > 0,
+    exaConfigured: getExaKeys().length > 0,
+    model: (cachedRoute && cachedRoute.model) || process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0]
   });
 });
 
-// جستجوی زنده پزشکی (Tavily -> Exa AI -> Google Search Grounding)
 app.post('/webhook/medical-search', async (req, res) => {
   try {
-    if (!checkSecret(req)) {
-      return res.status(401).json({ error: 'توکن دسترسی نامعتبر است.' });
-    }
-    const {
-      query = '',
-      clientTavilyKey = '',
-      clientExaKey = '',
-      clientGeminiKeys = [],
-      num = 5
-    } = req.body || {};
+    if (!checkSecret(req)) return res.status(401).json({ error: 'توکن دسترسی نامعتبر است.' });
+    const { query = '', clientTavilyKey = '', clientExaKey = '', num = 5 } = req.body || {};
     const q = String(query || '').trim();
     if (!q) return res.status(400).json({ error: 'متن جستجو خالی است.' });
 
-    const medicalQ = `${q} clinical guideline nursing cardiology radiology`;
-
-    const tKeys = splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY, clientTavilyKey);
-    if (tKeys.length) {
-      const tOut = await queryTavily(medicalQ, tKeys, Math.min(Number(num) || 5, 7));
-      if (tOut.ok && tOut.sources.length) {
-        return res.json({ ok: true, provider: 'Tavily', answer: tOut.answer || '', sources: tOut.sources });
-      }
-    }
-
-    const eKeys = splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY, clientExaKey);
-    if (eKeys.length) {
-      const eOut = await queryExa(medicalQ, eKeys, Math.min(Number(num) || 5, 7));
-      if (eOut.ok && eOut.sources.length) {
-        return res.json({ ok: true, provider: 'Exa AI', sources: eOut.sources });
-      }
-    }
-
-    const gKeys = splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []));
-    if (gKeys.length) {
-      const gOut = await callGeminiAPI({
-        keys: gKeys,
-        model: process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0],
-        userText: `جستجوی علمی و بالینی درباره موضوع زیر انجام بده و خلاصه معتبر به فارسی همراه با منابع بنویس:\n${medicalQ}`,
-        images: [],
-        enableGoogleSearch: true
-      });
-      return res.json({
-        ok: true,
-        provider: 'Google Search (Gemini)',
-        answer: gOut.text,
-        sources: gOut.groundingSources || []
-      });
-    }
-
-    return res.status(400).json({ error: 'هیچ کلید جستجو (Tavily / Exa / Gemini) تنظیم نشده است.' });
+    const out = await fastLiveSearch(
+      `${q} clinical guideline cardiology radiology`,
+      getTavilyKeys(clientTavilyKey),
+      getExaKeys(clientExaKey),
+      Math.min(Number(num) || 5, 6)
+    );
+    if (out.ok) return res.json(out);
+    return res.status(502).json({ error: 'پاسخی از Tavily یا Exa AI دریافت نشد. کلیدهای جستجو را بررسی کنید.' });
   } catch (err) {
     return res.status(500).json({ error: err.message || 'خطا در جستجوی پزشکی' });
   }
 });
 
-// تحلیل بالینی Gemini Vision + جستجوی زنده Tavily / Exa / Google
 app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
   try {
-    if (!checkSecret(req)) {
-      return res.status(401).json({ error: 'توکن دسترسی نامعتبر است.' });
-    }
+    if (!checkSecret(req)) return res.status(401).json({ error: 'توکن دسترسی نامعتبر است.' });
 
     const {
       modalityLabel = '',
@@ -319,38 +232,34 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
       clientExaKey = ''
     } = req.body || {};
 
-    const geminiKeys = splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []));
-    const rawEnvSearch = String(process.env.LIVE_SEARCH ?? process.env.ENABLE_LIVE_SEARCH ?? process.env.USE_LIVE_SEARCH ?? '').trim().toLowerCase();
-    const envSearchEnabled = ['true', '1', 'yes', 'on'].includes(rawEnvSearch);
-    const envSearchDisabled = ['false', '0', 'no', 'off'].includes(rawEnvSearch);
-    const effectiveLiveSearch = envSearchDisabled ? false : (Boolean(useLiveSearch) || envSearchEnabled);
+    const geminiKeys = getGeminiKeys(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []);
     if (!geminiKeys.length) {
       return res.status(400).json({ error: 'هیچ کلید Gemini API در Render یا تنظیمات دستی تعریف نشده است.' });
     }
 
-    const tavilyKeys = splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY, clientTavilyKey);
-    const exaKeys = splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY, clientExaKey);
+    const rawEnvSearch = String(process.env.LIVE_SEARCH ?? '').trim().toLowerCase();
+    const envDisabled = ['false', '0', 'no', 'off'].includes(rawEnvSearch);
+    const envEnabled  = ['true', '1', 'yes', 'on'].includes(rawEnvSearch);
+    const doSearch = envDisabled ? false : (Boolean(useLiveSearch) || envEnabled);
 
-    let liveSources = [];
-    let searchAnswer = '';
-    if (effectiveLiveSearch) {
-      const seed = (text || context || modalityLabel || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+    // اجرای سرچ زنده (با سقف ۴.۵ ثانیه؛ در صورت نبود پاسخ، تحلیل را متوقف نمی‌کند!)
+    let searchOut = { ok: false, sources: [], answer: '', provider: '' };
+    if (doSearch) {
+      const seed = (text || context || modalityLabel || '').replace(/\s+/g, ' ').trim().slice(0, 150);
       if (seed) {
-        if (tavilyKeys.length) {
-          const tOut = await queryTavily(`${seed} clinical guideline interpretation`, tavilyKeys, 4);
-          if (tOut.ok) { liveSources = tOut.sources; searchAnswer = tOut.answer || ''; }
-        }
-        if (!liveSources.length && exaKeys.length) {
-          const eOut = await queryExa(`${seed} clinical guideline interpretation`, exaKeys, 4);
-          if (eOut.ok) { liveSources = eOut.sources; }
-        }
+        searchOut = await fastLiveSearch(
+          `${seed} clinical guideline interpretation`,
+          getTavilyKeys(clientTavilyKey),
+          getExaKeys(clientExaKey),
+          4
+        );
       }
     }
 
-    const searchBlock = liveSources.length
-      ? '\n\nمنابع زنده پزشکی یافت‌شده (Tavily/Exa):\n'
-        + (searchAnswer ? `خلاصه جستجو: ${searchAnswer}\n` : '')
-        + liveSources.map((s, i) => `${i + 1}. ${s.title}: ${s.snippet}`).join('\n')
+    const searchBlock = searchOut.ok && searchOut.sources.length
+      ? `\n\nمنابع زنده پزشکی (${searchOut.provider}):\n`
+        + (searchOut.answer ? `خلاصه: ${searchOut.answer}\n` : '')
+        + searchOut.sources.map((s, i) => `${i + 1}. ${s.title}: ${s.snippet}`).join('\n')
       : '';
 
     const userText = [
@@ -360,29 +269,23 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
       searchBlock
     ].filter(Boolean).join('\n\n');
 
-    const useBuiltInGoogle = effectiveLiveSearch && liveSources.length === 0;
-    const out = await callGeminiAPI({
+    const aiOut = await callGeminiFast({
       keys: geminiKeys,
       model: clientModel,
       userText,
-      images,
-      enableGoogleSearch: useBuiltInGoogle
+      images
     });
-
-    if (out.groundingSources && out.groundingSources.length) {
-      liveSources = liveSources.concat(out.groundingSources);
-    }
 
     return res.json({
       ok: true,
-      result: out.text,
-      via: out.provider,
-      sources: liveSources
+      result: aiOut.text,
+      via: aiOut.provider + (searchOut.ok ? ` + ${searchOut.provider}` : ''),
+      sources: searchOut.sources || []
     });
   } catch (err) {
-    return res.status(502).json({ error: err.message || 'خطا در ارتباط با Gemini' });
+    return res.status(502).json({ error: err.message || 'خطا در ارتباط با سرور هوش مصنوعی' });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Cardiac Gemini+Tavily+Exa Server v30 running on port ' + PORT));
+app.listen(PORT, () => console.log('Fast Cardiac AI Server v31 running on port ' + PORT));
