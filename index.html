@@ -68,7 +68,7 @@ html,body{max-width:100%;overflow-x:hidden;}
 <style id="HW_CUSTOM_FONT_STYLE"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>سیستم جامع پرستاری قلب (نسخه ۲۸ — چند هوش مصنوعی رایگان: Gemini + Groq Llama-4 + OpenRouter + جستجوی زنده Google و Tavily)</title>
+    <title>سیستم جامع پرستاری قلب (نسخه ۲۹ — مفسر هوشمند Gemini 4 / 3.8 + جستجوی زنده Tavily و Exa AI)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -2368,7 +2368,7 @@ html[data-v12-theme="pearl-light"] .int-severity-pill.crit { color: #b91c1c; }
 
     <header>
         <button id="headerErrorBtn" type="button" onclick="openErrorReporter()" title="ثبت سریع خطای بیمارستانی">🚨 ثبت خطا <span id="headerErrBadge" class="hdr-err-badge" style="display:none;">0</span></button>
-        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v28</small></h1>
+        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v29</small></h1>
         <button id="themeToggleBtn" type="button" onclick="v12ToggleThemeMenu()" title="انتخاب تم ظاهری">🎨 <span class="theme-btn-lbl">تم</span></button>
     </header>
 
@@ -13609,10 +13609,10 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         </div>
     </div>
 
-    <!-- پنل تنظیمات چند هوش مصنوعی رایگان + جستجوی زنده (v25) -->
+    <!-- پنل تنظیمات اتصال خودکار Render + Gemini + Tavily و Exa AI (v29) -->
     <div class="int-cfg-box" id="intCfgBox">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px;">
-            <b style="color:var(--accent);">⚙️ تنظیمات چند هوش مصنوعی + جستجوی زنده وب</b>
+            <b style="color:var(--accent);">⚙️ تنظیمات Gemini + جستجوی زنده (Tavily / Exa)</b>
             <button type="button" class="nrs-clear-btn" onclick="intPingServer(false)">📡 تست سرور</button>
         </div>
 
@@ -13622,22 +13622,13 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
             <button type="button" id="intCfgBtn_gemini" onclick="intSetEngineMode('gemini')">🔑 فقط کلید دستی</button>
         </div>
 
-        <div class="form-group" style="margin-bottom:8px;">
-            <label>موتور هوش مصنوعی ترجیحی:</label>
-            <select id="int_cfg_provider" style="font-size:12.5px; padding:7px;">
-                <option value="auto">🔄 چرخش خودکار هوشمند (Gemini ➔ Groq Llama-4 ➔ OpenRouter)</option>
-                <option value="gemini">✨ Google Gemini (دارای Google Search زنده داخلی!)</option>
-                <option value="groq">⚡ Groq Cloud (مدل Llama-4 Scout Vision — فوق‌سریع و رایگان)</option>
-                <option value="openrouter">🌐 OpenRouter (مدل‌های رایگان Llama / DeepSeek / Qwen)</option>
-            </select>
-        </div>
-
         <!-- بخش سرور Render -->
         <div id="intCfgPane_webhook" style="padding:8px; border-radius:10px; background:var(--card); border:1px solid var(--border); margin-bottom:8px;">
             <div style="font-size:11.5px; font-weight:bold; color:#38bdf8; margin-bottom:6px;">☁️ سرور Render (اتصال خودکار بدون فیلترشکن)</div>
             <div class="form-group" style="margin-bottom:7px;">
-                <label>آدرس Webhook روی Render:</label>
-                <input type="url" id="int_cfg_webhook" dir="ltr" style="text-align:left; font-size:12px; padding:8px;" placeholder="https://nursing-shifts-manager.onrender.com/webhook/clinical-interpret">
+                <label>آدرس عمومی سرویس Render (لینک <code>.onrender.com</code>):</label>
+                <input type="url" id="int_cfg_webhook" dir="ltr" style="text-align:left; font-size:12px; padding:8px;" placeholder="https://your-service.onrender.com/webhook/clinical-interpret">
+                <div style="font-size:10px; color:var(--muted); margin-top:3px;">⚠️ لینک عمومی سایت (<code>https://....onrender.com</code>) را وارد کنید، نه لینک <code>api.render.com/deploy/...</code></div>
             </div>
             <div class="form-group" style="margin-bottom:0;">
                 <label>رمز اختصاصی APP_SECRET (اختیاری):</label>
@@ -13645,41 +13636,32 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
             </div>
         </div>
 
-        <!-- بخش کلیدهای دستی هوش مصنوعی و جستجوی زنده -->
+        <!-- بخش کلیدهای دستی Gemini + Tavily + Exa AI -->
         <div id="intCfgPane_gemini" style="padding:8px; border-radius:10px; background:var(--card); border:1px solid var(--border); margin-bottom:8px;">
             <div style="font-size:11.5px; font-weight:bold; color:#c084fc; margin-bottom:6px;">✨ کلیدهای دستی Gemini API (با چرخش خودکار + سرچ گوگل)</div>
             <div style="display:flex; gap:5px; margin-bottom:6px;">
-                <input type="password" id="int_new_gemini_key" dir="ltr" style="flex:1; text-align:left; font-size:12px; padding:8px;" placeholder="AQ.Ab8... یا AIzaSy... (کلید Gemini API)">
+                <input type="password" id="int_new_gemini_key" dir="ltr" style="flex:1; text-align:left; font-size:12px; padding:8px;" placeholder="AIzaSy... یا AQ.Ab8... (کلید Gemini API)">
                 <button type="button" class="int-btn-main" style="padding:0 12px; font-size:12px;" onclick="intAddManualGeminiKey()">➕ افزودن</button>
             </div>
             <div id="intGeminiKeysList" class="int-key-list"></div>
 
             <div class="form-group" style="margin-bottom:8px;">
-                <label>مدل Gemini (مدل‌های رسمی API + انتخاب مدل دلخواه):</label>
+                <label>مدل رایگان Gemini (لیست جدید):</label>
                 <select id="int_cfg_gemini_model" style="font-size:12px; padding:7px;" onchange="document.getElementById('int_cfg_custom_model_wrap').style.display = (this.value === '__custom__' ? 'block' : 'none')">
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (پیشنهادی — سریع + Vision + Google Search)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (تحلیل عمیق بالینی)</option>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (سهمیه رایگان بالا و فوق‌سریع)</option>
-                    <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (نسخه آزمایشی جدید)</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <option value="gemini-4-hydrogen">Gemini 4 Hydrogen (gemini-4-hydrogen)</option>
+                    <option value="gemini-3.8-flash">Gemini 3.8 Flash (gemini-3.8-flash)</option>
+                    <option value="gemini-3.6-flash">Gemini 3.6 Flash (gemini-3.6-flash)</option>
+                    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (gemini-3.5-flash-lite)</option>
+                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (gemini-3.1-flash-lite)</option>
+                    <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (gemini-3-flash-preview)</option>
                     <option value="__custom__">✏️ وارد کردن نام مدل دلخواه...</option>
                 </select>
                 <div id="int_cfg_custom_model_wrap" style="display:none; margin-top:5px;">
-                    <input type="text" id="int_cfg_custom_model" dir="ltr" style="text-align:left; font-size:12px; padding:7px;" placeholder="مثلاً gemini-2.5-flash">
+                    <input type="text" id="int_cfg_custom_model" dir="ltr" style="text-align:left; font-size:12px; padding:7px;" placeholder="مثلاً gemini-4-hydrogen">
                 </div>
             </div>
 
-            <div style="font-size:11.5px; font-weight:bold; color:#f59e0b; margin:8px 0 5px; padding-top:7px; border-top:1px dashed var(--border);">⚡ کلید دستی Groq API (رایگان — Llama-4 Vision فوق‌سریع)</div>
-            <div class="form-group" style="margin-bottom:7px;">
-                <input type="password" id="int_cfg_groq_key" dir="ltr" style="text-align:left; font-size:12px; padding:8px;" placeholder="gsk_... (از console.groq.com)">
-            </div>
-
-            <div style="font-size:11.5px; font-weight:bold; color:#10b981; margin:8px 0 5px; padding-top:7px; border-top:1px dashed var(--border);">🌐 کلید دستی OpenRouter API (مدل‌های رایگان)</div>
-            <div class="form-group" style="margin-bottom:7px;">
-                <input type="password" id="int_cfg_openrouter_key" dir="ltr" style="text-align:left; font-size:12px; padding:8px;" placeholder="sk-or-v1-... (از openrouter.ai)">
-            </div>
-
-            <div style="font-size:11.5px; font-weight:bold; color:#38bdf8; margin:8px 0 5px; padding-top:7px; border-top:1px dashed var(--border);">🔎 کلیدهای جستجوی زنده: Tavily + Exa AI</div>
+            <div style="font-size:11.5px; font-weight:bold; color:#38bdf8; margin:8px 0 5px; padding-top:7px; border-top:1px dashed var(--border);">🔎 کلیدهای جستجوی زنده پزشکی: Tavily + Exa AI</div>
             <div class="form-group" style="margin-bottom:6px;">
                 <input type="password" id="int_cfg_tavily_key" dir="ltr" style="text-align:left; font-size:12px; padding:8px;" placeholder="tvly-... (کلید Tavily — ۱۰۰۰ سرچ رایگان/ماه)">
             </div>
@@ -13753,13 +13735,13 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
             <div class="int-serper-toggle">
                 <label style="display:flex; align-items:center; gap:6px; margin:0; cursor:pointer; color:var(--text) !important; font-size:11.5px;">
                     <input type="checkbox" id="int_use_serper" checked style="width:auto;">
-                    <span>🌐 سرچ زنده پزشکی (Google Search / Tavily / Serper)</span>
+                    <span>🌐 سرچ زنده پزشکی (Tavily / Exa AI / Google Search)</span>
                 </label>
                 <span id="intSerperBadge" style="font-size:10px; color:#10b981;">🟢 فعال</span>
             </div>
 
             <div class="int-action-row-3">
-                <button type="button" id="intRunAiBtn" class="int-btn-main" style="grid-column:1 / -1;" onclick="intRunAiAnalysis()">🧠 تفسیر هوشمند (Gemini / Groq / OpenRouter + سرچ زنده)</button>
+                <button type="button" id="intRunAiBtn" class="int-btn-main" style="grid-column:1 / -1;" onclick="intRunAiAnalysis()">🧠 تفسیر هوشمند (Gemini + سرچ زنده)</button>
                 <button type="button" id="intRunSerperBtn" class="int-btn-sec" onclick="intRunSerperSearch()">🔎 جستجوی زنده منابع پزشکی</button>
                 <button type="button" class="int-btn-sec" onclick="intRunOfflineReportDecoder('ai')">⚡ رمزگشایی آفلاین متن</button>
             </div>
@@ -13988,28 +13970,29 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   };
 
   const DEFAULT_RENDER_WEBHOOK = 'https://nursing-shifts-manager.onrender.com/webhook/clinical-interpret';
+  const GEMINI_FREE_MODELS = [
+    'gemini-4-hydrogen',
+    'gemini-3.8-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-3-flash-preview'
+  ];
 
   let cfg = {
-    mode: 'auto',      // 'auto' | 'webhook' | 'gemini' (direct keys)
-    provider: 'auto',  // 'auto' | 'gemini' | 'groq' | 'openrouter'
+    mode: 'auto', // 'auto' | 'webhook' | 'gemini'
     webhookUrl: DEFAULT_RENDER_WEBHOOK,
     webhookSecret: '',
     geminiKeys: [],
     geminiKey: '',
-    geminiModel: 'gemini-2.5-flash',
-    groqKey: '',
-    groqModel: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    openrouterKey: '',
-    openrouterModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    geminiModel: 'gemini-4-hydrogen',
     tavilyKey: '',
     exaKey: '',
-    serperKey: '',
     useSerper: true
   };
   let serverHealth = {
     checked: false, online: false,
-    hasGemini: false, hasGroq: false, hasOpenRouter: false,
-    hasTavily: false, hasExa: false, hasSerper: false
+    hasGemini: false, hasTavily: false, hasExa: false
   };
   let activeModality = 'lab';
   let activeLabCat = 'cardiac';
@@ -14040,9 +14023,14 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     return arr.map(k => String(k || '').trim()).filter((v, i, a) => v && a.indexOf(v) === i);
   }
 
+  function isRenderDeployHookUrl(u) {
+    return /api\.render\.com\/deploy\//i.test(String(u || ''));
+  }
+
   function normalizeWebhookEndpoint(whUrl) {
     const u = String(whUrl || '').trim();
     if (!u) return '';
+    if (isRenderDeployHookUrl(u)) return '';
     try {
       const parsed = new URL(u);
       if (!parsed.pathname || parsed.pathname === '/') {
@@ -14054,13 +14042,13 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
 
   function getHealthUrlFromWebhook(whUrl) {
     const u = String(whUrl || '').trim();
-    if (!u) return '';
+    if (!u || isRenderDeployHookUrl(u)) return '';
     try { return new URL(u).origin + '/health'; } catch (e) { return ''; }
   }
 
   function getSerperProxyUrlFromWebhook(whUrl) {
     const u = String(whUrl || '').trim();
-    if (!u) return '';
+    if (!u || isRenderDeployHookUrl(u)) return '';
     try { return new URL(u).origin + '/webhook/medical-search'; } catch (e) { return ''; }
   }
 
@@ -14073,9 +14061,12 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         if (parsed.geminiKey && (!Array.isArray(cfg.geminiKeys) || !cfg.geminiKeys.includes(parsed.geminiKey))) {
           cfg.geminiKeys = [parsed.geminiKey].concat(Array.isArray(cfg.geminiKeys) ? cfg.geminiKeys : []);
         }
-        if (!cfg.webhookUrl) cfg.webhookUrl = DEFAULT_RENDER_WEBHOOK;
-        if (cfg.geminiModel === 'gemini-3.8-flash' || cfg.geminiModel === 'gemini-3.5-flash' || cfg.geminiModel === 'gemini-3.5-flash-lite') {
-          cfg.geminiModel = 'gemini-2.5-flash';
+        if (!cfg.webhookUrl || isRenderDeployHookUrl(cfg.webhookUrl)) {
+          cfg.webhookUrl = DEFAULT_RENDER_WEBHOOK;
+        }
+        // Migrate old legacy defaults to new list
+        if (!cfg.geminiModel || ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'].includes(cfg.geminiModel)) {
+          cfg.geminiModel = 'gemini-4-hydrogen';
         }
       }
     } catch (e) {}
@@ -14126,7 +14117,6 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   };
 
   window.intClearSerperKey = function() {
-    cfg.serperKey = '';
     cfg.tavilyKey = '';
     cfg.exaKey = '';
     const s1 = document.getElementById('int_cfg_exa_key');
@@ -14141,17 +14131,13 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   function syncCfgUI() {
     const wh = document.getElementById('int_cfg_webhook');
     const ws = document.getElementById('int_cfg_webhook_secret');
-    const pr = document.getElementById('int_cfg_provider');
     const gm = document.getElementById('int_cfg_gemini_model');
-    const gk = document.getElementById('int_cfg_groq_key');
-    const ok = document.getElementById('int_cfg_openrouter_key');
     const tk = document.getElementById('int_cfg_tavily_key');
-    const sk = document.getElementById('int_cfg_exa_key');
+    const ek = document.getElementById('int_cfg_exa_key');
     const us = document.getElementById('int_use_serper');
 
     if (wh) wh.value = cfg.webhookUrl || DEFAULT_RENDER_WEBHOOK;
     if (ws) ws.value = cfg.webhookSecret || '';
-    if (pr) pr.value = cfg.provider || 'auto';
     if (gm && cfg.geminiModel) {
       const hasOpt = Array.from(gm.options).some(o => o.value === cfg.geminiModel);
       if (hasOpt) {
@@ -14166,19 +14152,16 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         if (ci) ci.value = cfg.geminiModel;
       }
     }
-    if (gk) gk.value = cfg.groqKey || '';
-    if (ok) ok.value = cfg.openrouterKey || '';
     if (tk) tk.value = cfg.tavilyKey || '';
-    if (sk) sk.value = cfg.exaKey || '';
+    if (ek) ek.value = cfg.exaKey || '';
     if (us) us.checked = Boolean(cfg.useSerper);
 
     renderManualGeminiKeysList();
     intSetEngineMode(cfg.mode || 'auto', true);
 
     const gKeys = getAllManualGeminiKeys();
-    const hasAnyManual = gKeys.length > 0 || Boolean(cfg.groqKey) || Boolean(cfg.openrouterKey);
-    const hasLiveSearch = Boolean(cfg.tavilyKey) || Boolean(cfg.exaKey) || Boolean(cfg.serperKey) || gKeys.length > 0
-      || serverHealth.hasTavily || serverHealth.hasExa || serverHealth.hasSerper || serverHealth.hasGemini;
+    const hasLiveSearch = Boolean(cfg.tavilyKey) || Boolean(cfg.exaKey) || gKeys.length > 0
+      || serverHealth.hasTavily || serverHealth.hasExa || serverHealth.hasGemini;
 
     const dot = document.getElementById('intAiDot');
     const lbl = document.getElementById('intAiStatusLbl');
@@ -14193,17 +14176,12 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       sb.style.color = hasLiveSearch ? '#10b981' : 'var(--muted)';
     }
 
-    if (dot) dot.classList.toggle('ready', serverHealth.online || hasAnyManual);
+    if (dot) dot.classList.toggle('ready', serverHealth.online || gKeys.length > 0);
     if (lbl) {
-      const activeEngines = [];
-      if (gKeys.length || serverHealth.hasGemini) activeEngines.push('Gemini');
-      if (cfg.groqKey || serverHealth.hasGroq) activeEngines.push('Groq');
-      if (cfg.openrouterKey || serverHealth.hasOpenRouter) activeEngines.push('OpenRouter');
-
       if (serverHealth.online) {
-        lbl.textContent = '⚡ متصل به Render' + (activeEngines.length ? ' (' + activeEngines.join('+') + ')' : '');
-      } else if (hasAnyManual) {
-        lbl.textContent = '🔑 آماده (' + activeEngines.join(' + ') + ')';
+        lbl.textContent = '⚡ متصل به Render (Gemini)';
+      } else if (gKeys.length > 0) {
+        lbl.textContent = '🔑 آماده با کلید دستی (' + gKeys.length + ')';
       } else {
         lbl.textContent = '⚡ اتصال خودکار AI';
       }
@@ -14228,6 +14206,10 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
 
   window.intPingServer = async function(silent) {
     const wh = (document.getElementById('int_cfg_webhook')?.value || cfg.webhookUrl || '').trim();
+    if (isRenderDeployHookUrl(wh)) {
+      if (!silent) toast('⚠️ این لینک Deploy Hook رندر است! لطفاً لینک عمومی سرویس (https://....onrender.com) را وارد کنید');
+      return false;
+    }
     const healthUrl = getHealthUrlFromWebhook(wh);
     if (!healthUrl) {
       if (!silent) toast('آدرس سرور Render وارد نشده است');
@@ -14248,11 +14230,8 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
             checked: true,
             online: true,
             hasGemini: Boolean(j.geminiConfigured),
-            hasGroq: Boolean(j.groqConfigured),
-            hasOpenRouter: Boolean(j.openrouterConfigured),
             hasTavily: Boolean(j.tavilyConfigured),
-            hasExa: Boolean(j.exaConfigured),
-            hasSerper: Boolean(j.serperConfigured)
+            hasExa: Boolean(j.exaConfigured)
           };
           syncCfgUI();
           if (!silent) toast('🟢 سرور تفسیر Render آنلاین است!');
@@ -14263,11 +14242,16 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     serverHealth.checked = true;
     serverHealth.online = false;
     syncCfgUI();
-    if (!silent) toast('🟡 سرور Render پاسخ نداد (از کلیدهای دستی استفاده می‌شود)');
+    if (!silent) toast('🟡 سرور Render پاسخ نداد (یا لینک سرویس .onrender.com را بررسی کنید)');
     return false;
   };
 
   window.intSaveCfg = function() {
+    const whInputVal = (document.getElementById('int_cfg_webhook')?.value || '').trim();
+    if (isRenderDeployHookUrl(whInputVal)) {
+      toast('⚠️ لینک api.render.com/deploy فقط برای بیلد است! لطفاً لینک https://....onrender.com را وارد کنید');
+      return;
+    }
     const pendingG = (document.getElementById('int_new_gemini_key')?.value || '').trim();
     if (pendingG && pendingG.length >= 15) {
       const keys = getAllManualGeminiKeys();
@@ -14276,14 +14260,11 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       cfg.geminiKey = keys[0] || '';
       document.getElementById('int_new_gemini_key').value = '';
     }
-    cfg.provider = document.getElementById('int_cfg_provider')?.value || 'auto';
-    cfg.webhookUrl = (document.getElementById('int_cfg_webhook')?.value || '').trim() || DEFAULT_RENDER_WEBHOOK;
+    cfg.webhookUrl = whInputVal || DEFAULT_RENDER_WEBHOOK;
     cfg.webhookSecret = (document.getElementById('int_cfg_webhook_secret')?.value || '').trim();
-    const selModel = document.getElementById('int_cfg_gemini_model')?.value || 'gemini-2.5-flash';
+    const selModel = document.getElementById('int_cfg_gemini_model')?.value || 'gemini-4-hydrogen';
     const customModelVal = (document.getElementById('int_cfg_custom_model')?.value || '').trim();
-    cfg.geminiModel = (selModel === '__custom__' && customModelVal) ? customModelVal : (selModel === '__custom__' ? 'gemini-2.5-flash' : selModel);
-    cfg.groqKey = (document.getElementById('int_cfg_groq_key')?.value || '').trim();
-    cfg.openrouterKey = (document.getElementById('int_cfg_openrouter_key')?.value || '').trim();
+    cfg.geminiModel = (selModel === '__custom__' && customModelVal) ? customModelVal : (selModel === '__custom__' ? 'gemini-4-hydrogen' : selModel);
     cfg.tavilyKey = (document.getElementById('int_cfg_tavily_key')?.value || '').trim();
     cfg.exaKey = (document.getElementById('int_cfg_exa_key')?.value || '').trim();
     cfg.useSerper = Boolean(document.getElementById('int_use_serper')?.checked);
@@ -14613,7 +14594,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   };
 
   // ============================================================================
-  // ENGINE 2: MULTI-AI (GEMINI + GROQ LLAMA-4 + OPENROUTER) + LIVE WEB SEARCH (v28 Debugged)
+  // ENGINE 2: GEMINI VISION (NEW FREE MODELS) + LIVE WEB SEARCH (TAVILY / EXA / GOOGLE) (v29)
   // ============================================================================
   function buildClinicalSystemPrompt(modInfo, ctxText) {
     return 'شما یک متخصص تفسیر پاراکلینیک، رادیولوژی و پرستاری مراقبت‌های ویژه قلب (CCU) در بیمارستان‌های ایران هستید.\n'
@@ -14627,33 +14608,31 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   }
 
   async function callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch) {
+    if (isRenderDeployHookUrl(cfg.webhookUrl)) {
+      throw new Error('لینک واردشده Deploy Hook است نه آدرس وب‌سرویس (.onrender.com)');
+    }
+    const targetWh = normalizeWebhookEndpoint(cfg.webhookUrl);
+    if (!targetWh) throw new Error('آدرس سرور Render تنظیم نشده است');
+
     const headers = { 'Content-Type': 'application/json' };
     if (cfg.webhookSecret) {
       headers['Authorization'] = 'Bearer ' + cfg.webhookSecret;
       headers['X-API-Key'] = cfg.webhookSecret;
     }
-    const targetWh = normalizeWebhookEndpoint(cfg.webhookUrl);
     const resp = await fetch(targetWh, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        provider: cfg.provider || 'auto',
         modality: activeModality,
         modalityLabel: modInfo.label,
         prompt: sysPrompt,
         text: rawText,
         context: ctxText,
         useLiveSearch: Boolean(useLiveSearch),
-        useSerper: Boolean(useLiveSearch),
-        model: cfg.geminiModel || 'gemini-2.5-flash',
-        groqModel: cfg.groqModel || 'meta-llama/llama-4-scout-17b-16e-instruct',
-        openrouterModel: cfg.openrouterModel || 'meta-llama/llama-3.3-70b-instruct:free',
+        model: cfg.geminiModel || 'gemini-4-hydrogen',
         clientGeminiKeys: getAllManualGeminiKeys(),
-        clientGroqKey: cfg.groqKey || '',
-        clientOpenRouterKey: cfg.openrouterKey || '',
         clientTavilyKey: cfg.tavilyKey || '',
         clientExaKey: cfg.exaKey || '',
-        clientSerperKey: cfg.serperKey || '',
         images: uploadedImages.map(im => ({ name: im.name, mimeType: im.mimeType, base64: im.base64 }))
       })
     });
@@ -14668,7 +14647,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     }
     const ct = resp.headers.get('content-type') || '';
     if (ct.includes('text/html')) {
-      throw new Error('آدرس Render به صفحه HTML اشاره می‌کند (نه سرور server.js تفسیر)');
+      throw new Error('آدرس Render به صفحه HTML اشاره می‌کند (لینک سرویس server.js با .onrender.com را وارد کنید)');
     }
     if (ct.includes('application/json')) {
       const data = await resp.json();
@@ -14679,9 +14658,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       const aiText = obj?.result || obj?.analysis || obj?.output || obj?.text || obj?.reply || obj?.message
         || obj?.candidates?.[0]?.content?.parts?.map(p => p.text).join('\n')
         || '';
-      if (!aiText) {
-        throw new Error('پاسخ معتبر تفسیری از سرور Render دریافت نشد');
-      }
+      if (!aiText) throw new Error('پاسخ معتبری از سرور Render دریافت نشد');
       const sources = Array.isArray(obj?.sources) ? obj.sources : [];
       serverHealth.online = true;
       syncCfgUI();
@@ -14697,7 +14674,6 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   }
 
   async function callDirectWebSearch(queryText) {
-    // 1) Tavily direct
     if (cfg.tavilyKey) {
       try {
         const r = await fetch('https://api.tavily.com/search', {
@@ -14720,7 +14696,6 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         }
       } catch (e) {}
     }
-    // 2) Exa AI direct
     if (cfg.exaKey) {
       try {
         const r = await fetch('https://api.exa.ai/search', {
@@ -14744,27 +14719,13 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         }
       } catch (e) {}
     }
-    // 3) Serper direct
-    if (cfg.serperKey) {
-      try {
-        const r = await fetch('https://google.serper.dev/search', {
-          method: 'POST',
-          headers: { 'X-API-KEY': cfg.serperKey.trim(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q: queryText + ' clinical cardiology radiology guideline', num: 4, hl: 'en', gl: 'us' })
-        });
-        if (r.ok) {
-          const d = await r.json();
-          const srcs = (Array.isArray(d.organic) ? d.organic : []).slice(0, 4).map(it => ({
-            title: it.title || '', link: it.link || '', snippet: it.snippet || ''
-          }));
-          if (srcs.length) return { sources: srcs, answer: '', provider: 'Serper' };
-        }
-      } catch (e) {}
-    }
     return { sources: [], answer: '', provider: '' };
   }
 
   async function callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch) {
+    const keys = getAllManualGeminiKeys();
+    if (!keys.length) throw new Error('هیچ کلید دستی Gemini وارد نشده است');
+
     let sources = [];
     let searchAns = '';
     if (useLiveSearch) {
@@ -14784,153 +14745,82 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       + (rawText ? ('\n\nمتن/ریپورت ارسالی:\n' + rawText) : '\n\nتصاویر پیوست را با دقت بررسی و تفسیر کن.')
       + srcBlock;
 
-    const pOrder = cfg.provider === 'gemini' ? ['gemini']
-      : cfg.provider === 'groq' ? ['groq']
-      : cfg.provider === 'openrouter' ? ['openrouter']
-      : ['gemini', 'groq', 'openrouter'];
+    const parts = [{ text: fullUserPrompt }];
+    uploadedImages.forEach(im => {
+      parts.push({ inline_data: { mime_type: im.mimeType, data: im.base64 } });
+    });
+
+    const wantGoogleGrounding = Boolean(useLiveSearch && !sources.length);
+    const mList = [cfg.geminiModel || 'gemini-4-hydrogen', ...GEMINI_FREE_MODELS]
+      .filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+
+    async function sendDirectGem(epUrl, withSearch) {
+      const pl = { contents: [{ role: 'user', parts }] };
+      if (withSearch) pl.tools = [{ google_search: {} }];
+      const resp = await fetch(epUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pl)
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const cand = data?.candidates?.[0] || {};
+        const aiText = cand?.content?.parts?.map(x => x.text).filter(Boolean).join('\n') || '';
+        const chunks = cand?.groundingMetadata?.groundingChunks || [];
+        chunks.filter(c => c?.web?.uri).slice(0, 5).forEach(c => {
+          sources.push({ title: c.web.title || c.web.uri, link: c.web.uri, snippet: 'Google Search زنده' });
+        });
+        if (aiText) return { ok: true, aiText: aiText.trim() };
+        return { ok: false, status: 502, body: 'پاسخ متنی خالی' };
+      }
+      const eBody = await resp.text().catch(() => '');
+      return { ok: false, status: resp.status, body: eBody.slice(0, 140) };
+    }
 
     const errs = [];
-    for (const p of pOrder) {
-      if (p === 'gemini') {
-        const keys = getAllManualGeminiKeys();
-        if (!keys.length) continue;
-        const parts = [{ text: fullUserPrompt }];
-        uploadedImages.forEach(im => {
-          parts.push({ inline_data: { mime_type: im.mimeType, data: im.base64 } });
-        });
-        const wantGoogleGrounding = Boolean(useLiveSearch && !sources.length);
-        const mList = [cfg.geminiModel || 'gemini-2.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro', 'gemini-2.0-flash']
-          .filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+    for (let i = 0; i < keys.length; i++) {
+      const cleanKey = keys[i].replace(/^["']+|["']+$/g, '').trim();
+      const isVertex = cleanKey.startsWith('AQ.');
+      let stopKey = false;
+      for (let mIdx = 0; mIdx < mList.length; mIdx++) {
+        const mName = mList[mIdx];
+        const epList = isVertex
+          ? [
+              { lbl: 'Vertex', url: 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) },
+              { lbl: 'AIStudio', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) }
+            ]
+          : [
+              { lbl: 'AIStudio', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) }
+            ];
 
-        async function sendDirectGem(epUrl, withSearch) {
-          const pl = { contents: [{ role: 'user', parts }] };
-          if (withSearch) pl.tools = [{ google_search: {} }];
-          const resp = await fetch(epUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pl)
-          });
-          if (resp.ok) {
-            const data = await resp.json();
-            const cand = data?.candidates?.[0] || {};
-            const aiText = cand?.content?.parts?.map(x => x.text).filter(Boolean).join('\n') || '';
-            const chunks = cand?.groundingMetadata?.groundingChunks || [];
-            chunks.filter(c => c?.web?.uri).slice(0, 5).forEach(c => {
-              sources.push({ title: c.web.title || c.web.uri, link: c.web.uri, snippet: 'Google Search زنده' });
-            });
-            if (aiText) return { ok: true, aiText: aiText.trim() };
-            return { ok: false, status: 502, body: 'پاسخ متنی خالی' };
-          }
-          const eBody = await resp.text().catch(() => '');
-          return { ok: false, status: resp.status, body: eBody.slice(0, 140) };
-        }
-
-        for (let i = 0; i < keys.length; i++) {
-          const cleanKey = keys[i].replace(/^["']+|["']+$/g, '').trim();
-          const isVertex = cleanKey.startsWith('AQ.');
-          let stopKey = false;
-          for (let mIdx = 0; mIdx < mList.length; mIdx++) {
-            const mName = mList[mIdx];
-            const epList = isVertex
-              ? [
-                  { lbl: 'Vertex', url: 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) },
-                  { lbl: 'AIStudio', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) }
-                ]
-              : [
-                  { lbl: 'AIStudio', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) }
-                ];
-
-            for (let eIdx = 0; eIdx < epList.length; eIdx++) {
-              const ep = epList[eIdx];
-              try {
-                let resObj = await sendDirectGem(ep.url, wantGoogleGrounding);
-                if (!resObj.ok && resObj.status === 400 && wantGoogleGrounding) {
-                  resObj = await sendDirectGem(ep.url, false);
-                }
-                if (resObj.ok) {
-                  return { aiText: resObj.aiText, sources, via: 'Gemini ' + mName + ' • ' + ep.lbl + ' (کلید #' + (i + 1) + ')' };
-                }
-                errs.push('Gemini/' + ep.lbl + ' (' + mName + ') HTTP ' + resObj.status + ': ' + resObj.body);
-                if ([401, 403, 429].includes(resObj.status)) {
-                  if (isVertex && ep.lbl === 'Vertex') continue;
-                  stopKey = true;
-                  break;
-                }
-                if (resObj.status === 404) break;
-              } catch (e) {
-                errs.push('Gemini/' + ep.lbl + ': ' + (e.message || 'خطای شبکه/CORS'));
-                if (isVertex && ep.lbl === 'Vertex') continue;
-                stopKey = true;
-                break;
-              }
-            }
-            if (stopKey) break;
-          }
-        }
-      }
-
-      if (p === 'groq' && cfg.groqKey) {
-        try {
-          const content = [{ type: 'text', text: fullUserPrompt }];
-          uploadedImages.forEach(im => {
-            content.push({ type: 'image_url', image_url: { url: 'data:' + im.mimeType + ';base64,' + im.base64 } });
-          });
-          const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + cfg.groqKey.trim(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: cfg.groqModel || 'meta-llama/llama-4-scout-17b-16e-instruct',
-              messages: [{ role: 'system', content: sysPrompt }, { role: 'user', content }],
-              temperature: 0.25
-            })
-          });
-          if (resp.ok) {
-            const data = await resp.json();
-            const aiText = data?.choices?.[0]?.message?.content || '';
-            if (aiText) return { aiText: aiText.trim(), sources, via: 'Groq Llama-4 Vision' };
-          }
-          errs.push('Groq HTTP ' + resp.status);
-        } catch (e) { errs.push('Groq: ' + e.message); }
-      }
-
-      if (p === 'openrouter' && cfg.openrouterKey) {
-        const hasImgs = uploadedImages.length > 0;
-        const orModels = hasImgs
-          ? ['google/gemma-3-27b-it:free', 'qwen/qwen2.5-vl-72b-instruct:free', 'meta-llama/llama-4-scout:free']
-          : [cfg.openrouterModel || 'meta-llama/llama-3.3-70b-instruct:free', 'google/gemma-3-27b-it:free'];
-        const content = [{ type: 'text', text: fullUserPrompt }];
-        if (hasImgs) {
-          uploadedImages.forEach(im => {
-            content.push({ type: 'image_url', image_url: { url: 'data:' + im.mimeType + ';base64,' + im.base64 } });
-          });
-        }
-        for (let oi = 0; oi < orModels.length; oi++) {
-          const om = orModels[oi];
+        for (let eIdx = 0; eIdx < epList.length; eIdx++) {
+          const ep = epList[eIdx];
           try {
-            const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': 'Bearer ' + cfg.openrouterKey.trim(),
-                'Content-Type': 'application/json',
-                'X-Title': 'Cardiac Nursing App'
-              },
-              body: JSON.stringify({
-                model: om,
-                messages: [{ role: 'system', content: sysPrompt }, { role: 'user', content: hasImgs ? content : fullUserPrompt }],
-                temperature: 0.25
-              })
-            });
-            if (resp.ok) {
-              const data = await resp.json();
-              const aiText = data?.choices?.[0]?.message?.content || '';
-              if (aiText) return { aiText: aiText.trim(), sources, via: 'OpenRouter (' + om + ')' };
+            let resObj = await sendDirectGem(ep.url, wantGoogleGrounding);
+            if (!resObj.ok && resObj.status === 400 && wantGoogleGrounding) {
+              resObj = await sendDirectGem(ep.url, false);
             }
-            errs.push('OpenRouter (' + om + ') HTTP ' + resp.status);
-          } catch (e) { errs.push('OpenRouter: ' + e.message); break; }
+            if (resObj.ok) {
+              return { aiText: resObj.aiText, sources, via: 'Gemini ' + mName + ' • ' + ep.lbl + ' (کلید #' + (i + 1) + ')' };
+            }
+            errs.push('Gemini/' + ep.lbl + ' (' + mName + ') HTTP ' + resObj.status + ': ' + resObj.body);
+            if ([401, 403, 429].includes(resObj.status)) {
+              if (isVertex && ep.lbl === 'Vertex') continue;
+              stopKey = true;
+              break;
+            }
+            if (resObj.status === 404) break;
+          } catch (e) {
+            errs.push('Gemini/' + ep.lbl + ': ' + (e.message || 'خطای شبکه/CORS'));
+            if (isVertex && ep.lbl === 'Vertex') continue;
+            stopKey = true;
+            break;
+          }
         }
+        if (stopKey) break;
       }
     }
-    throw new Error(errs.length ? errs.join(' | ') : 'هیچ کلید دستی وارد نشده است');
+    throw new Error(errs.length ? errs.join(' | ') : 'خطا در اتصال مستقیم Gemini');
   }
 
   window.intRunSerperSearch = async function() {
@@ -14963,7 +14853,6 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
               query: q,
               clientTavilyKey: cfg.tavilyKey || '',
               clientExaKey: cfg.exaKey || '',
-              clientSerperKey: cfg.serperKey || '',
               clientGeminiKeys: getAllManualGeminiKeys(),
               num: 5
             })
@@ -15055,9 +14944,9 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       const errDetail = String(err.message || 'خطا در اتصال');
       const hasAqKey = getAllManualGeminiKeys().some(k => k.startsWith('AQ.'));
       const aqHint = hasAqKey
-        ? '\n💡 نکته مهم درباره کلید AQ....: این نوع کلید متعلق به Vertex AI Express است و مرورگر ممکن است به دلیل CORS آن را مستقیم مسدود کند؛ اما روی سرور Render (server.js v28) یا با کلید AIzaSy... از aistudio.google.com مستقیم کار می‌کند.'
+        ? '\n💡 نکته کلید AQ....: مرورگر گوشی معمولاً به دلیل CORS اجازه اتصال مستقیم به Vertex را نمی‌دهد؛ این کلید را در Render بگذارید یا از کلید AIzaSy... استفاده کنید.'
         : '';
-      toast('⚠️ خطا در اتصال AI — جزئیات خطا در کادر نتیجه نمایش داده شد');
+      toast('⚠️ خطا در اتصال AI — جزئیات خطا نمایش داده شد');
       if (rawText) {
         intRunOfflineReportDecoder('ai');
       } else {
@@ -15070,7 +14959,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         document.getElementById('intCfgBox')?.classList.add('open');
       }
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = oldBtnTxt || '🧠 تفسیر هوشمند (Gemini / Groq / OpenRouter + سرچ زنده)'; }
+      if (btn) { btn.disabled = false; btn.textContent = oldBtnTxt || '🧠 تفسیر هوشمند (Gemini + سرچ زنده)'; }
     }
   };
 
