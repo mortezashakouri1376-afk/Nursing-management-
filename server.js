@@ -23,7 +23,7 @@ function checkSecret(req) {
 function splitKeys(...rawVals) {
   const out = [];
   rawVals.forEach(raw => {
-    String(raw || '').split(/[\n,]+/).map(k => k.trim()).filter(Boolean).forEach(k => {
+    String(raw || '').split(/[\n,]+/).map(k => k.replace(/^["']+|["']+$/g, '').trim()).filter(Boolean).forEach(k => {
       if (!out.includes(k)) out.push(k);
     });
   });
@@ -73,7 +73,6 @@ async function queryTavily(query, tavilyKeys, maxResults = 5) {
   }
   return { ok: false, sources: [], error: lastErr };
 }
-
 
 // 1b) Exa AI Neural Medical Search (1000 free searches/month)
 async function queryExa(query, exaKeys, numResults = 5) {
@@ -185,17 +184,30 @@ async function callGroqAPI({ keys, model, systemPrompt, userText, images }) {
       const text = data?.choices?.[0]?.message?.content || '';
       if (text) return { text, provider: 'Groq (Llama-4 Vision)' };
     }
-    lastErr = `Groq HTTP ${r.status}: ${(await r.text()).slice(0, 180)}`;
+    lastErr = `Groq HTTP ${r.status}: ${(await r.text().catch(() => '')).slice(0, 180)}`;
     if (![429, 503, 403, 401].includes(r.status)) break;
   }
   throw new Error(lastErr || 'Groq failed');
 }
 
-// 4) OpenRouter Free Models (Llama / Qwen / DeepSeek / Gemma Free)
+// 4) OpenRouter Free Models (Auto-switches to Vision model when images exist)
 async function callOpenRouterAPI({ keys, model, systemPrompt, userText, images }) {
   if (!keys.length) throw new Error('کلید OpenRouter تعریف نشده است');
-  const orModel = model || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
   const hasImgs = Array.isArray(images) && images.some(im => im && im.base64);
+  const candidateModels = hasImgs
+    ? [
+        model && !/llama-3\.3-70b/i.test(model) ? model : '',
+        process.env.OPENROUTER_VISION_MODEL || '',
+        'google/gemma-3-27b-it:free',
+        'qwen/qwen2.5-vl-72b-instruct:free',
+        'meta-llama/llama-4-scout:free'
+      ].filter((v, i, a) => v && a.indexOf(v) === i)
+    : [
+        model || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+        'google/gemma-3-27b-it:free',
+        'deepseek/deepseek-chat-v3-0324:free'
+      ].filter((v, i, a) => v && a.indexOf(v) === i);
+
   const content = [{ type: 'text', text: userText }];
   if (hasImgs) {
     images.slice(0, 4).forEach(im => {
@@ -207,40 +219,53 @@ async function callOpenRouterAPI({ keys, model, systemPrompt, userText, images }
       }
     });
   }
+
   let lastErr = '';
   for (const apiKey of keys) {
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://mortezashakouri1376-afk.github.io',
-        'X-Title': 'Cardiac Nursing Clinical Interpreter'
-      },
-      body: JSON.stringify({
-        model: orModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: hasImgs ? content : userText }
-        ],
-        temperature: 0.25
-      })
-    });
-    if (r.ok) {
-      const data = await r.json();
-      const text = data?.choices?.[0]?.message?.content || '';
-      if (text) return { text, provider: 'OpenRouter (' + orModel.split('/')[0] + ')' };
+    for (const orModel of candidateModels) {
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://mortezashakouri1376-afk.github.io',
+          'X-Title': 'Cardiac Nursing Clinical Interpreter'
+        },
+        body: JSON.stringify({
+          model: orModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: hasImgs ? content : userText }
+          ],
+          temperature: 0.25
+        })
+      });
+      if (r.ok) {
+        const data = await r.json();
+        const text = data?.choices?.[0]?.message?.content || '';
+        if (text) return { text, provider: 'OpenRouter (' + orModel + ')' };
+      }
+      lastErr = `OpenRouter (${orModel}) HTTP ${r.status}: ${(await r.text().catch(() => '')).slice(0, 160)}`;
+      if ([404, 400, 429, 503].includes(r.status)) continue;
+      break;
     }
-    lastErr = `OpenRouter HTTP ${r.status}: ${(await r.text()).slice(0, 180)}`;
-    if (![429, 503, 403, 401].includes(r.status)) break;
   }
   throw new Error(lastErr || 'OpenRouter failed');
 }
 
-// 5) Gemini Vision + Built-in Google Search Grounding (Free Live Search without Serper!)
+// 5) Gemini Vision + Built-in Google Search Grounding
+// Supports BOTH Google AI Studio keys (AIza...) AND Vertex AI Express keys (AQ....)
 async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch }) {
   if (!keys.length) throw new Error('کلید Gemini تعریف نشده است');
-  const gemModel = model || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const primaryModel = (model || process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const candidateModels = [
+    primaryModel,
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash'
+  ].filter((v, i, a) => v && a.indexOf(v) === i);
+
   const parts = [{ text: userText }];
   if (Array.isArray(images)) {
     images.slice(0, 4).forEach(im => {
@@ -251,17 +276,18 @@ async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch
       }
     });
   }
-  const payload = { contents: [{ role: 'user', parts }] };
-  if (enableGoogleSearch) {
-    payload.tools = [{ google_search: {} }];
-  }
 
-  let lastErr = '';
-  for (const apiKey of keys) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const r = await fetch(url, {
+  async function sendGeminiRequest(endpointUrl, cleanKey, withSearch) {
+    const payload = { contents: [{ role: 'user', parts }] };
+    if (withSearch) {
+      payload.tools = [{ google_search: {} }];
+    }
+    const r = await fetch(endpointUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': cleanKey
+      },
       body: JSON.stringify(payload)
     });
     if (r.ok) {
@@ -277,19 +303,78 @@ async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch
           link: c.web.uri,
           snippet: 'منبع تأییدشده از جستجوی زنده Google Search'
         }));
-      if (text) return { text, provider: 'Gemini (' + gemModel + ')', groundingSources: gSources };
+      if (text) return { ok: true, text, groundingSources: gSources };
+      return { ok: false, status: 502, body: 'پاسخ متنی خالی از Gemini' };
     }
-    lastErr = `Gemini HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`;
-    if (![429, 503, 403, 401].includes(r.status)) break;
+    const errBody = await r.text().catch(() => '');
+    return { ok: false, status: r.status, body: errBody.slice(0, 220) };
+  }
+
+  let lastErr = '';
+  for (const apiKey of keys) {
+    const cleanKey = apiKey.replace(/^["']+|["']+$/g, '').trim();
+    const isVertexExpress = cleanKey.startsWith('AQ.');
+
+    for (const gemModel of candidateModels) {
+      const endpoints = isVertexExpress
+        ? [
+            { label: 'Vertex', url: `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(cleanKey)}` },
+            { label: 'AIStudio', url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(cleanKey)}` }
+          ]
+        : [
+            { label: 'AIStudio', url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(cleanKey)}` }
+          ];
+
+      let stopModelsForThisKey = false;
+      for (const ep of endpoints) {
+        let resObj = await sendGeminiRequest(ep.url, cleanKey, Boolean(enableGoogleSearch));
+        // If grounding tool caused HTTP 400, automatically retry once without tools
+        if (!resObj.ok && resObj.status === 400 && enableGoogleSearch) {
+          resObj = await sendGeminiRequest(ep.url, cleanKey, false);
+        }
+        if (resObj.ok) {
+          return {
+            text: resObj.text,
+            provider: `Gemini ${gemModel} (${ep.label})`,
+            groundingSources: resObj.groundingSources
+          };
+        }
+        lastErr = `Gemini/${ep.label} (${gemModel}) HTTP ${resObj.status}: ${resObj.body}`;
+        if ([401, 403, 429].includes(resObj.status)) {
+          // Try alternate endpoint for AQ keys before giving up on this key
+          if (isVertexExpress && ep.label === 'Vertex') continue;
+          stopModelsForThisKey = true;
+          break;
+        }
+        if (resObj.status === 404) break; // Try next model
+      }
+      if (stopModelsForThisKey) break;
+    }
   }
   throw new Error(lastErr || 'Gemini failed');
 }
+
+// Root Status Page (so opening Render URL in browser shows clear health info)
+app.get('/', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'Cardiac Clinical AI Server (v28)',
+    endpoints: ['/health', '/webhook/clinical-interpret', '/webhook/medical-search'],
+    geminiConfigured: getServerGeminiKeys().length > 0,
+    tavilyConfigured: getServerTavilyKeys().length > 0,
+    exaConfigured: getServerExaKeys().length > 0,
+    openrouterConfigured: getServerOpenRouterKeys().length > 0,
+    groqConfigured: getServerGroqKeys().length > 0,
+    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  });
+});
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {
   res.json({
     ok: true,
     status: 'running',
+    version: 'v28',
     geminiConfigured: getServerGeminiKeys().length > 0,
     groqConfigured: getServerGroqKeys().length > 0,
     openrouterConfigured: getServerOpenRouterKeys().length > 0,
@@ -300,7 +385,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Live Medical Search Endpoint (Tavily -> Serper -> Gemini Google Search Grounding)
+// Live Medical Search Endpoint (Tavily -> Exa AI -> Serper -> Gemini Google Search Grounding)
 app.post('/webhook/medical-search', async (req, res) => {
   try {
     if (!checkSecret(req)) {
@@ -328,7 +413,7 @@ app.post('/webhook/medical-search', async (req, res) => {
       }
     }
 
-    // 1b. Try Exa AI second
+    // 2. Try Exa AI second
     const eKeys = splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY, clientExaKey);
     if (eKeys.length) {
       const eOut = await queryExa(medicalQ, eKeys, Math.min(Number(num) || 5, 7));
@@ -337,7 +422,7 @@ app.post('/webhook/medical-search', async (req, res) => {
       }
     }
 
-    // 2. Try Serper third
+    // 3. Try Serper third
     const sKeys = splitKeys(process.env.SERPER_API_KEYS, process.env.SERPER_API_KEY, clientSerperKey);
     if (sKeys.length) {
       const sOut = await querySerper(medicalQ, sKeys, Math.min(Number(num) || 5, 7));
@@ -346,12 +431,12 @@ app.post('/webhook/medical-search', async (req, res) => {
       }
     }
 
-    // 3. Fallback to Gemini Built-in Google Search Grounding!
+    // 4. Fallback to Gemini Built-in Google Search Grounding
     const gKeys = splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []));
     if (gKeys.length) {
       const gOut = await callGeminiAPI({
         keys: gKeys,
-        model: 'gemini-2.5-flash',
+        model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
         userText: `جستجوی علمی و بالینی درباره موضوع زیر انجام بده و خلاصه معتبر به فارسی همراه با منابع بنویس:\n${medicalQ}`,
         images: [],
         enableGoogleSearch: true
@@ -364,14 +449,14 @@ app.post('/webhook/medical-search', async (req, res) => {
       });
     }
 
-    return res.status(400).json({ error: 'هیچ کلید جستجو (Tavily / Serper / Gemini) تنظیم نشده است.' });
+    return res.status(400).json({ error: 'هیچ کلید جستجو (Tavily / Exa / Serper / Gemini) تنظیم نشده است.' });
   } catch (err) {
     return res.status(500).json({ error: err.message || 'خطا در جستجوی پزشکی' });
   }
 });
 
 // Multi-AI Clinical Interpretation Endpoint (Gemini + Groq + OpenRouter + Live Web Search)
-app.post('/webhook/clinical-interpret', async (req, res) => {
+app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
   try {
     if (!checkSecret(req)) {
       return res.status(401).json({ error: 'توکن دسترسی نامعتبر است.' });
@@ -426,7 +511,7 @@ app.post('/webhook/clinical-interpret', async (req, res) => {
     }
 
     const searchBlock = liveSources.length
-      ? '\n\nمنابع زنده پزشکی یافت‌شده (Tavily/Serper):\n'
+      ? '\n\nمنابع زنده پزشکی یافت‌شده (Tavily/Exa/Serper):\n'
         + (searchAnswer ? `خلاصه جستجو: ${searchAnswer}\n` : '')
         + liveSources.map((s, i) => `${i + 1}. ${s.title}: ${s.snippet}`).join('\n')
       : '';
@@ -449,7 +534,6 @@ app.post('/webhook/clinical-interpret', async (req, res) => {
     for (const p of chain) {
       try {
         if (p === 'gemini' && geminiKeys.length) {
-          // If live search requested and neither Tavily nor Serper returned sources, activate Gemini built-in Google Search!
           const useBuiltInGoogle = wantSearch && liveSources.length === 0;
           const r = await callGeminiAPI({
             keys: geminiKeys,
@@ -507,4 +591,4 @@ app.post('/webhook/clinical-interpret', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Multi-AI + Live Search Server running on port ' + PORT));
+app.listen(PORT, () => console.log('Multi-AI + Live Search Server v28 running on port ' + PORT));
