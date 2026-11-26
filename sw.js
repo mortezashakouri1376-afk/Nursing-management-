@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cardiac-ward-v32';
+const CACHE_NAME = 'cardiac-ward-v37';
 const CORE_ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -22,7 +22,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
-  // Network-first for HTML/navigation so updates appear immediately without manual cache clear
   if (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
     event.respondWith(
       fetch(req)
