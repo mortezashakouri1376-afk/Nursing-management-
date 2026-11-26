@@ -12,6 +12,15 @@ app.use((req, res, next) => {
   next();
 });
 
+const GEMINI_FREE_MODELS = [
+  'gemini-4-hydrogen',
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3-flash-preview'
+];
+
 function checkSecret(req) {
   const secret = (process.env.APP_SECRET || '').trim();
   if (!secret) return true;
@@ -31,13 +40,10 @@ function splitKeys(...rawVals) {
 }
 
 function getServerGeminiKeys() { return splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY); }
-function getServerGroqKeys() { return splitKeys(process.env.GROQ_API_KEYS, process.env.GROQ_API_KEY); }
-function getServerOpenRouterKeys() { return splitKeys(process.env.OPENROUTER_API_KEYS, process.env.OPENROUTER_API_KEY); }
 function getServerTavilyKeys() { return splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY); }
 function getServerExaKeys() { return splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY); }
-function getServerSerperKeys() { return splitKeys(process.env.SERPER_API_KEYS, process.env.SERPER_API_KEY); }
 
-// 1) Tavily AI Medical Search (1000 free searches/month, built-in AI summary + sources)
+// 1) Tavily AI Medical Search (1000 free searches/month)
 async function queryTavily(query, tavilyKeys, maxResults = 5) {
   const q = String(query || '').trim();
   if (!q || !tavilyKeys.length) return { ok: false, sources: [] };
@@ -74,7 +80,7 @@ async function queryTavily(query, tavilyKeys, maxResults = 5) {
   return { ok: false, sources: [], error: lastErr };
 }
 
-// 1b) Exa AI Neural Medical Search (1000 free searches/month)
+// 2) Exa AI Neural Medical Search (1000 free searches/month)
 async function queryExa(query, exaKeys, numResults = 5) {
   const q = String(query || '').trim();
   if (!q || !exaKeys.length) return { ok: false, sources: [] };
@@ -115,156 +121,13 @@ async function queryExa(query, exaKeys, numResults = 5) {
   return { ok: false, sources: [], error: lastErr };
 }
 
-// 2) Serper Google Search
-async function querySerper(query, serperKeys, num = 5) {
-  const q = String(query || '').trim();
-  if (!q || !serperKeys.length) return { ok: false, sources: [] };
-  let lastErr = '';
-  for (const apiKey of serperKeys) {
-    try {
-      const r = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q, num, hl: 'en', gl: 'us' })
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const organic = Array.isArray(data.organic) ? data.organic : [];
-        const sources = organic.slice(0, num).map(it => ({
-          title: it.title || '',
-          link: it.link || '',
-          snippet: it.snippet || ''
-        }));
-        return { ok: true, sources, provider: 'Serper' };
-      }
-      lastErr = `Serper HTTP ${r.status}`;
-      if (![429, 403, 401].includes(r.status)) break;
-    } catch (e) {
-      lastErr = e.message || 'Serper error';
-    }
-  }
-  return { ok: false, sources: [], error: lastErr };
-}
-
-// 3) Groq Ultra-Fast Vision + Text (Llama-4 Scout 17B Vision — Free Tier)
-async function callGroqAPI({ keys, model, systemPrompt, userText, images }) {
-  if (!keys.length) throw new Error('کلید Groq تعریف نشده است');
-  const groqModel = model || process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct';
-  const content = [{ type: 'text', text: userText }];
-  if (Array.isArray(images)) {
-    images.slice(0, 4).forEach(im => {
-      if (im && im.base64) {
-        content.push({
-          type: 'image_url',
-          image_url: { url: `data:${im.mimeType || 'image/jpeg'};base64,${im.base64}` }
-        });
-      }
-    });
-  }
-  let lastErr = '';
-  for (const apiKey of keys) {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: groqModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content }
-        ],
-        temperature: 0.25,
-        max_tokens: 2048
-      })
-    });
-    if (r.ok) {
-      const data = await r.json();
-      const text = data?.choices?.[0]?.message?.content || '';
-      if (text) return { text, provider: 'Groq (Llama-4 Vision)' };
-    }
-    lastErr = `Groq HTTP ${r.status}: ${(await r.text().catch(() => '')).slice(0, 180)}`;
-    if (![429, 503, 403, 401].includes(r.status)) break;
-  }
-  throw new Error(lastErr || 'Groq failed');
-}
-
-// 4) OpenRouter Free Models (Auto-switches to Vision model when images exist)
-async function callOpenRouterAPI({ keys, model, systemPrompt, userText, images }) {
-  if (!keys.length) throw new Error('کلید OpenRouter تعریف نشده است');
-  const hasImgs = Array.isArray(images) && images.some(im => im && im.base64);
-  const candidateModels = hasImgs
-    ? [
-        model && !/llama-3\.3-70b/i.test(model) ? model : '',
-        process.env.OPENROUTER_VISION_MODEL || '',
-        'google/gemma-3-27b-it:free',
-        'qwen/qwen2.5-vl-72b-instruct:free',
-        'meta-llama/llama-4-scout:free'
-      ].filter((v, i, a) => v && a.indexOf(v) === i)
-    : [
-        model || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
-        'google/gemma-3-27b-it:free',
-        'deepseek/deepseek-chat-v3-0324:free'
-      ].filter((v, i, a) => v && a.indexOf(v) === i);
-
-  const content = [{ type: 'text', text: userText }];
-  if (hasImgs) {
-    images.slice(0, 4).forEach(im => {
-      if (im && im.base64) {
-        content.push({
-          type: 'image_url',
-          image_url: { url: `data:${im.mimeType || 'image/jpeg'};base64,${im.base64}` }
-        });
-      }
-    });
-  }
-
-  let lastErr = '';
-  for (const apiKey of keys) {
-    for (const orModel of candidateModels) {
-      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://mortezashakouri1376-afk.github.io',
-          'X-Title': 'Cardiac Nursing Clinical Interpreter'
-        },
-        body: JSON.stringify({
-          model: orModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: hasImgs ? content : userText }
-          ],
-          temperature: 0.25
-        })
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const text = data?.choices?.[0]?.message?.content || '';
-        if (text) return { text, provider: 'OpenRouter (' + orModel + ')' };
-      }
-      lastErr = `OpenRouter (${orModel}) HTTP ${r.status}: ${(await r.text().catch(() => '')).slice(0, 160)}`;
-      if ([404, 400, 429, 503].includes(r.status)) continue;
-      break;
-    }
-  }
-  throw new Error(lastErr || 'OpenRouter failed');
-}
-
-// 5) Gemini Vision + Built-in Google Search Grounding
+// 3) Gemini Vision + Built-in Google Search Grounding
 // Supports BOTH Google AI Studio keys (AIza...) AND Vertex AI Express keys (AQ....)
 async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch }) {
   if (!keys.length) throw new Error('کلید Gemini تعریف نشده است');
-  const primaryModel = (model || process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
-  const candidateModels = [
-    primaryModel,
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
-    'gemini-2.5-pro',
-    'gemini-2.0-flash'
-  ].filter((v, i, a) => v && a.indexOf(v) === i);
+  const primaryModel = (model || process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0]).trim();
+  const candidateModels = [primaryModel, ...GEMINI_FREE_MODELS]
+    .filter((v, i, a) => v && a.indexOf(v) === i);
 
   const parts = [{ text: userText }];
   if (Array.isArray(images)) {
@@ -328,7 +191,6 @@ async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch
       let stopModelsForThisKey = false;
       for (const ep of endpoints) {
         let resObj = await sendGeminiRequest(ep.url, cleanKey, Boolean(enableGoogleSearch));
-        // If grounding tool caused HTTP 400, automatically retry once without tools
         if (!resObj.ok && resObj.status === 400 && enableGoogleSearch) {
           resObj = await sendGeminiRequest(ep.url, cleanKey, false);
         }
@@ -341,12 +203,11 @@ async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch
         }
         lastErr = `Gemini/${ep.label} (${gemModel}) HTTP ${resObj.status}: ${resObj.body}`;
         if ([401, 403, 429].includes(resObj.status)) {
-          // Try alternate endpoint for AQ keys before giving up on this key
           if (isVertexExpress && ep.label === 'Vertex') continue;
           stopModelsForThisKey = true;
           break;
         }
-        if (resObj.status === 404) break; // Try next model
+        if (resObj.status === 404) break;
       }
       if (stopModelsForThisKey) break;
     }
@@ -354,38 +215,34 @@ async function callGeminiAPI({ keys, model, userText, images, enableGoogleSearch
   throw new Error(lastErr || 'Gemini failed');
 }
 
-// Root Status Page (so opening Render URL in browser shows clear health info)
+// صفحه وضعیت اصلی
 app.get('/', (req, res) => {
   res.json({
     ok: true,
-    service: 'Cardiac Clinical AI Server (v28)',
+    service: 'Cardiac Clinical AI Server (v29 — Gemini + Tavily + Exa AI)',
     endpoints: ['/health', '/webhook/clinical-interpret', '/webhook/medical-search'],
     geminiConfigured: getServerGeminiKeys().length > 0,
     tavilyConfigured: getServerTavilyKeys().length > 0,
     exaConfigured: getServerExaKeys().length > 0,
-    openrouterConfigured: getServerOpenRouterKeys().length > 0,
-    groqConfigured: getServerGroqKeys().length > 0,
-    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    model: process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0],
+    models: GEMINI_FREE_MODELS
   });
 });
 
-// Health Check Endpoint
+// مسیر سلامت
 app.get('/health', (req, res) => {
   res.json({
     ok: true,
     status: 'running',
-    version: 'v28',
+    version: 'v29',
     geminiConfigured: getServerGeminiKeys().length > 0,
-    groqConfigured: getServerGroqKeys().length > 0,
-    openrouterConfigured: getServerOpenRouterKeys().length > 0,
     tavilyConfigured: getServerTavilyKeys().length > 0,
     exaConfigured: getServerExaKeys().length > 0,
-    serperConfigured: getServerSerperKeys().length > 0,
-    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    model: process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0]
   });
 });
 
-// Live Medical Search Endpoint (Tavily -> Exa AI -> Serper -> Gemini Google Search Grounding)
+// جستجوی زنده پزشکی (Tavily -> Exa AI -> Google Search Grounding)
 app.post('/webhook/medical-search', async (req, res) => {
   try {
     if (!checkSecret(req)) {
@@ -395,7 +252,6 @@ app.post('/webhook/medical-search', async (req, res) => {
       query = '',
       clientTavilyKey = '',
       clientExaKey = '',
-      clientSerperKey = '',
       clientGeminiKeys = [],
       num = 5
     } = req.body || {};
@@ -404,7 +260,6 @@ app.post('/webhook/medical-search', async (req, res) => {
 
     const medicalQ = `${q} clinical guideline nursing cardiology radiology`;
 
-    // 1. Try Tavily first
     const tKeys = splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY, clientTavilyKey);
     if (tKeys.length) {
       const tOut = await queryTavily(medicalQ, tKeys, Math.min(Number(num) || 5, 7));
@@ -413,7 +268,6 @@ app.post('/webhook/medical-search', async (req, res) => {
       }
     }
 
-    // 2. Try Exa AI second
     const eKeys = splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY, clientExaKey);
     if (eKeys.length) {
       const eOut = await queryExa(medicalQ, eKeys, Math.min(Number(num) || 5, 7));
@@ -422,40 +276,30 @@ app.post('/webhook/medical-search', async (req, res) => {
       }
     }
 
-    // 3. Try Serper third
-    const sKeys = splitKeys(process.env.SERPER_API_KEYS, process.env.SERPER_API_KEY, clientSerperKey);
-    if (sKeys.length) {
-      const sOut = await querySerper(medicalQ, sKeys, Math.min(Number(num) || 5, 7));
-      if (sOut.ok && sOut.sources.length) {
-        return res.json({ ok: true, provider: 'Serper', sources: sOut.sources });
-      }
-    }
-
-    // 4. Fallback to Gemini Built-in Google Search Grounding
     const gKeys = splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []));
     if (gKeys.length) {
       const gOut = await callGeminiAPI({
         keys: gKeys,
-        model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        model: process.env.GEMINI_MODEL || GEMINI_FREE_MODELS[0],
         userText: `جستجوی علمی و بالینی درباره موضوع زیر انجام بده و خلاصه معتبر به فارسی همراه با منابع بنویس:\n${medicalQ}`,
         images: [],
         enableGoogleSearch: true
       });
       return res.json({
         ok: true,
-        provider: 'Google Search (Gemini Grounding)',
+        provider: 'Google Search (Gemini)',
         answer: gOut.text,
         sources: gOut.groundingSources || []
       });
     }
 
-    return res.status(400).json({ error: 'هیچ کلید جستجو (Tavily / Exa / Serper / Gemini) تنظیم نشده است.' });
+    return res.status(400).json({ error: 'هیچ کلید جستجو (Tavily / Exa / Gemini) تنظیم نشده است.' });
   } catch (err) {
     return res.status(500).json({ error: err.message || 'خطا در جستجوی پزشکی' });
   }
 });
 
-// Multi-AI Clinical Interpretation Endpoint (Gemini + Groq + OpenRouter + Live Web Search)
+// تحلیل بالینی Gemini Vision + جستجوی زنده Tavily / Exa / Google
 app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
   try {
     if (!checkSecret(req)) {
@@ -463,36 +307,29 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
     }
 
     const {
-      provider = 'auto', // 'auto' | 'gemini' | 'groq' | 'openrouter'
       modalityLabel = '',
       prompt = '',
       text = '',
       context = '',
       images = [],
       useLiveSearch = false,
-      useSerper = false,
       model: clientModel = '',
-      groqModel: clientGroqModel = '',
-      openrouterModel: clientOrModel = '',
       clientGeminiKeys = [],
-      clientGroqKey = '',
-      clientOpenRouterKey = '',
       clientTavilyKey = '',
-      clientExaKey = '',
-      clientSerperKey = ''
+      clientExaKey = ''
     } = req.body || {};
 
-    const wantSearch = Boolean(useLiveSearch || useSerper);
     const geminiKeys = splitKeys(process.env.GEMINI_API_KEYS, process.env.GEMINI_API_KEY, ...(Array.isArray(clientGeminiKeys) ? clientGeminiKeys : []));
-    const groqKeys = splitKeys(process.env.GROQ_API_KEYS, process.env.GROQ_API_KEY, clientGroqKey);
-    const orKeys = splitKeys(process.env.OPENROUTER_API_KEYS, process.env.OPENROUTER_API_KEY, clientOpenRouterKey);
+    if (!geminiKeys.length) {
+      return res.status(400).json({ error: 'هیچ کلید Gemini API در Render یا تنظیمات دستی تعریف نشده است.' });
+    }
+
     const tavilyKeys = splitKeys(process.env.TAVILY_API_KEYS, process.env.TAVILY_API_KEY, clientTavilyKey);
     const exaKeys = splitKeys(process.env.EXA_API_KEYS, process.env.EXA_API_KEY, clientExaKey);
-    const serperKeys = splitKeys(process.env.SERPER_API_KEYS, process.env.SERPER_API_KEY, clientSerperKey);
 
     let liveSources = [];
     let searchAnswer = '';
-    if (wantSearch) {
+    if (useLiveSearch) {
       const seed = (text || context || modalityLabel || '').replace(/\s+/g, ' ').trim().slice(0, 180);
       if (seed) {
         if (tavilyKeys.length) {
@@ -503,15 +340,11 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
           const eOut = await queryExa(`${seed} clinical guideline interpretation`, exaKeys, 4);
           if (eOut.ok) { liveSources = eOut.sources; }
         }
-        if (!liveSources.length && serperKeys.length) {
-          const sOut = await querySerper(`${seed} clinical guideline interpretation`, serperKeys, 4);
-          if (sOut.ok) { liveSources = sOut.sources; }
-        }
       }
     }
 
     const searchBlock = liveSources.length
-      ? '\n\nمنابع زنده پزشکی یافت‌شده (Tavily/Exa/Serper):\n'
+      ? '\n\nمنابع زنده پزشکی یافت‌شده (Tavily/Exa):\n'
         + (searchAnswer ? `خلاصه جستجو: ${searchAnswer}\n` : '')
         + liveSources.map((s, i) => `${i + 1}. ${s.title}: ${s.snippet}`).join('\n')
       : '';
@@ -523,72 +356,29 @@ app.post(['/webhook/clinical-interpret', '/'], async (req, res) => {
       searchBlock
     ].filter(Boolean).join('\n\n');
 
-    const chain = provider === 'gemini' ? ['gemini']
-      : provider === 'groq' ? ['groq']
-      : provider === 'openrouter' ? ['openrouter']
-      : ['gemini', 'groq', 'openrouter'];
+    const useBuiltInGoogle = Boolean(useLiveSearch) && liveSources.length === 0;
+    const out = await callGeminiAPI({
+      keys: geminiKeys,
+      model: clientModel,
+      userText,
+      images,
+      enableGoogleSearch: useBuiltInGoogle
+    });
 
-    let finalOut = null;
-    const errors = [];
-
-    for (const p of chain) {
-      try {
-        if (p === 'gemini' && geminiKeys.length) {
-          const useBuiltInGoogle = wantSearch && liveSources.length === 0;
-          const r = await callGeminiAPI({
-            keys: geminiKeys,
-            model: clientModel,
-            userText,
-            images,
-            enableGoogleSearch: useBuiltInGoogle
-          });
-          if (r.groundingSources && r.groundingSources.length) {
-            liveSources = liveSources.concat(r.groundingSources);
-          }
-          finalOut = r;
-          break;
-        }
-        if (p === 'groq' && groqKeys.length) {
-          finalOut = await callGroqAPI({
-            keys: groqKeys,
-            model: clientGroqModel,
-            systemPrompt: prompt,
-            userText,
-            images
-          });
-          break;
-        }
-        if (p === 'openrouter' && orKeys.length) {
-          finalOut = await callOpenRouterAPI({
-            keys: orKeys,
-            model: clientOrModel,
-            systemPrompt: prompt,
-            userText,
-            images
-          });
-          break;
-        }
-      } catch (e) {
-        errors.push(`${p}: ${e.message}`);
-      }
-    }
-
-    if (!finalOut) {
-      return res.status(502).json({
-        error: errors.length ? errors.join(' | ') : 'هیچ کلید API فعالی (Gemini / Groq / OpenRouter) تنظیم نشده است.'
-      });
+    if (out.groundingSources && out.groundingSources.length) {
+      liveSources = liveSources.concat(out.groundingSources);
     }
 
     return res.json({
       ok: true,
-      result: finalOut.text,
-      via: finalOut.provider,
+      result: out.text,
+      via: out.provider,
       sources: liveSources
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message || 'خطای داخلی سرور' });
+    return res.status(502).json({ error: err.message || 'خطا در ارتباط با Gemini' });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Multi-AI + Live Search Server v28 running on port ' + PORT));
+app.listen(PORT, () => console.log('Cardiac Gemini+Tavily+Exa Server v29 running on port ' + PORT));
