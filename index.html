@@ -68,7 +68,7 @@ html,body{max-width:100%;overflow-x:hidden;}
 <style id="HW_CUSTOM_FONT_STYLE"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>سیستم جامع پرستاری قلب (نسخه ۳۲ — مفسر هوشمند Gemini 4 / 3.8 + جستجوی زنده Tavily و Exa AI)</title>
+    <title>سیستم جامع پرستاری قلب (نسخه ۳۱ — مفسر هوشمند Gemini 4 / 3.8 + جستجوی زنده Tavily و Exa AI)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -2510,7 +2510,7 @@ html[data-v12-theme="pearl-light"] .int-severity-pill.crit { color: #b91c1c; }
 
     <header>
         <button id="headerErrorBtn" type="button" onclick="openErrorReporter()" title="ثبت سریع خطای بیمارستانی">🚨 ثبت خطا <span id="headerErrBadge" class="hdr-err-badge" style="display:none;">0</span></button>
-        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v32</small></h1>
+        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v31</small></h1>
         <button id="themeToggleBtn" type="button" onclick="v12ToggleThemeMenu()" title="انتخاب تم ظاهری">🎨 <span class="theme-btn-lbl">تم</span></button>
     </header>
 
@@ -12519,14 +12519,28 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     ward: "CCU",
     connected: false,
     loadedOnce: false,
-    popupWin: null,
     pendingContext: null,
     sessionReceived: 0,
     stats: { total: 0, critical: 0 },
     offlineFile: null, // { name, size, updatedAt, html }
     offlineReady: false,
-    standaloneBlobUrl: null
+    excelHandledByChild: false,
+    _lastCtx: null
   };
+
+  function safeEscape(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function showBridgeNotice(msg) {
+    if (typeof v8Toast === "function") v8Toast(msg);
+    else console.log(msg);
+  }
 
   // ---------- IndexedDB + localStorage persistence for offline HTML ----------
   function openOfflineDB() {
@@ -12581,7 +12595,6 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
 
   function saveOfflineFilePersistent(record) {
     bridgeState.offlineFile = record;
-    // Try localStorage fallback for files under 3MB
     try {
       localStorage.setItem(OFFLINE_LS_META_KEY, JSON.stringify({
         name: record.name, size: record.size, updatedAt: record.updatedAt
@@ -12648,17 +12661,17 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     if (rec && rec.html) {
       if (stEl) {
         stEl.innerHTML = '<span style="color:#2ecc71; font-weight:bold;">✅ فایل آفلاین متصل و ذخیره شد:</span> '
-          + '<code dir="ltr">' + ((typeof meddbEsc === "function") ? meddbEsc(rec.name) : rec.name) + '</code>'
+          + '<code dir="ltr">' + safeEscape(rec.name) + '</code>'
           + ' (' + formatBytes(rec.size) + ')'
-          + (rec.updatedAt ? '<br><small style="color:var(--muted);">زمان ذخیره: ' + rec.updatedAt + '</small>' : '');
+          + (rec.updatedAt ? '<br><small style="color:var(--muted);">زمان ذخیره: ' + safeEscape(rec.updatedAt) + '</small>' : '');
       }
       if (clearBtn) clearBtn.style.display = "block";
       if (openBtn) openBtn.style.display = "block";
       if (lbl) lbl.textContent = "📦 آفلاین: " + rec.name;
       if (tip) {
         tip.innerHTML = '✅ <b>حالت ۱۰۰٪ آفلاین فعال است:</b> فایل <code>'
-          + ((typeof meddbEsc === "function") ? meddbEsc(rec.name) : rec.name)
-          + '</code> از حافظه داخلی برنامه بارگذاری می‌شود (بدون نیاز به اینترنت). برای به‌روزرسانی فایل، دوباره روی «📂 انتخاب فایل آفلاین (HTML)» بزنید.';
+          + safeEscape(rec.name)
+          + '</code> بدون نیاز به پاپ‌آپ و مستقیماً از حافظه برنامه بارگذاری می‌شود.';
       }
     } else {
       if (stEl) stEl.textContent = "وضعیت: هنوز فایل آفلاینی انتخاب نشده است (در حالت لینک/نام فایل).";
@@ -12672,6 +12685,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     try { return (localStorage.getItem(URL_KEY) || DEFAULT_URL).trim() || DEFAULT_URL; }
     catch (e) { return DEFAULT_URL; }
   }
+
   function setErrorAppUrl(u) {
     u = (u || "").trim() || DEFAULT_URL;
     try { localStorage.setItem(URL_KEY, u); } catch (e) {}
@@ -12718,7 +12732,8 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     sel.innerHTML = '<option value="">— انتخاب اختیاری بیمار —</option>';
     uniq.forEach(function(label) {
       var o = document.createElement("option");
-      o.value = label; o.textContent = label;
+      o.value = label;
+      o.textContent = label;
       sel.appendChild(o);
     });
     if (prev && uniq.indexOf(prev) !== -1) sel.value = prev;
@@ -12743,7 +12758,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     var base = getErrorAppUrl();
     var params = new URLSearchParams();
     params.set("from", "cardiac_app");
-    if (embedded) params.set("embedded", "1");
+    if (embedded !== false) params.set("embedded", "1");
     if (ctx.shift) params.set("shift", ctx.shift);
     if (ctx.ward) params.set("ward", ctx.ward);
     if (ctx.patient) params.set("patient", ctx.patient);
@@ -12754,7 +12769,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     return base + sep + params.toString();
   }
 
-  function postToTargets(payload) {
+  function postToEmbeddedFrame(payload) {
     var sent = false;
     var iframe = document.getElementById("errorReporterFrame");
     try {
@@ -12763,26 +12778,20 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         sent = true;
       }
     } catch (e) {}
-    try {
-      if (bridgeState.popupWin && !bridgeState.popupWin.closed) {
-        bridgeState.popupWin.postMessage(payload, "*");
-        sent = true;
-      }
-    } catch (e) {}
     return sent;
   }
 
   function syncThemeAndContext(ctx) {
     var tInfo = getCurrentThemeInfo();
-    postToTargets({
+    postToEmbeddedFrame({
       type: "CARDIAC_SYNC_THEME",
       source: "cardiac_app",
       theme: tInfo.errorAppTheme,
       v12Theme: tInfo.v12Theme
     });
     var c = ctx || buildContext();
-    postToTargets({ type: "CARDIAC_SYNC_CONTEXT", source: "cardiac_app", payload: c, data: c });
-    postToTargets({ type: "CARDIAC_REQUEST_STATS", source: "cardiac_app" });
+    postToEmbeddedFrame({ type: "CARDIAC_SYNC_CONTEXT", source: "cardiac_app", payload: c, data: c });
+    postToEmbeddedFrame({ type: "CARDIAC_REQUEST_STATS", source: "cardiac_app" });
   }
 
   function setStatus(connected, text) {
@@ -12800,6 +12809,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       return Array.isArray(arr) ? arr : [];
     } catch (e) { return []; }
   }
+
   function saveFeed(arr) {
     try { localStorage.setItem(FEED_KEY, JSON.stringify(arr.slice(0, 50))); } catch (e) {}
   }
@@ -12868,19 +12878,18 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       box.innerHTML = '<p style="font-size:12px; color:var(--muted); text-align:center;">هنوز خطایی از طریق پل ارتباطی دریافت نشده است.</p>';
       return;
     }
-    var html = "";
+    var htmlStr = "";
     feed.forEach(function(item, i) {
-      var safeLine = (typeof meddbEsc === "function") ? meddbEsc(item.line) : item.line;
-      html += '<div class="err-feed-card">'
-        + '<div><b>' + safeLine + '</b></div>'
-        + '<div style="font-size:11px; color:var(--muted); margin-top:2px;">زمان همگام‌سازی: ' + (item.syncedAt || "") + '</div>'
+      htmlStr += '<div class="err-feed-card">'
+        + '<div><b>' + safeEscape(item.line) + '</b></div>'
+        + '<div style="font-size:11px; color:var(--muted); margin-top:2px;">زمان همگام‌سازی: ' + safeEscape(item.syncedAt || "") + '</div>'
         + '<div class="err-feed-actions">'
         + '<button type="button" onclick="cardiacBridgeInsertFeed(' + i + ', \'challenges\')">➕ درج در چالش‌های شیفت</button>'
         + '<button type="button" onclick="cardiacBridgeInsertFeed(' + i + ', \'notes\')">📋 درج در گزارش حین بستری</button>'
         + '<button type="button" style="color:#ff6b6b;" onclick="cardiacBridgeRemoveFeed(' + i + ')">حذف</button>'
         + '</div></div>';
     });
-    box.innerHTML = html;
+    box.innerHTML = htmlStr;
   }
 
   function recordIncomingError(payload, forceAppend) {
@@ -12903,10 +12912,10 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     }
     renderFeed();
     updateBadges();
-    if (typeof v8Toast === "function") v8Toast("🚨 گزارش خطا با اپ پرستاری همگام شد");
+    showBridgeNotice("🚨 گزارش خطا با اپ پرستاری همگام شد");
   }
 
-  // ---------- Offline HTML File Picker Handlers ----------
+  // ---------- Offline HTML File Picker Handlers (No Pop-up Needed) ----------
   window.cardiacBridgeHandleOfflineFile = function(input) {
     var file = input && input.files && input.files[0];
     if (!file) return;
@@ -12924,15 +12933,14 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         updatedAt: new Date().toLocaleString("fa-IR"),
         html: text
       };
+      bridgeState.offlineFile = record;
+      bridgeState.offlineReady = true;
+      updateOfflineUI();
+      window.cardiacBridgeLoadFrame(buildContext());
       saveOfflineFilePersistent(record).then(function() {
         updateOfflineUI();
-        window.cardiacBridgeLoadFrame(buildContext());
-        if (typeof v8Toast === "function") {
-          v8Toast("📦 فایل آفلاین «" + record.name + "» ذخیره و متصل شد");
-        } else {
-          alert("✅ فایل آفلاین «" + record.name + "» ذخیره و متصل شد!");
-        }
       });
+      showBridgeNotice("📦 فایل آفلاین «" + record.name + "» ذخیره و بدون پاپ‌آپ بارگذاری شد");
       input.value = "";
     };
     reader.onerror = function() {
@@ -12949,10 +12957,11 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       localStorage.removeItem(OFFLINE_LS_HTML_KEY);
       localStorage.removeItem(OFFLINE_LS_META_KEY);
     } catch (e) {}
+    updateOfflineUI();
     idbDeleteOfflineFile().then(function() {
       updateOfflineUI();
       if (bridgeState.loadedOnce) window.cardiacBridgeLoadFrame(buildContext());
-      if (!silent && typeof v8Toast === "function") v8Toast("🗑 فایل آفلاین حذف شد (حالت لینک فعال)");
+      if (!silent) showBridgeNotice("🗑 فایل آفلاین حذف شد (حالت لینک فعال)");
     });
   };
 
@@ -12962,10 +12971,10 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     if (!item) return;
     if (dest === "notes") {
       appendToNursingNotes(item.line);
-      if (typeof v8Toast === "function") v8Toast("✓ در گزارش حین بستری درج شد");
+      showBridgeNotice("✓ در گزارش حین بستری درج شد");
     } else {
       appendToChallenges(item.line);
-      if (typeof v8Toast === "function") v8Toast("✓ در چالش‌های شیفت درج شد");
+      showBridgeNotice("✓ در چالش‌های شیفت درج شد");
     }
   };
 
@@ -12987,7 +12996,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         else if (data.summaryText || data.text) recordIncomingError(data, false);
       }
     } catch (e) {}
-    postToTargets({ type: "CARDIAC_REQUEST_STATS", source: "cardiac_app" });
+    postToEmbeddedFrame({ type: "CARDIAC_REQUEST_STATS", source: "cardiac_app" });
     renderFeed();
   };
 
@@ -13002,7 +13011,8 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         iframe.srcdoc = bridgeState.offlineFile.html;
         bridgeState.loadedOnce = true;
         updateOfflineUI();
-        setStatus(true, "متصل (آفلاین از حافظه گوشی)");
+        setStatus(true, "متصل (آفلاین بدون پاپ‌آپ)");
+        setTimeout(function() { syncThemeAndContext(activeCtx); }, 350);
       } else {
         iframe.removeAttribute("srcdoc");
         var fullUrl = buildUrlWithParams(activeCtx, true);
@@ -13022,52 +13032,35 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
 
   window.cardiacBridgeSyncNow = function(override) {
     var ctx = buildContext(override);
-    var sent = postToTargets({ type: "CARDIAC_SYNC_CONTEXT", source: "cardiac_app", payload: ctx, data: ctx });
+    var sent = postToEmbeddedFrame({ type: "CARDIAC_SYNC_CONTEXT", source: "cardiac_app", payload: ctx, data: ctx });
     if (!bridgeState.loadedOnce) {
       window.cardiacBridgeLoadFrame(ctx);
-    } else if (sent && typeof v8Toast === "function") {
-      v8Toast("🔄 مشخصات شیفت (" + ctx.shift + " / " + ctx.ward + ") به سامانه خطا ارسال شد");
+    } else if (sent) {
+      showBridgeNotice("🔄 مشخصات شیفت (" + ctx.shift + " / " + ctx.ward + ") به سامانه خطا ارسال شد");
     }
   };
 
-    function buildFallbackErrorsExcelBlob() {
-    var feed = [];
-    try { feed = JSON.parse(localStorage.getItem("CARDIAC_ERROR_BRIDGE_FEED_V11") || "[]"); } catch (e) {}
+  function buildFallbackErrorsExcelBlob() {
+    var feed = loadFeed();
     var ctx = bridgeState._lastCtx || buildContext();
-    var esc = function(s) {
-      return String(s == null ? "" : s)
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    };
     var rows = "";
-    if (Array.isArray(feed) && feed.length) {
+    if (feed.length) {
       feed.forEach(function(it, idx) {
         rows += "<tr>"
           + "<td>" + (idx + 1) + "</td>"
-          + "<td>" + esc(it.time || it.date || "") + "</td>"
-          + "<td>" + esc(it.ward || ctx.ward || "") + "</td>"
-          + "<td>" + esc(it.shift || ctx.shift || "") + "</td>"
-          + "<td>" + esc(it.category || it.type || "خطای ثبت‌شده") + "</td>"
-          + "<td>" + esc(it.severity || "") + "</td>"
-          + "<td>" + esc(it.summary || it.text || it.description || "") + "</td>"
+          + "<td>" + safeEscape(it.syncedAt || "") + "</td>"
+          + "<td>" + safeEscape(ctx.ward || "") + "</td>"
+          + "<td>" + safeEscape(ctx.shift || "") + "</td>"
+          + "<td>" + safeEscape(it.line || "") + "</td>"
           + "</tr>";
       });
     } else {
-      rows = "<tr><td>1</td><td>" + esc(ctx.date || "") + "</td><td>" + esc(ctx.ward || "") + "</td><td>" + esc(ctx.shift || "") + "</td><td>بدون خطای ثبت‌شده در این نشست</td><td>-</td><td>هنوز خطایی در فید این نشست ثبت نشده است</td></tr>";
+      rows = "<tr><td>1</td><td>" + safeEscape(new Date().toLocaleTimeString("fa-IR")) + "</td><td>" + safeEscape(ctx.ward || "") + "</td><td>" + safeEscape(ctx.shift || "") + "</td><td>بدون خطای ثبت‌شده در این نشست</td></tr>";
     }
     var xlsHtml = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body dir="rtl">'
       + '<table border="1"><thead><tr>'
-      + '<th>ردیف</th><th>تاریخ/ساعت</th><th>بخش</th><th>شیفت</th><th>نوع/دسته خطا</th><th>شدت</th><th>شرح خطا</th>'
-      + '</tr></thead><tbody>' + rows + '</tbody></table>
-    <!-- لودینگ تمام‌صفحه متحرک متناسب با نوع مدرک بالینی (v31) -->
-    <div id="intScanOverlay" role="dialog" aria-modal="true" aria-label="در حال اسکن و تحلیل">
-        <div id="intScanVisual" class="int-scan-stage"></div>
-        <div id="intScanTitle" class="int-scan-title">در حال اسکن و تحلیل هوشمند...</div>
-        <div id="intScanSub" class="int-scan-sub">اتصال آنلاین به سرور اختصاصی + تحلیل تصویر و سرچ زنده</div>
-        <button type="button" class="int-scan-cancel" onclick="intCancelActiveScan()">✕ لغو عملیات اسکن</button>
-    </div>
-
-</body></html>';
+      + '<th>ردیف</th><th>زمان ثبت</th><th>بخش</th><th>شیفت</th><th>شرح خطا</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table></body></html>';
     return new Blob(["\ufeff" + xlsHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
   }
 
@@ -13090,39 +13083,34 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     if (!bridgeState.loadedOnce) {
       window.cardiacBridgeLoadFrame(ctx);
     }
-    var sent = postToTargets({ type: "CARDIAC_TRIGGER_EXCEL", source: "cardiac_app" });
+    var sent = postToEmbeddedFrame({ type: "CARDIAC_TRIGGER_EXCEL", source: "cardiac_app" });
     setTimeout(function() {
       if (!bridgeState.excelHandledByChild) {
         try {
           var blob = buildFallbackErrorsExcelBlob();
           triggerLocalExcelDownload(blob, fileName);
-          if (typeof v8Toast === "function") {
-            v8Toast("📥 فایل اکسل (" + fileName + ") در پوشه Download گوشی ذخیره شد");
-          }
+          showBridgeNotice("📥 فایل اکسل (" + fileName + ") در پوشه Download گوشی ذخیره شد");
         } catch (err) {
-          if (typeof v8Toast === "function") v8Toast("⚠️ خطا در ساخت فایل اکسل: " + err.message);
+          showBridgeNotice("⚠️ خطا در ساخت فایل اکسل: " + err.message);
         }
       }
       bridgeState.excelHandledByChild = false;
     }, 650);
-    if (!sent && typeof v8Toast === "function") {
-      v8Toast("📊 در حال آماده‌سازی خروجی اکسل خطاها...");
-    }
+    if (!sent) showBridgeNotice("📊 در حال آماده‌سازی خروجی اکسل خطاها...");
   };
 
+  // Popup-free standalone/expanded handler: expands & focuses embedded view inside the app
   window.cardiacBridgeOpenStandalone = function(override) {
-    if (bridgeState.offlineFile && bridgeState.offlineFile.html) {
-      try {
-        if (bridgeState.standaloneBlobUrl) URL.revokeObjectURL(bridgeState.standaloneBlobUrl);
-        var blob = new Blob([bridgeState.offlineFile.html], { type: "text/html;charset=utf-8" });
-        bridgeState.standaloneBlobUrl = URL.createObjectURL(blob);
-        bridgeState.popupWin = window.open(bridgeState.standaloneBlobUrl, "_blank");
-        return;
-      } catch (e) {}
-    }
     var ctx = buildContext(override);
-    var url = buildUrlWithParams(ctx, false);
-    bridgeState.popupWin = window.open(url, "_blank");
+    if (typeof switchTab === "function") switchTab("errors");
+    window.cardiacBridgeLoadFrame(ctx);
+    var wrap = document.getElementById("errFrameWrap");
+    var btn = document.getElementById("errExpandBtn");
+    if (wrap && !wrap.classList.contains("expanded")) {
+      wrap.classList.add("expanded");
+      if (btn) btn.textContent = "✕ بستن تمام‌صفحه";
+    }
+    showBridgeNotice("🖥️ سامانه ثبت خطا بدون نیاز به پاپ‌آپ در حالت تمام‌صفحه داخلی باز شد");
   };
 
   window.cardiacBridgePromptUrl = function() {
@@ -13134,7 +13122,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       window.cardiacBridgeClearOfflineFile(true);
     }
     window.cardiacBridgeLoadFrame(buildContext());
-    if (typeof v8Toast === "function") v8Toast("✓ آدرس سامانه خطا ذخیره شد");
+    showBridgeNotice("✓ آدرس سامانه خطا ذخیره شد");
   };
 
   window.cardiacBridgeSaveUrlFromSettings = function() {
@@ -13146,14 +13134,16 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     } else if (bridgeState.loadedOnce) {
       window.cardiacBridgeLoadFrame(buildContext());
     }
-    if (typeof v8Toast === "function") v8Toast("✓ آدرس پل ارتباطی خطا ذخیره شد");
+    showBridgeNotice("✓ آدرس پل ارتباطی خطا ذخیره شد");
   };
 
-  window.cardiacBridgeToggleExpand = function() {
+  window.cardiacBridgeToggleExpand = function(forceExpand) {
     var wrap = document.getElementById("errFrameWrap");
     var btn = document.getElementById("errExpandBtn");
     if (!wrap) return;
-    var isExp = wrap.classList.toggle("expanded");
+    var isExp = typeof forceExpand === "boolean"
+      ? wrap.classList.toggle("expanded", forceExpand)
+      : wrap.classList.toggle("expanded");
     if (btn) btn.textContent = isExp ? "✕ بستن تمام‌صفحه" : "⛶ تمام‌صفحه";
   };
 
@@ -13223,12 +13213,15 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     });
   };
 
-  // Listen to postMessage from hospital-error-reporter.html
+  // Listen to postMessage from embedded error reporter frame
   window.addEventListener("message", function(ev) {
     var msg = ev.data;
     if (!msg || typeof msg !== "object") return;
     var t = String(msg.type || msg.action || "");
-    if (/EXCEL|XLS|EXPORT/i.test(t)) { bridgeState.excelHandledByChild = true; if (typeof v8Toast === "function") v8Toast("📥 دانلود اکسل از سامانه خطا انجام شد (پوشه Download)"); }
+    if (/EXCEL|XLS|EXPORT/i.test(t)) {
+      bridgeState.excelHandledByChild = true;
+      showBridgeNotice("📥 دانلود اکسل از سامانه خطا انجام شد (پوشه Download)");
+    }
     if (!t) return;
 
     if (t === "ERROR_APP_READY" || t === "CARDIAC_BRIDGE_READY" || t === "HOSP_ERR_READY") {
@@ -13249,7 +13242,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     }
   });
 
-  // Listen to shared localStorage sync (when running in two tabs on same origin)
+  // Listen to shared localStorage sync
   window.addEventListener("storage", function(ev) {
     if (ev.key === SYNC_KEY && ev.newValue) {
       window.cardiacBridgeRefreshFromStorage();
@@ -13269,15 +13262,17 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         if (bridgeState.loadedOnce) window.cardiacBridgeSyncNow();
       });
     });
+
     var iframe = document.getElementById("errorReporterFrame");
     if (iframe) {
       iframe.addEventListener("load", function() {
-        setStatus(true, bridgeState.offlineFile ? "متصل (آفلاین از حافظه گوشی)" : "بارگذاری شد — آماده همگام‌سازی");
+        setStatus(true, bridgeState.offlineFile ? "متصل (آفلاین بدون پاپ‌آپ)" : "بارگذاری شد — آماده همگام‌سازی");
         setTimeout(function() {
           syncThemeAndContext(bridgeState._lastCtx || buildContext());
         }, 350);
       });
     }
+
     window.cardiacBridgeRefreshFromStorage();
   }
 
@@ -14120,15 +14115,14 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     report:     { label: 'ریپورت بالینی متنی', icon: '📄' }
   };
 
-  const DEFAULT_RENDER_WEBHOOK = 'https://nursing-management.onrender.com/webhook/clinical-interpret';
+  const DEFAULT_RENDER_WEBHOOK = 'https://nursing-shifts-manager.onrender.com/webhook/clinical-interpret';
   const GEMINI_FREE_MODELS = [
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite',
+    'gemini-4-hydrogen',
     'gemini-3.8-flash',
     'gemini-3.6-flash',
-    'gemini-3-flash-preview',
-    'gemini-4-hydrogen',
-    'gemini-2.5-flash'
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-3-flash-preview'
   ];
 
   let cfg = {
@@ -14213,7 +14207,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         if (parsed.geminiKey && (!Array.isArray(cfg.geminiKeys) || !cfg.geminiKeys.includes(parsed.geminiKey))) {
           cfg.geminiKeys = [parsed.geminiKey].concat(Array.isArray(cfg.geminiKeys) ? cfg.geminiKeys : []);
         }
-        if (!cfg.webhookUrl || isRenderDeployHookUrl(cfg.webhookUrl) || cfg.webhookUrl.indexOf('nursing-shifts-manager.onrender.com') !== -1) {
+        if (!cfg.webhookUrl || isRenderDeployHookUrl(cfg.webhookUrl)) {
           cfg.webhookUrl = DEFAULT_RENDER_WEBHOOK;
         }
         // Migrate old legacy defaults to new list
@@ -14967,8 +14961,9 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       parts.push({ inline_data: { mime_type: im.mimeType, data: im.base64 } });
     });
 
-    const mList = [cfg.geminiModel || 'gemini-3.5-flash-lite', ...GEMINI_FREE_MODELS]
-      .filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+    const mList = [cfg.geminiModel || 'gemini-4-hydrogen', ...GEMINI_FREE_MODELS]
+      .filter((v, idx, arr) => v && arr.indexOf(v) === idx)
+      .slice(0, 4);
 
     const payload = {
       contents: [{ role: 'user', parts }],
@@ -14978,38 +14973,32 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     const errs = [];
     for (let i = 0; i < keys.length; i++) {
       const cleanKey = keys[i].replace(/^["']+|["']+$/g, '').trim();
-      const hosts = [
-        { lbl: 'AIStudio', makeUrl: (m) => 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(m) + ':generateContent?key=' + encodeURIComponent(cleanKey) },
-        ...(cleanKey.startsWith('AQ.') ? [{ lbl: 'Vertex', makeUrl: (m) => 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + encodeURIComponent(m) + ':generateContent?key=' + encodeURIComponent(cleanKey) }] : [])
-      ];
-      for (let hIdx = 0; hIdx < hosts.length; hIdx++) {
-        const host = hosts[hIdx];
-        let hostBlocked = false;
-        for (let mIdx = 0; mIdx < mList.length; mIdx++) {
-          const mName = mList[mIdx];
-          try {
-            const resp = await fetchFast(host.makeUrl(mName), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cleanKey },
-              body: JSON.stringify(payload)
-            }, 15000, signal);
-            if (resp.ok) {
-              const data = await resp.json();
-              const aiText = data?.candidates?.[0]?.content?.parts?.map(x => x.text).filter(Boolean).join('\n') || '';
-              if (aiText) return { aiText: aiText.trim(), sources, via: 'Gemini ' + mName + ' (کلید #' + (i + 1) + ')' };
-            }
-            const eBody = await resp.text().catch(() => '');
-            errs.push(host.lbl + '/' + mName + ' HTTP ' + resp.status + ': ' + eBody.slice(0, 90));
-            if (resp.status === 404 || resp.status === 429 || resp.status === 503) continue;
-            hostBlocked = true;
-            break;
-          } catch (e) {
-            if (e.name === 'AbortError' && signal && signal.aborted) throw e;
-            errs.push(host.lbl + '/' + mName + ': ' + (e.name === 'AbortError' ? 'Timeout' : e.message));
-            continue;
+      const isVertex = cleanKey.startsWith('AQ.');
+      for (let mIdx = 0; mIdx < mList.length; mIdx++) {
+        const mName = mList[mIdx];
+        const url = isVertex
+          ? 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey)
+          : 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey);
+        try {
+          const resp = await fetchFast(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }, 15000, signal);
+          if (resp.ok) {
+            const data = await resp.json();
+            const aiText = data?.candidates?.[0]?.content?.parts?.map(x => x.text).filter(Boolean).join('\n') || '';
+            if (aiText) return { aiText: aiText.trim(), sources, via: 'Gemini ' + mName + ' (کلید #' + (i + 1) + ')' };
           }
+          const eBody = await resp.text().catch(() => '');
+          errs.push('Gemini (' + mName + ') HTTP ' + resp.status + ': ' + eBody.slice(0, 90));
+          if (resp.status === 404) continue;
+          break;
+        } catch (e) {
+          if (e.name === 'AbortError' && signal && signal.aborted) throw e;
+          errs.push('Gemini (' + mName + '): ' + (e.name === 'AbortError' ? 'Timeout' : e.message));
+          break;
         }
-        if (!hostBlocked) break;
       }
     }
     throw new Error(errs.length ? errs.join(' | ') : 'خطا در اتصال مستقیم Gemini');
@@ -15693,1692 +15682,9 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
 (function(){
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     window.addEventListener("load", function(){
-      navigator.serviceWorker.register("./sw.js?v=32", { updateViaCache: "none" })
-        .then(function(reg){ try { reg.update(); } catch(e) {} })
-        .catch(function(){});
+      navigator.serviceWorker.register("./sw.js").catch(function(){});
     });
   }
-})();
-</script>
-  <!-- ========================================================================
-     V37 MASTER UPGRADE MODULE — 20 CLINICAL & AI CAPABILITIES (SINGLE-FILE)
-     ======================================================================== -->
-<style id="V37_MASTER_CSS">
-.v37-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 12px; margin-bottom: 12px;
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-glass); color: var(--text);
-}
-.v37-card.accent-purple { border-right: 4px solid #a855f7 !important; }
-.v37-card.accent-cyan   { border-right: 4px solid #38bdf8 !important; }
-.v37-card.accent-red    { border-right: 4px solid #ef4444 !important; }
-.v37-card.accent-green  { border-right: 4px solid #10b981 !important; }
-.v37-card.accent-gold   { border-right: 4px solid #f59e0b !important; }
-.v37-head {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 8px; padding-bottom: 7px; margin-bottom: 9px; border-bottom: 1px dashed var(--border);
-  font-size: 13px; font-weight: bold; color: var(--accent);
-}
-.v37-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
-.v37-pill {
-  padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border);
-  background: var(--input-bg); color: var(--text); font-family: inherit;
-  font-size: 11.5px; font-weight: bold; cursor: pointer; transition: 0.14s;
-}
-.v37-pill.active, .v37-pill.primary {
-  background: linear-gradient(135deg, #9333ea, #4f46e5); color: #fff; border-color: #a855f7;
-}
-.v37-pill.cyan { background: #0284c7; color: #fff; border-color: #38bdf8; }
-.v37-pill.green { background: #059669; color: #fff; border-color: #10b981; }
-.v37-pill.danger { background: #dc2626; color: #fff; border-color: #ef4444; }
-.v37-panel { display: none; animation: fadeIn 0.18s; }
-.v37-panel.open { display: block; }
-.v37-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.v37-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-@media (max-width: 440px) { .v37-grid-3 { grid-template-columns: repeat(2, 1fr); } }
-.v37-lab-inp { display: flex; flex-direction: column; gap: 2px; }
-.v37-lab-inp label { font-size: 10.5px !important; margin: 0 !important; color: var(--muted) !important; display: flex; justify-content: space-between; }
-.v37-lab-inp input { padding: 7px 6px !important; font-size: 13px !important; text-align: center; border-radius: 8px !important; }
-.v37-lab-inp input.v37-filled { border-color: #38bdf8 !important; box-shadow: 0 0 0 1.5px rgba(56,189,248,0.35); }
-.v37-lab-inp input.v37-warn   { border-color: #f59e0b !important; background: rgba(245,158,11,0.12) !important; }
-.v37-lab-inp input.v37-panic  { border-color: #ef4444 !important; background: rgba(239,68,68,0.18) !important; font-weight: bold; }
-.v37-btn {
-  padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border);
-  background: var(--input-bg); color: var(--text); font-family: inherit;
-  font-size: 12px; font-weight: bold; cursor: pointer;
-}
-.v37-btn.main { background: linear-gradient(135deg, #9333ea, #4f46e5); color: #fff; border: none; }
-.v37-btn.ok   { background: #059669; color: #fff; border: none; }
-.v37-btn.warn { background: #d97706; color: #fff; border: none; }
-.v37-btn.red  { background: #dc2626; color: #fff; border: none; }
-.v37-box {
-  background: var(--input-bg); border: 1px solid var(--border);
-  border-radius: 10px; padding: 9px 10px; font-size: 12px; line-height: 1.7;
-  margin-top: 8px; white-space: pre-wrap;
-}
-.v37-alert {
-  padding: 8px 10px; border-radius: 9px; font-size: 12px; line-height: 1.65; margin-top: 8px;
-}
-.v37-alert.crit { background: rgba(239,68,68,0.16); border: 1px solid #ef4444; color: #fca5a5; }
-.v37-alert.warn { background: rgba(245,158,11,0.16); border: 1px solid #f59e0b; color: #fcd34d; }
-.v37-alert.ok   { background: rgba(16,185,129,0.14); border: 1px solid #10b981; color: #6ee7b7; }
-html[data-v12-theme="pearl-light"] .v37-alert.crit { color: #b91c1c; }
-html[data-v12-theme="pearl-light"] .v37-alert.warn { color: #b45309; }
-html[data-v12-theme="pearl-light"] .v37-alert.ok   { color: #047857; }
-.v37-chat-log {
-  max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
-  padding: 8px; background: var(--input-bg); border-radius: 10px; border: 1px solid var(--border);
-  margin-bottom: 8px; font-size: 12px; line-height: 1.7;
-}
-.v37-chat-msg { padding: 7px 9px; border-radius: 9px; white-space: pre-wrap; }
-.v37-chat-msg.user { background: rgba(147,51,234,0.22); align-self: flex-start; border: 1px solid rgba(168,85,247,0.4); }
-.v37-chat-msg.ai   { background: var(--card); border: 1px solid var(--border); }
-.v37-bed-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
-@media (max-width: 400px) { .v37-bed-grid { grid-template-columns: 1fr; } }
-.v37-bed-card {
-  background: var(--input-bg); border: 1px solid var(--border); border-right: 4px solid #10b981;
-  border-radius: 11px; padding: 9px; font-size: 11.5px; line-height: 1.65;
-}
-.v37-bed-card.watch { border-right-color: #f59e0b; }
-.v37-bed-card.crit  { border-right-color: #ef4444; background: rgba(239,68,68,0.08); }
-.v37-tag {
-  display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: bold;
-  background: rgba(56,189,248,0.18); color: #38bdf8; margin: 2px 2px 0 0;
-}
-.v37-tag.red  { background: rgba(239,68,68,0.22); color: #f87171; }
-.v37-tag.warn { background: rgba(245,158,11,0.22); color: #fbbf24; }
-.v37-tag.ok   { background: rgba(16,185,129,0.22); color: #34d399; }
-.v37-chk-item {
-  display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 8px;
-  background: var(--input-bg); border: 1px solid var(--border); margin-bottom: 5px; font-size: 12px; cursor: pointer;
-}
-.v37-chk-item input { width: auto !important; margin: 0 !important; }
-/* Privacy Blur Modal */
-#v37BlurModal {
-  position: fixed; inset: 0; z-index: 250000; background: rgba(5,8,16,0.92);
-  backdrop-filter: blur(10px); display: none; flex-direction: column; align-items: center;
-  justify-content: center; padding: 14px; color: #f8fafc;
-}
-#v37BlurModal.open { display: flex; }
-#v37BlurCanvas {
-  max-width: 100%; max-height: 62vh; border: 2px solid #38bdf8; border-radius: 12px;
-  background: #000; touch-action: none; cursor: crosshair;
-}
-/* PIN Lock Overlay */
-#v37PinOverlay {
-  position: fixed; inset: 0; z-index: 290000; display: none;
-  background: radial-gradient(circle at 50% 30%, #0f172a, #050811);
-  color: #f8fafc; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
-}
-#v37PinOverlay.open { display: flex; }
-.v37-pin-dots { display: flex; gap: 12px; margin: 16px 0 22px; }
-.v37-pin-dots span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #38bdf8; }
-.v37-pin-dots span.on { background: #38bdf8; box-shadow: 0 0 10px #38bdf8; }
-.v37-pin-pad { display: grid; grid-template-columns: repeat(3, 68px); gap: 10px; }
-.v37-pin-pad button {
-  height: 58px; border-radius: 14px; border: 1px solid rgba(56,189,248,0.35);
-  background: rgba(30,41,59,0.75); color: #fff; font-size: 20px; font-weight: bold; cursor: pointer;
-}
-/* Night Shift Ultra-Low Dimmer */
-#v37DimOverlay {
-  position: fixed; inset: 0; z-index: 240000; pointer-events: none;
-  background: rgba(8, 4, 0, 0); transition: background 0.2s;
-}
-</style>
-
-<!-- Global Modals for V37 (Privacy Blur + PIN Lock + Night Dimmer) -->
-<div id="v37DimOverlay"></div>
-
-<div id="v37BlurModal" role="dialog" aria-label="محو کردن مشخصات بیمار">
-  <div style="font-size:14px;font-weight:bold;color:#38bdf8;margin-bottom:6px;">🛡️ محو کردن نام و کد ملی بیمار (اختیاری)</div>
-  <div style="font-size:11.5px;color:#94a3b8;margin-bottom:10px;text-align:center;">انگشت خود را روی نام/کد ملی بیمار بکشید تا قبل از ارسال به هوش مصنوعی مشکی شود.</div>
-  <canvas id="v37BlurCanvas"></canvas>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;width:min(420px,100%);">
-    <button type="button" class="v37-btn main" style="flex:2;" onclick="V37.confirmBlurSend()">✅ تأیید و اسکن هوشمند</button>
-    <button type="button" class="v37-btn" style="flex:1;" onclick="V37.resetBlurCanvas()">🔄 ریست</button>
-    <button type="button" class="v37-btn red" style="flex:1;" onclick="V37.closeBlurModal()">✕ لغو</button>
-  </div>
-</div>
-
-<div id="v37PinOverlay" role="dialog" aria-label="قفل حریم خصوصی">
-  <div style="font-size:38px;margin-bottom:6px;">🔒</div>
-  <div style="font-size:16px;font-weight:bold;color:#38bdf8;">قفل حریم خصوصی سامانه پرستاری</div>
-  <div id="v37PinMsg" style="font-size:12px;color:#94a3b8;margin-top:4px;">پین ۴ رقمی خود را وارد کنید</div>
-  <div class="v37-pin-dots" id="v37PinDots"><span></span><span></span><span></span><span></span></div>
-  <div class="v37-pin-pad">
-    <button type="button" onclick="V37.pinKey('1')">1</button><button type="button" onclick="V37.pinKey('2')">2</button><button type="button" onclick="V37.pinKey('3')">3</button>
-    <button type="button" onclick="V37.pinKey('4')">4</button><button type="button" onclick="V37.pinKey('5')">5</button><button type="button" onclick="V37.pinKey('6')">6</button>
-    <button type="button" onclick="V37.pinKey('7')">7</button><button type="button" onclick="V37.pinKey('8')">8</button><button type="button" onclick="V37.pinKey('9')">9</button>
-    <button type="button" onclick="V37.pinKey('C')" style="font-size:14px;color:#fca5a5;">پاک</button>
-    <button type="button" onclick="V37.pinKey('0')">0</button>
-    <button type="button" onclick="V37.pinKey('B')" style="font-size:15px;">⌫</button>
-  </div>
-</div>
-
-<script id="V37_MASTER_SCRIPT">
-(function() {
-  'use strict';
-
-  const DEFAULT_RENDER_BASE = 'https://nursing-management.onrender.com';
-  const LS = {
-    LAB_HIST: 'V37_LAB_TREND_HIST',
-    BEDS:     'V37_WARD_BEDS',
-    RADAR:    'V37_SHIFT_RADAR',
-    BLOOD:    'V37_BLOOD_GUARD',
-    VITALS:   'V37_NEWS2_TREND',
-    PIN:      'V37_PRIVACY_PIN',
-    DIM:      'V37_NIGHT_DIM',
-    BSLOG:    'V37_BS_LOG'
-  };
-
-  // استانداردهای آزمایشگاهی + مقادیر بحرانی (Panic Values)
-  const LAB_DEFS = [
-    { k:'ph',    lbl:'pH',     u:'',       lo:7.35, hi:7.45, pLo:7.20, pHi:7.60 },
-    { k:'pco2',  lbl:'pCO2',   u:'mmHg',   lo:35,   hi:45,   pLo:20,   pHi:65 },
-    { k:'po2',   lbl:'pO2',    u:'mmHg',   lo:80,   hi:100,  pLo:55,   pHi:999 },
-    { k:'hco3',  lbl:'HCO3',   u:'mEq/L',  lo:22,   hi:26,   pLo:12,   pHi:40 },
-    { k:'be',    lbl:'BE',     u:'',       lo:-2,   hi:2,    pLo:-10,  pHi:10 },
-    { k:'sao2',  lbl:'SaO2',   u:'%',      lo:95,   hi:100,  pLo:88,   pHi:101 },
-    { k:'na',    lbl:'Na',     u:'mEq/L',  lo:135,  hi:145,  pLo:125,  pHi:155 },
-    { k:'k',     lbl:'K',      u:'mEq/L',  lo:3.5,  hi:5.1,  pLo:2.8,  pHi:6.0 },
-    { k:'ca',    lbl:'Ca',     u:'mg/dL',  lo:8.5,  hi:10.5, pLo:7.0,  pHi:12.0 },
-    { k:'mg',    lbl:'Mg',     u:'mg/dL',  lo:1.7,  hi:2.4,  pLo:1.2,  pHi:4.0 },
-    { k:'alb',   lbl:'Alb',    u:'g/dL',   lo:3.5,  hi:5.0,  pLo:2.0,  pHi:99 },
-    { k:'bs',    lbl:'BS',     u:'mg/dL',  lo:70,   hi:140,  pLo:55,   pHi:400 },
-    { k:'bun',   lbl:'BUN',    u:'mg/dL',  lo:7,    hi:22,   pLo:0,    pHi:80 },
-    { k:'cr',    lbl:'Cr',     u:'mg/dL',  lo:0.6,  hi:1.3,  pLo:0,    pHi:4.0 },
-    { k:'hb',    lbl:'Hb',     u:'g/dL',   lo:12.0, hi:17.5, pLo:7.5,  pHi:20.0 },
-    { k:'wbc',   lbl:'WBC',    u:'×10³',   lo:4.0,  hi:11.0, pLo:2.0,  pHi:25.0 },
-    { k:'plt',   lbl:'Plt',    u:'×10³',   lo:150,  hi:450,  pLo:50,   pHi:900 },
-    { k:'inr',   lbl:'INR',    u:'',       lo:0.8,  hi:1.2,  pLo:0,    pHi:4.5 },
-    { k:'ptt',   lbl:'PTT',    u:'sec',    lo:25,   hi:38,   pLo:0,    pHi:100 },
-    { k:'trop',  lbl:'Trop',   u:'ng/L',   lo:0,    hi:14,   pLo:0,    pHi:50 },
-    { k:'ckmb',  lbl:'CK-MB',  u:'U/L',    lo:0,    hi:25,   pLo:0,    pHi:60 },
-    { k:'bnp',   lbl:'BNP',    u:'pg/mL',  lo:0,    hi:100,  pLo:0,    pHi:500 },
-    { k:'ddimer',lbl:'D-Dimer',u:'ng/mL',  lo:0,    hi:500,  pLo:0,    pHi:1500 },
-    { k:'crp',   lbl:'CRP',    u:'mg/L',   lo:0,    hi:6,    pLo:0,    pHi:100 }
-  ];
-
-  // پایگاه آفلاین تداخلات دارویی و ناسازگاری سرمی (Y-Site & QTc & Bleeding)
-  const INTERACTION_RULES = [
-    { a:/heparin|هپارین/i, b:/amiodarone|آمیودارون|cordarone/i, lv:'crit', msg:'⛔ ناسازگاری سرمی (Y-Site): هپارین و آمیودارون رسوب می‌دهند؛ حتماً از دو لاین جداگانه تزریق شوند.' },
-    { a:/heparin|هپارین/i, b:/dobutamine|دوبوتامین|vancomycin|ونکومایسین|gentamicin|جنتامایسین/i, lv:'crit', msg:'⛔ ناسازگاری سرمی (Y-Site): هپارین با دوبوتامین/ونکومایسین در یک لاین ناسازگار است.' },
-    { a:/ceftriaxone|سفتریاکسون/i, b:/ringer|رینگر|calcium|کلسیم/i, lv:'crit', msg:'⛔ خطر رسوب کشنده: سفتریاکسون هرگز با رینگر یا محلول‌های حاوی کلسیم در یک ست/لاین تزریق نشود.' },
-    { a:/bicarb|بی‌کربنات|بیکربنات/i, b:/calcium|کلسیم|epinephrine|اپی‌نفرین|norepi|نوراپی|dopamine|دوپامین|dobutamine|دوبوتامین/i, lv:'crit', msg:'⛔ ناسازگاری شیمیایی: بی‌کربنات سدیم کاتکول‌آمین‌ها را غیرفعال و با کلسیم رسوب ایجاد می‌کند (لاین جداگانه).' },
-    { a:/lasix|furosemide|لازیکس|فوروزماید/i, b:/amiodarone|آمیودارون|dobutamine|دوبوتامین|dopamine|دوپامین|pantozol|پنتوپرازول/i, lv:'warn', msg:'⚠️ ناسازگاری Y-Site: فوروزماید (لازیکس) در یک لاین مشترک با آمیودارون/اینوتروپ‌ها/پنتوپرازول تزریق نشود.' },
-    { a:/amiodarone|آمیودارون/i, b:/ondansetron|اندانسترون|haloperidol|هالوپریدول|azithromycin|آزیترومایسین|levofloxacin|لووفلوکساسین|cipro|سیپرو/i, lv:'crit', msg:'🔴 خطر طولانی شدن QTc و Torsades de Pointes: پایش مداوم ECG، QTc و K+/Mg2+ الزامی است.' },
-    { a:/heparin|هپارین|clexane|انوکساپارین|warfarin|وارفارین|apixaban|ریواروکسابان/i, b:/plavix|کلوپیدوگرل|asa|آسپرین|ticagrelor|تیکاگرلور|ketorolac|کتورولاک|nsaid/i, lv:'warn', msg:'🩸 خطر تجمعی خونریزی: ترکیب ضدانعقاد + ضدپلاکت/NSAID؛ کنترل Hb، علائم خونریزی، هماتوم و محافظت معده (PPI).' },
-    { a:/tng|نیتروگلیسیرین|nitro/i, b:/sildenafil|سیلدنافیل|tadalafil|تادالافیل/i, lv:'crit', msg:'🚨 منع مصرف مطلق: نیترات + مهارکننده PDE5 باعث افت فشار خون شدید و مقاوم می‌شود!' },
-    { a:/spironolactone|اسپیرونولاکتون|captopril|کاپتوپریل|losartan|لوزارتان|enalapril|انالاپریل/i, b:/kcl|پتاسیم/i, lv:'warn', msg:'⚠️ خطر هایپرکالمی: پایش دقیق پتاسیم سرم و نوار قلب.' },
-    { a:/digoxin|دیگوکسین/i, b:/amiodarone|آمیودارون|verapamil|وراپامیل|lasix|لازیکس/i, lv:'warn', msg:'⚠️ خطر مسمومیت دیگوکسین: آمیودارون/وراپامیل سطح دیگوکسین را بالا می‌برند و هیپوکالمی ناشی از لازیکس مسمومیت را تشدید می‌کند.' }
-  ];
-
-  // پروتکل‌های گام‌به‌گام اورژانس قلبی (آفلاین)
-  const ALGORITHMS = {
-    edema: {
-      title: '🫁 ادم حاد ریوی (Acute Pulmonary Edema)',
-      steps: [
-        '۱. پوزیشن نشسته کامل (High-Fowler) با آویزان کردن پاها + مانیتورینگ ECG، BP و SpO2.',
-        '۲. اکسیژن با جریان بالا؛ در SpO2<90% یا دیسترس شدید آماده‌سازی سریع NIV (CPAP/BiPAP).',
-        '۳. نیتروگلیسیرین (TNG): در SBP ≥ 110 mmHg شروع انفوزیون 10–20 mcg/min و تیتره بر اساس فشار خون و تنگی نفس.',
-        '۴. فوروزماید (Lasix): دوز معمول 40–80 mg IV آهسته طبق دستور + ثبت دقیق I/O و کاتتر فولی در صورت نیاز.',
-        '۵. پایش مداوم فشار خون (هر ۵–۱۰ دقیقه)، صداهای ریه، ABG، الکترولیت‌ها (K+) و تروپونین.'
-      ]
-    },
-    hyperk: {
-      title: '⚡ هایپرکالمی بحرانی (K ≥ 6.0 یا تغییرات ECG)',
-      steps: [
-        '۱. تثبیت غشای قلب (فوری در صورت موج T بلند یا QRS پهن): Calcium Gluconate 10% به میزان 10 mL IV طی ۲–۳ دقیقه با مانیتورینگ ECG.',
-        '۲. شیفت پتاسیم به داخل سلول: ۱۰ واحد انسولین رگولار IV + 50 mL دکستروز ۵۰٪ (یا 25g گلوکز) + چک قند خون (BS) پس از ۳۰ و ۶۰ دقیقه.',
-        '۳. نبولایزر سالبوتامول (10–20 mg) در صورت نبود تاکی‌کاردی شدید/ایسکمی فعال.',
-        '۴. دفع پتاسیم از بدن: لازیکس IV (در صورت وجود ادرار) / کی‌اگزالات (SPS) / هماهنگی همودیالیز اورژانسی در نارسایی کلیه.',
-        '۵. قطع فوری تمام سرم‌ها و داروهای حاوی پتاسیم و تکرار K+ و ECG ظرف ۱–۲ ساعت.'
-      ]
-    },
-    arrhythmia: {
-      title: '💓 تاکی‌کاردی / برادی‌کاردی ناپایدار (ACLS)',
-      steps: [
-        '۱. بررسی ۵ علامت ناپایداری: افت فشار، کاهش هوشیاری، شوک، درد قفسه سینه ایسکمیک، نارسایی حاد قلبی.',
-        '۲. تاکی‌کاردی ناپایدار با نبض: کاردیوورژن سنکرون فوری (Sync ON!) + سداسیون کوتاه در صورت هوشیاری (AF: 120–200J، SVT/VT تک‌شکل: 50–100J).',
-        '۳. برادی‌کاردی علامت‌دار: Atropine 1 mg IV هر ۳–۵ دقیقه (حداکثر ۳mg) ➔ در صورت عدم پاسخ: پیس‌میکر جلدی (TCP) یا انفوزیون دوپامین/اپی‌نفرین.',
-        '۴. بدون نبض (VF/pVT): شروع فوری CPR، شوک غیرسنکرون 200J، اپی‌نفرین 1mg هر ۳–۵ دقیقه، آمیودارون 300mg پس از شوک سوم.'
-      ]
-    },
-    shock: {
-      title: '🚨 شوک کاردیوژنیک (SBP < 90 + هیپوپرفیوژن)',
-      steps: [
-        '۱. مانیتورینگ مداوم، لاین وریدی مطمئن (ترجیحاً ۲ لاین یا CVP)، ECG ۱۲ لید فوری جهت رد STEMI (نیاز به PCI اورژانسی).',
-        '۲. وازوپرسور خط اول: انفوزیون نوراپی‌نفرین با هدف MAP ≥ 65 mmHg.',
-        '۳. اینوتروپ (در صورت تداوم هیپوپرفیوژن با فشار قابل‌قبول): دوبوتامین طبق دستور و پایش آریتمی.',
-        '۴. احتیاط شدید در مایع‌درمانی (در صورت رال ریوی مایع ندهید؛ در انفارکتوس بطن راست با احتیاط حجم چک شود).',
-        '۵. پایش دقیق برون‌ده ادراری (هدف ≥ 0.5 mL/kg/hr)، لاکتات و ABG.'
-      ]
-    },
-    lysis: {
-      title: '💉 چک‌لیست ترومبولیتیک (رتپلاز / تنکتپلاز در STEMI)',
-      steps: [
-        '۱. رد منع مصرف مطلق: خونریزی فعال/مغزی قبلی، سکته ایسکمیک <۳ ماه، تومور مغزی، دیسکسیون آئورت، ترومای شدید سر <۳ هفته.',
-        '۲. کنترل فشار خون پیش از تزریق (در BP > 180/110 کنترل فشار پیش از ترومبولیز).',
-        '۳. دو لاین وریدی مطمئن قبل از تزریق + پرهیز از هرگونه تزریق عضلانی (IM) یا رگ‌گیری غیرضروری پس از تزریق.',
-        '۴. دوز رتپلاز: دو بولوس ۱۰ واحدی به فاصله ۳۰ دقیقه (هر بولوس طی ۲ دقیقه، خط سرم قبل و بعد با N/S فلاش شود).',
-        '۵. پایش دقیق آریتمی‌های ری‌پرفیوژن، علائم خونریزی مغزی/گوارشی، کاهش درد و تکرار ECG پس از ۶۰–۹۰ دقیقه.'
-      ]
-    }
-  };
-
-  // --- Helpers ---
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-  function toast(msg) {
-    if (typeof window.v8Toast === 'function') window.v8Toast(msg);
-    else alert(msg);
-  }
-  function lsGet(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function nowHHMM() { const d = new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
-
-  function getServerConfig() {
-    const cfg = lsGet('CARDIAC_INTERPRET_CFG_V23', {}) || {};
-    let base = String(cfg.webhookUrl || '').trim();
-    if (!base || /nursing-shifts-manager|api\.render\.com\/deploy/i.test(base)) base = DEFAULT_RENDER_BASE;
-    base = base.replace(/\/webhook\/.*$/i, '').replace(/\/+$/, '');
-    return {
-      baseUrl: base,
-      secret: String(cfg.secret || '').trim(),
-      model: String(cfg.model || 'gemini-3.5-flash-lite').trim(),
-      clientGeminiKeys: Array.isArray(cfg.geminiKeys) ? cfg.geminiKeys : []
-    };
-  }
-
-  function showScanLoading(modalityKey, title, sub) {
-    const ov = document.getElementById('intScanOverlay');
-    if (ov) {
-      const t = ov.querySelector('.int-scan-title');
-      const s = ov.querySelector('.int-scan-sub');
-      const st = ov.querySelector('.int-scan-stage');
-      if (t) t.textContent = title || 'در حال اسکن و استخراج هوشمند...';
-      if (s) s.textContent = sub || 'اتصال آنلاین به سرور اختصاصی Render v37';
-      if (st) {
-        if (modalityKey === 'ecg') {
-          st.innerHTML = '<div class="scan-ecg-wrap"><svg class="scan-ecg-svg" viewBox="0 0 170 88"><path class="scan-ecg-path" d="M4,46 L34,46 L42,38 L49,46 L58,46 L64,58 L74,14 L84,74 L91,46 L104,46 L114,32 L126,46 L166,46"/></svg></div>';
-        } else if (modalityKey === 'lab') {
-          st.innerHTML = '<div class="scan-lab-tube"><div class="scan-lab-liq"></div><div class="scan-lab-beam"></div></div>';
-        } else {
-          st.innerHTML = '<div class="scan-radar"></div>';
-        }
-      }
-      ov.classList.add('open');
-    }
-  }
-  function hideScanLoading() {
-    const ov = document.getElementById('intScanOverlay');
-    if (ov) ov.classList.remove('open');
-  }
-
-  let activeAbort = null;
-  async function postServer(path, payload, scanMod, scanTitle) {
-    const cfg = getServerConfig();
-    const headers = { 'Content-Type': 'application/json' };
-    if (cfg.secret) headers['X-API-Key'] = cfg.secret;
-    if (activeAbort) { try { activeAbort.abort(); } catch (e) {} }
-    activeAbort = new AbortController();
-    if (scanTitle) showScanLoading(scanMod || 'radar', scanTitle, 'در حال پردازش با سرور v37...');
-    try {
-      const r = await fetch(cfg.baseUrl + path, {
-        method: 'POST',
-        headers,
-        signal: activeAbort.signal,
-        body: JSON.stringify({ ...payload, model: cfg.model, clientGeminiKeys: cfg.clientGeminiKeys })
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
-      return data;
-    } finally {
-      hideScanLoading();
-      activeAbort = null;
-    }
-  }
-
-  function compressImageFile(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('خطا در خواندن تصویر'));
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error('فرمت تصویر نامعتبر است'));
-        img.onload = () => {
-          const maxSide = 1280;
-          let w = img.width, h = img.height;
-          if (w > maxSide || h > maxSide) {
-            if (w >= h) { h = Math.round(h * maxSide / w); w = maxSide; }
-            else { w = Math.round(w * maxSide / h); h = maxSide; }
-          }
-          const c = document.createElement('canvas');
-          c.width = w; c.height = h;
-          c.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(c.toDataURL('image/jpeg', 0.84));
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  // --- Feature #6: Privacy Blur Brush Modal ---
-  let blurState = { origDataUrl: '', cb: null, drawing: false };
-  function openBlurModal(dataUrl, onConfirm) {
-    blurState = { origDataUrl: dataUrl, cb: onConfirm, drawing: false };
-    const modal = document.getElementById('v37BlurModal');
-    const canvas = document.getElementById('v37BlurCanvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      modal.classList.add('open');
-    };
-    img.src = dataUrl;
-  }
-  function initBlurEvents() {
-    const canvas = document.getElementById('v37BlurCanvas');
-    if (!canvas) return;
-    const getPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const pt = e.touches ? e.touches[0] : e;
-      return {
-        x: (pt.clientX - rect.left) * (canvas.width / rect.width),
-        y: (pt.clientY - rect.top) * (canvas.height / rect.height)
-      };
-    };
-    const drawDot = (e) => {
-      if (!blurState.drawing) return;
-      e.preventDefault();
-      const p = getPos(e);
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#090d16';
-      const r = Math.max(16, canvas.width * 0.028);
-      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-    };
-    canvas.addEventListener('pointerdown', (e) => { blurState.drawing = true; drawDot(e); });
-    canvas.addEventListener('pointermove', drawDot);
-    window.addEventListener('pointerup', () => { blurState.drawing = false; });
-  }
-
-  function pickImageFor(onReady, askBlur) {
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*';
-    inp.onchange = async () => {
-      if (!inp.files || !inp.files[0]) return;
-      try {
-        const dataUrl = await compressImageFile(inp.files[0]);
-        if (askBlur) openBlurModal(dataUrl, onReady);
-        else onReady(dataUrl);
-      } catch (e) { toast('❌ ' + e.message); }
-    };
-    inp.click();
-  }
-
-  function dataUrlToImgObj(dataUrl) {
-    const m = String(dataUrl || '').match(/^data:([^;]+);base64,(.*)$/);
-    return m ? { mimeType: m[1], base64: m[2] } : null;
-  }
-
-  // --- Shared context reader ---
-  function getPatientSummaryContext() {
-    const fn = (document.getElementById('rep_adm_name')?.value || '').trim();
-    const ln = (document.getElementById('rep_adm_lname')?.value || '').trim();
-    const age = (document.getElementById('rep_adm_age')?.value || '').trim();
-    const dx = (document.getElementById('rep_adm_dx')?.value || '').trim();
-    const bed = (document.getElementById('rep_adm_room')?.value || '').trim();
-    return [fn || ln ? `بیمار: ${(fn+' '+ln).trim()}` : '', age ? `سن: ${age}` : '', bed ? `تخت: ${bed}` : '', dx ? `تشخیص: ${dx}` : ''].filter(Boolean).join(' | ');
-  }
-
-  function insertIntoReportNote(text) {
-    const clean = String(text || '').trim();
-    if (!clean) return;
-    const targets = ['rep_dur_notes', 'rep_adm_extra', 'rep_full_chart'];
-    for (const id of targets) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.value = el.value.trim() ? (el.value.trim() + '\n' + clean) : clean;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        toast('✅ به گزارش پرستاری اضافه شد');
-        return;
-      }
-    }
-  }
-
-  // =========================================================================
-  // 1. TAB INTERPRET INJECTION (Features #1, #2, #3, #4, #5, #6)
-  // =========================================================================
-  let lastLabData = null, lastRadData = null, serialEcg1 = null, serialEcg2 = null;
-  let followupHistory = [];
-
-  function mountInterpretV37() {
-    const host = document.getElementById('tab-interpret');
-    if (!host || document.getElementById('v37InterpretHub')) return;
-
-    const labInputsHtml = LAB_DEFS.map(d =>
-      `<div class="v37-lab-inp"><label>${d.lbl} <small>${d.u}</small></label><input type="number" step="any" id="v37_lab_${d.k}" placeholder="${d.lo}-${d.hi}" oninput="V37.evaluateLabs()"></div>`
-    ).join('');
-
-    const div = document.createElement('div');
-    div.id = 'v37InterpretHub';
-    div.className = 'v37-card accent-purple';
-    div.innerHTML = `
-      <div class="v37-head">
-        <span>✨ استودیو اسکن هوشمند و چت بالینی (v37)</span>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;margin:0;cursor:pointer;">
-          <input type="checkbox" id="v37_use_blur" checked style="width:auto;"> 🛡️ محو مشخصات قبل از ارسال
-        </label>
-      </div>
-      <div class="v37-pills">
-        <button type="button" class="v37-pill active" data-v37-ip="lab" onclick="V37.openIP('lab',this)">🧪 اسکن آزمایش/ABG</button>
-        <button type="button" class="v37-pill" data-v37-ip="rad" onclick="V37.openIP('rad',this)">🩻 اسکن اکو/رادیو</button>
-        <button type="button" class="v37-pill" data-v37-ip="ecg" onclick="V37.openIP('ecg',this)">📈 مقایسه ۲ نوار قلب</button>
-        <button type="button" class="v37-pill" data-v37-ip="chat" onclick="V37.openIP('chat',this)">💬 چت پیگیری مدرک</button>
-      </div>
-
-      <!-- Panel 1: Lab/ABG Photo -> Auto-Fill + Delta Guard + Calc Bridge -->
-      <div class="v37-panel open" id="v37_ip_lab">
-        <div class="v37-grid-2" style="margin-bottom:8px;">
-          <button type="button" class="v37-btn main" onclick="V37.scanLabPhoto()">📷 عکس از برگه آزمایش / ABG</button>
-          <button type="button" class="v37-btn" onclick="V37.clearLabs()">🧹 پاک کردن فیلدها</button>
-        </div>
-        <div class="v37-grid-3">${labInputsHtml}</div>
-        <div id="v37_lab_alerts"></div>
-        <div id="v37_lab_delta"></div>
-        <div class="v37-pills" style="margin-top:9px;">
-          <button type="button" class="v37-pill cyan" onclick="V37.pushLabToCalc('gfr')">🧪 ارسال Cr به GFR</button>
-          <button type="button" class="v37-pill cyan" onclick="V37.pushLabToCalc('grace')">❤️‍🔥 ارسال به GRACE</button>
-          <button type="button" class="v37-pill cyan" onclick="V37.pushLabToCalc('na')">🧂 سدیم تصحیح‌شده</button>
-          <button type="button" class="v37-pill cyan" onclick="V37.pushLabToCalc('ca')">🦴 کلسیم تصحیح‌شده</button>
-          <button type="button" class="v37-pill green" onclick="V37.pushLabToReport()">📋 درج در برگ گزارش</button>
-          <button type="button" class="v37-pill danger" onclick="V37.openSBARFromPanic()">📞 ساخت SBAR بحرانی</button>
-        </div>
-      </div>
-
-      <!-- Panel 2: Radiology / Echo / Angio Photo -> Auto-Fill & Checklist -->
-      <div class="v37-panel" id="v37_ip_rad">
-        <button type="button" class="v37-btn main" style="width:100%;margin-bottom:8px;" onclick="V37.scanRadPhoto()">📷 عکس از برگه ریپورت اکو / رادیولوژی / آنژیو</button>
-        <div class="v37-grid-2" style="margin-bottom:6px;">
-          <div class="v37-lab-inp"><label>LVEF (%)</label><input type="number" id="v37_rad_ef" placeholder="مثلاً 45"></div>
-          <div class="v37-lab-inp"><label>مدالیته</label><input type="text" id="v37_rad_mod" placeholder="Echo / CXR / Angio"></div>
-        </div>
-        <div class="v37-pills" id="v37_rad_tags"></div>
-        <textarea id="v37_rad_en" rows="2" placeholder="متن انگلیسی استخراج‌شده..."></textarea>
-        <textarea id="v37_rad_fa" rows="3" style="margin-top:6px;" placeholder="ترجمه و خلاصه فارسی آماده درج در پرونده..."></textarea>
-        <div class="v37-grid-2" style="margin-top:7px;">
-          <button type="button" class="v37-btn ok" onclick="V37.pushRadToReport()">📋 انتقال خلاصه به گزارش</button>
-          <button type="button" class="v37-btn" onclick="V37.pushEfToCalc()">🫀 انتقال LVEF به محاسبات</button>
-        </div>
-      </div>
-
-      <!-- Panel 3: Serial ECG Comparison -->
-      <div class="v37-panel" id="v37_ip_ecg">
-        <div class="v37-grid-2" style="margin-bottom:8px;">
-          <button type="button" class="v37-btn" id="v37_ecg1_btn" onclick="V37.pickSerialEcg(1)">1️⃣ انتخاب نوار قلب قبلی</button>
-          <button type="button" class="v37-btn" id="v37_ecg2_btn" onclick="V37.pickSerialEcg(2)">2️⃣ انتخاب نوار قلب جدید</button>
-        </div>
-        <button type="button" class="v37-btn main" style="width:100%;" onclick="V37.compareSerialEcgs()">⚡ مقایسه تغییرات دینامیک ۲ نوار قلب</button>
-        <div id="v37_ecg_diff_out"></div>
-      </div>
-
-      <!-- Panel 4: Follow-up Clinical Chat -->
-      <div class="v37-panel" id="v37_ip_chat">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">درباره آخرین تفسیر، آزمایش اسکن‌شده یا اکو سؤال تکمیلی بپرسید:</div>
-        <div class="v37-chat-log" id="v37_fchat_log"><div style="color:var(--muted);text-align:center;">سؤال خود را پایین بنویسید (مثلاً: با این PTT و وزن ۷۵ کیلو سرعت هپارین چقدر شود؟)</div></div>
-        <div style="display:flex;gap:6px;">
-          <input type="text" id="v37_fchat_inp" placeholder="سؤال بالینی شما..." style="flex:1;padding:9px;font-size:13px;">
-          <button type="button" class="v37-btn main" onclick="V37.sendFollowup()">ارسال</button>
-        </div>
-      </div>
-    `;
-    host.insertBefore(div, host.firstChild);
-  }
-
-  // =========================================================================
-  // 2. TAB REPORT INJECTION (Features #7, #8, #9, #10, #11, #12)
-  // =========================================================================
-  let scannedOrders = [];
-  let speechRec = null;
-
-  function mountReportV37() {
-    const host = document.getElementById('tab-report');
-    if (!host || document.getElementById('v37ReportHub')) return;
-
-    const div = document.createElement('div');
-    div.id = 'v37ReportHub';
-    div.className = 'v37-card accent-cyan';
-    div.innerHTML = `
-      <div class="v37-head"><span>🚀 دستیار هوشمند برگ گزارش (v37)</span></div>
-      <div class="v37-pills">
-        <button type="button" class="v37-pill cyan" onclick="V37.scanMonitorVitals()">📟 اسکن مانیتور</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleRP('order')">📝 اسکن اردر پزشک</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleRP('inter');V37.runOfflineInteractions()">⚠️ تداخل/Y-Site</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleRP('sbar');V37.buildSBAR()">📞 SBAR پزشک</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleRP('voice')">🎙 ویس به گزارش</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleRP('docs')">📄 کارت ترخیص/شیفت</button>
-      </div>
-
-      <!-- Order Decoder -->
-      <div class="v37-panel" id="v37_rp_order">
-        <button type="button" class="v37-btn main" style="width:100%;" onclick="V37.scanOrderPhoto()">📷 عکاسی از برگه اردر دست‌نویس / کاردکس</button>
-        <div id="v37_orders_box" style="margin-top:8px;"></div>
-      </div>
-
-      <!-- Drug Interaction & Y-Site Guard -->
-      <div class="v37-panel" id="v37_rp_inter">
-        <div class="v37-grid-2">
-          <button type="button" class="v37-btn ok" onclick="V37.runOfflineInteractions()">⚡ چک فوری آفلاین داروها</button>
-          <button type="button" class="v37-btn main" onclick="V37.runAiInteractions()">🧠 بررسی عمیق آنلاین (AI)</button>
-        </div>
-        <div id="v37_inter_out"></div>
-      </div>
-
-      <!-- SBAR Assistant -->
-      <div class="v37-panel" id="v37_rp_sbar">
-        <textarea id="v37_sbar_txt" rows="5" placeholder="متن استاندارد SBAR اینجا ساخته می‌شود..."></textarea>
-        <div class="v37-grid-2" style="margin-top:6px;">
-          <button type="button" class="v37-btn ok" onclick="V37.copySBAR()">📋 کپی متن تماس</button>
-          <button type="button" class="v37-btn main" onclick="V37.logSbarToReport()">✅ ثبت اطلاع به پزشک در گزارش</button>
-        </div>
-      </div>
-
-      <!-- Voice to Chart -->
-      <div class="v37-panel" id="v37_rp_voice">
-        <div class="v37-grid-2" style="margin-bottom:6px;">
-          <button type="button" class="v37-btn red" id="v37_voice_rec_btn" onclick="V37.toggleVoiceDictation()">🎙 شروع ضبط گفتار فارسی</button>
-          <button type="button" class="v37-btn main" onclick="V37.convertVoiceToChart()">✨ تبدیل به گزارش رسمی + دارو</button>
-        </div>
-        <textarea id="v37_voice_raw" rows="2" placeholder="مثلاً: ساعت ۲ بیمار درد سینه با نمره ۶ داشت نوار گرفتیم تی‌ان‌جی زیرزبانی دادیم درد شد ۲..."></textarea>
-        <div id="v37_voice_out"></div>
-      </div>
-
-      <!-- Custom Discharge Card + AI Ward Briefing -->
-      <div class="v37-panel" id="v37_rp_docs">
-        <div class="v37-grid-2">
-          <button type="button" class="v37-btn main" onclick="V37.genDischargeCard()">🏥 ساخت کارت آموزش ترخیص</button>
-          <button type="button" class="v37-btn ok" onclick="V37.genWardBriefing()">📊 خلاصه ۳۰ ثانیه‌ای کل شیفت</button>
-        </div>
-        <div id="v37_docs_out"></div>
-      </div>
-    `;
-    const bar = host.querySelector('.rep-mode-tabs');
-    if (bar) host.insertBefore(div, bar);
-    else host.insertBefore(div, host.firstChild);
-  }
-
-  // =========================================================================
-  // 3. TAB CALC INJECTION (Features #13, #14, #15, #16, #17)
-  // =========================================================================
-  function mountCalcV37() {
-    const host = document.getElementById('tab-calc');
-    if (!host || document.getElementById('v37CalcSuite')) return;
-
-    const wrap = document.createElement('div');
-    wrap.id = 'v37CalcSuite';
-    wrap.innerHTML = `
-      <!-- #13: Heparin Drip Nomogram -->
-      <div class="calc-tool-card" style="border-right:4px solid #f59e0b;">
-        <div class="calc-tool-title" style="color:#f59e0b;"><span>🩸 نموگرام هوشمند تیتره‌کردن هپارین (v37)</span></div>
-        <div class="row">
-          <div class="col"><label>وزن (kg):</label><input type="number" id="v37_hep_wt" placeholder="75"></div>
-          <div class="col"><label>جواب PTT (sec):</label><input type="number" id="v37_hep_ptt" placeholder="42"></div>
-        </div>
-        <div class="row" style="margin-top:6px;">
-          <div class="col"><label>سرعت فعلی (U/hr):</label><input type="number" id="v37_hep_cur" placeholder="1000"></div>
-          <div class="col"><label>غلظت سرم (U/mL):</label><input type="number" id="v37_hep_conc" value="100" placeholder="مثلاً 100 (25000 در 250cc)"></div>
-        </div>
-        <button type="button" class="calc-btn" style="background:#d97706;" onclick="V37.calcHeparinNomogram()">محاسبه تغییر دوز و سرعت جدید</button>
-        <div id="v37_hep_out"></div>
-      </div>
-
-      <!-- #14: Blood Transfusion Guard -->
-      <div class="calc-tool-card" style="border-right:4px solid #ef4444;">
-        <div class="calc-tool-title" style="color:#f87171;"><span>🩸 پایشگر تزریق خون و فرآورده‌ها (سقف ۴ ساعت)</span><b id="v37_bld_clk" style="font-family:monospace;">04:00:00</b></div>
-        <div class="row">
-          <div class="col"><input type="text" id="v37_bld_type" placeholder="فرآورده (مثلاً PC O+)"></div>
-          <div class="col"><input type="text" id="v37_bld_bag" placeholder="شماره کیسه"></div>
-        </div>
-        <div style="margin:7px 0;">
-          <label class="v37-chk-item"><input type="checkbox" id="v37_bc1"> تطبیق دوپرستاره نام بیمار، گروه خون و شماره کیسه انجام شد</label>
-          <label class="v37-chk-item"><input type="checkbox" id="v37_bc2"> ست تزریق خون فیلتردار و سرم نرمال سالین آماده است</label>
-          <label class="v37-chk-item"><input type="checkbox" id="v37_bc3"> علائم حیاتی پایه ثبت و سرعت ۱۵ دقیقه اول آهسته تنظیم شد</label>
-        </div>
-        <div class="v37-grid-2">
-          <button type="button" class="v37-btn red" onclick="V37.startBloodTimer()">▶ شروع تایمر ۴ ساعته</button>
-          <button type="button" class="v37-btn ok" onclick="V37.logBloodToReport()">📋 ثبت گزارش تزریق خون</button>
-        </div>
-      </div>
-
-      <!-- #15: Interactive Emergency Algorithms -->
-      <div class="calc-tool-card" style="border-right:4px solid #a855f7;">
-        <div class="calc-tool-title" style="color:#c084fc;"><span>⚡ پروتکل‌های گام‌به‌گام اورژانس قلبی (آفلاین)</span></div>
-        <div class="v37-pills">
-          <button type="button" class="v37-pill active" onclick="V37.showAlgo('edema',this)">ادم حاد ریه</button>
-          <button type="button" class="v37-pill" onclick="V37.showAlgo('hyperk',this)">هایپرکالمی</button>
-          <button type="button" class="v37-pill" onclick="V37.showAlgo('arrhythmia',this)">آریتمی ناپایدار</button>
-          <button type="button" class="v37-pill" onclick="V37.showAlgo('shock',this)">شوک کاردیوژنیک</button>
-          <button type="button" class="v37-pill" onclick="V37.showAlgo('lysis',this)">ترومبولیتیک</button>
-        </div>
-        <div id="v37_algo_box" class="v37-box"></div>
-      </div>
-
-      <!-- #16: NEWS2 + Vitals SVG Trend Chart -->
-      <div class="calc-tool-card" style="border-right:4px solid #38bdf8;">
-        <div class="calc-tool-title" style="color:#38bdf8;"><span>📈 امتیاز NEWS2 و نمودار روند علائم حیاتی شیفت</span></div>
-        <div class="v37-grid-3">
-          <div class="v37-lab-inp"><label>SBP</label><input type="number" id="v37_n2_sbp" placeholder="120"></div>
-          <div class="v37-lab-inp"><label>HR</label><input type="number" id="v37_n2_hr" placeholder="80"></div>
-          <div class="v37-lab-inp"><label>RR</label><input type="number" id="v37_n2_rr" placeholder="18"></div>
-          <div class="v37-lab-inp"><label>SpO2%</label><input type="number" id="v37_n2_spo2" placeholder="97"></div>
-          <div class="v37-lab-inp"><label>Temp</label><input type="number" step="0.1" id="v37_n2_temp" placeholder="36.8"></div>
-          <div class="v37-lab-inp"><label>اکسیژن</label><select id="v37_n2_o2" style="padding:7px;font-size:12px;"><option value="0">هوای اتاق</option><option value="2">با O2 (+2)</option></select></div>
-        </div>
-        <div class="v37-grid-2" style="margin-top:8px;">
-          <button type="button" class="v37-btn main" onclick="V37.addNews2Point()">➕ محاسبه NEWS2 و ثبت در نمودار</button>
-          <button type="button" class="v37-btn" onclick="V37.clearNews2()">🧹 پاک کردن نمودار</button>
-        </div>
-        <div id="v37_news2_out"></div>
-        <div id="v37_news2_svg" style="margin-top:8px;"></div>
-      </div>
-
-      <!-- #17: Sliding Scale Insulin Tracker -->
-      <div class="calc-tool-card" style="border-right:4px solid #10b981;">
-        <div class="calc-tool-title" style="color:#10b981;"><span>💉 دستیار قند خون و انسولین (Sliding Scale)</span></div>
-        <div class="row">
-          <div class="col"><label>قند خون BS (mg/dL):</label><input type="number" id="v37_bs_val" placeholder="مثلاً 265"></div>
-          <div class="col"><label>شدت پروتکل:</label>
-            <select id="v37_bs_proto"><option value="low">ملایم (حساس به انسولین)</option><option value="std" selected>استاندارد</option><option value="high">مقاوم / دوز بالا</option></select>
-          </div>
-        </div>
-        <button type="button" class="calc-btn" style="background:#059669;" onclick="V37.calcInsulin()">محاسبه واحد انسولین رگولار SC</button>
-        <div id="v37_bs_out"></div>
-      </div>
-    `;
-    const cpr = document.getElementById('cprTimerCard');
-    if (cpr && cpr.parentNode) cpr.parentNode.insertBefore(wrap, cpr.nextSibling);
-    else host.insertBefore(wrap, host.firstChild);
-    V37.showAlgo('edema');
-    V37.renderNews2Chart();
-  }
-
-  // =========================================================================
-  // 4. TAB NEW INJECTION (Features #18 & #19: Bed Board, Line Age, Radar, Checklists)
-  // =========================================================================
-  function mountWardV37() {
-    const host = document.getElementById('tab-new');
-    if (!host || document.getElementById('v37WardHub')) return;
-
-    const div = document.createElement('div');
-    div.id = 'v37WardHub';
-    div.className = 'v37-card accent-gold';
-    div.innerHTML = `
-      <div class="v37-head"><span>🏥 داشبورد هوشمند شیفت و ایمنی (v37)</span></div>
-      <div class="v37-pills">
-        <button type="button" class="v37-pill" onclick="V37.toggleWP('beds')">🛏 تخت‌ها و عمر لاین‌ها</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleWP('radar')">⏰ رادار تایمر سریال</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleWP('preangio')">📋 چک‌لیست اعزام/آنژیو</button>
-        <button type="button" class="v37-pill" onclick="V37.toggleWP('cart')">🚑 تحویل ترالی احیا</button>
-      </div>
-
-      <!-- #18: Ward Bed Board + Line Age Tracker -->
-      <div class="v37-panel" id="v37_wp_beds">
-        <div class="v37-grid-3" style="margin-bottom:6px;">
-          <input type="text" id="v37_bed_no" placeholder="شماره تخت">
-          <input type="text" id="v37_bed_name" placeholder="نام بیمار">
-          <select id="v37_bed_st"><option value="ok">🟢 پایدار</option><option value="watch">🟡 نیازمند پایش</option><option value="crit">🔴 بحرانی</option></select>
-        </div>
-        <div class="v37-grid-3" style="margin-bottom:6px;">
-          <input type="text" id="v37_bed_pump" placeholder="پمپ (TNG/هپارین)">
-          <input type="number" id="v37_bed_ivhrs" placeholder="عمر آنژیوکت (ساعت)">
-          <label class="v37-chk-item" style="margin:0;justify-content:center;"><input type="checkbox" id="v37_bed_npo"> NPO</label>
-        </div>
-        <button type="button" class="v37-btn ok" style="width:100%;" onclick="V37.addBed()">➕ افزودن / بروزرسانی تخت</button>
-        <div class="v37-bed-grid" id="v37_beds_grid"></div>
-      </div>
-
-      <!-- #19a: Shift Serial Timer Radar -->
-      <div class="v37-panel" id="v37_wp_radar">
-        <div class="v37-pills">
-          <button type="button" class="v37-pill cyan" onclick="V37.addRadarPreset('post_angio')">🩺 پست‌آنژیو (۱۵د)</button>
-          <button type="button" class="v37-pill cyan" onclick="V37.addRadarPreset('trop')">🧪 تروپونین سریال (۳س)</button>
-          <button type="button" class="v37-pill cyan" onclick="V37.addRadarPreset('ptt')">🩸 کنترل PTT (۶س)</button>
-        </div>
-        <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <input type="text" id="v37_rad_lbl" placeholder="عنوان یادآور (مثلاً چک نبض تخت ۴)" style="flex:2;">
-          <input type="number" id="v37_rad_min" placeholder="دقیقه" value="15" style="flex:1;">
-          <button type="button" class="v37-btn main" onclick="V37.addCustomRadar()">+</button>
-        </div>
-        <div id="v37_radar_list"></div>
-      </div>
-
-      <!-- #19b: Pre-Angio / ICU Transfer Checklist -->
-      <div class="v37-panel" id="v37_wp_preangio">
-        <div id="v37_preangio_chks">
-          <label class="v37-chk-item"><input type="checkbox"> رضایت‌نامه آگاهانه توسط بیمار/ولی امضا شده است</label>
-          <label class="v37-chk-item"><input type="checkbox"> ناشتایی (NPO) از ساعت مقرر رعایت شده است</label>
-          <label class="v37-chk-item"><input type="checkbox"> جواب کراتینین، الکترولیت‌ها و انعقاد (INR/PTT) چک شد</label>
-          <label class="v37-chk-item"><input type="checkbox"> متفورمین / وارفارین / ضدانعقاد طبق پروتکل قطع شده است</label>
-          <label class="v37-chk-item"><input type="checkbox"> شیو ناحیه کشاله ران/رادیال و رگ مطمئن دست چپ (سایز ۱۸/۲۰)</label>
-          <label class="v37-chk-item"><input type="checkbox"> آلرژی به ماده حاجب پرسیده شد + تخلیه مثانه قبل از اعزام</label>
-          <label class="v37-chk-item"><input type="checkbox"> مانیتور پرتابل، اکسیژن و پرونده کامل همراه بیمار است</label>
-        </div>
-        <button type="button" class="v37-btn ok" style="width:100%;" onclick="V37.exportChecklist('v37_preangio_chks','چک‌لیست آمادگی اعزام/آنژیوگرافی')">📋 درج خلاصه چک‌لیست در گزارش</button>
-      </div>
-
-      <!-- #19c: Crash Cart Shift Audit -->
-      <div class="v37-panel" id="v37_wp_cart">
-        <div id="v37_cart_chks">
-          <label class="v37-chk-item"><input type="checkbox"> پلمپ ترالی احیا سالم و تاریخ انقضای داروها معتبر است</label>
-          <label class="v37-chk-item"><input type="checkbox"> تست روزانه دفیبریلاتور (۳۰ ژول) و ژل/پدال تایید شد</label>
-          <label class="v37-chk-item"><input type="checkbox"> دستگاه ساکشن و مکش مرکزی تست و سالم است</label>
-          <label class="v37-chk-item"><input type="checkbox"> لارنگوسکوپ (تیغه‌های ۳ و ۴)، باتری و لامپ روشن است</label>
-          <label class="v37-chk-item"><input type="checkbox"> آمبوبگ، ماسک و کپسول اکسیژن پر و مانومتر سالم است</label>
-        </div>
-        <button type="button" class="v37-btn warn" style="width:100%;" onclick="V37.exportChecklist('v37_cart_chks','تحویل ترالی احیا و تجهیزات اورژانس')">📋 ثبت تایید تحویل در چالش‌های شیفت</button>
-      </div>
-    `;
-    host.insertBefore(div, host.firstChild);
-    V37.renderBeds();
-    V37.renderRadar();
-  }
-
-  // =========================================================================
-  // 5. TAB SETTINGS INJECTION (Feature #20: PIN Lock + Night Shift Dimmer)
-  // =========================================================================
-  function mountSecurityV37() {
-    const host = document.getElementById('tab-settings');
-    if (!host || document.getElementById('v37SecCard')) return;
-
-    const savedDim = Number(localStorage.getItem(LS.DIM) || 0);
-    const hasPin = Boolean(localStorage.getItem(LS.PIN));
-
-    const div = document.createElement('div');
-    div.id = 'v37SecCard';
-    div.className = 'v37-card accent-green';
-    div.innerHTML = `
-      <div class="v37-head"><span>🔐 قفل حریم خصوصی و دیمر شیفت شب (v37)</span></div>
-      <div style="margin-bottom:10px;">
-        <label style="font-size:12px;">🌙 دیمر نور فوق‌کم‌نور ساعت ۳ صبح (<span id="v37_dim_val">${savedDim}%</span>):</label>
-        <input type="range" min="0" max="75" value="${savedDim}" oninput="V37.setDimmer(this.value)" style="padding:0;">
-      </div>
-      <div class="row">
-        <div class="col" style="flex:2;"><input type="tel" maxlength="4" id="v37_pin_new" placeholder="پین ۴ رقمی (مثلاً 1234)"></div>
-        <div class="col" style="flex:1;"><button type="button" class="v37-btn ok" style="width:100%;height:100%;" onclick="V37.savePin()">ذخیره پین</button></div>
-      </div>
-      <div class="v37-grid-2" style="margin-top:8px;">
-        <button type="button" class="v37-btn main" onclick="V37.lockNow()" ${hasPin ? '' : 'style="opacity:0.6;"'}>🔒 قفل فوری صفحه</button>
-        <button type="button" class="v37-btn red" onclick="V37.removePin()">🗑 حذف قفل پین</button>
-      </div>
-    `;
-    host.insertBefore(div, host.firstChild);
-    V37.setDimmer(savedDim);
-
-    // دکمه سریع قفل در هدر در صورت فعال بودن پین
-    const hdr = document.querySelector('header');
-    if (hdr && !document.getElementById('v37HdrLockBtn')) {
-      const b = document.createElement('button');
-      b.id = 'v37HdrLockBtn';
-      b.type = 'button';
-      b.title = 'قفل سریع حریم خصوصی';
-      b.textContent = '🔒';
-      b.style.cssText = 'position:absolute;left:88px;top:50%;transform:translateY(-50%);background:transparent;border:1px solid var(--border);color:var(--text);border-radius:50%;width:32px;height:32px;cursor:pointer;display:' + (hasPin ? 'inline-flex' : 'none') + ';align-items:center;justify-content:center;z-index:101;';
-      b.onclick = () => V37.lockNow();
-      hdr.appendChild(b);
-    }
-  }
-
-  // --- Sound Beep for Radar ---
-  function playBeep() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = 880; g.gain.value = 0.15;
-      o.connect(g); g.connect(ctx.destination); o.start();
-      setTimeout(() => { o.stop(); ctx.close(); }, 350);
-    } catch (e) {}
-  }
-
-  // --- Public API ---
-  let pinBuf = '';
-  window.V37 = {
-    openIP(id, btn) {
-      document.querySelectorAll('#v37InterpretHub [data-v37-ip]').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      ['lab','rad','ecg','chat'].forEach(p => {
-        const el = document.getElementById('v37_ip_' + p);
-        if (el) el.classList.toggle('open', p === id);
-      });
-    },
-    toggleRP(id) {
-      ['order','inter','sbar','voice','docs'].forEach(p => {
-        const el = document.getElementById('v37_rp_' + p);
-        if (el) el.classList.toggle('open', p === id ? !el.classList.contains('open') : false);
-      });
-    },
-    toggleWP(id) {
-      ['beds','radar','preangio','cart'].forEach(p => {
-        const el = document.getElementById('v37_wp_' + p);
-        if (el) el.classList.toggle('open', p === id ? !el.classList.contains('open') : false);
-      });
-    },
-    confirmBlurSend() {
-      const c = document.getElementById('v37BlurCanvas');
-      const out = c.toDataURL('image/jpeg', 0.85);
-      const cb = blurState.cb;
-      this.closeBlurModal();
-      if (cb) cb(out);
-    },
-    resetBlurCanvas() {
-      if (!blurState.origDataUrl) return;
-      const c = document.getElementById('v37BlurCanvas');
-      const img = new Image();
-      img.onload = () => { c.getContext('2d').drawImage(img, 0, 0); };
-      img.src = blurState.origDataUrl;
-    },
-    closeBlurModal() {
-      document.getElementById('v37BlurModal')?.classList.remove('open');
-      blurState.cb = null;
-    },
-
-    // #1 + #5b: Scan Lab/ABG Photo -> Fill Inputs + Delta Guard
-    scanLabPhoto() {
-      const useBlur = document.getElementById('v37_use_blur')?.checked;
-      pickImageFor(async (dataUrl) => {
-        try {
-          const im = dataUrlToImgObj(dataUrl);
-          const res = await postServer('/webhook/extract-fields', {
-            mode: 'lab_abg', images: [im], context: getPatientSummaryContext()
-          }, 'lab', 'در حال استخراج مقادیر آزمایش و ABG...');
-          const d = res.data || {};
-          lastLabData = d;
-          const fields = d.fields || {};
-          let count = 0;
-          LAB_DEFS.forEach(def => {
-            const val = fields[def.k];
-            const el = document.getElementById('v37_lab_' + def.k);
-            if (el && val !== null && val !== undefined && val !== '') {
-              el.value = val;
-              el.classList.add('v37-filled');
-              count++;
-              // Auto-sync into any existing legacy lab input inside #tab-interpret
-              const legacy = document.querySelector(`#tab-interpret input[id$="_${def.k}"]:not(#v37_lab_${def.k}), #tab-interpret input[id="lab_${def.k}"]`);
-              if (legacy) { legacy.value = val; legacy.dispatchEvent(new Event('input', { bubbles: true })); }
-            }
-          });
-          this.evaluateLabs(d.abgInterpretationFa, d.summaryFa);
-          this.saveLabDelta(fields);
-          toast(`✅ ${count} مقدار آزمایشگاهی خودکار پر شد (${res.via || 'v37'})`);
-        } catch (e) { toast('❌ ' + e.message); }
-      }, useBlur);
-    },
-
-    evaluateLabs(abgFa = '', sumFa = '') {
-      const panics = [], abnorms = [];
-      LAB_DEFS.forEach(def => {
-        const el = document.getElementById('v37_lab_' + def.k);
-        if (!el) return;
-        el.classList.remove('v37-warn', 'v37-panic');
-        const v = parseFloat(el.value);
-        if (isNaN(v)) return;
-        if (v <= def.pLo || v >= def.pHi) {
-          el.classList.add('v37-panic');
-          panics.push(`${def.lbl}=${v} ${def.u}`);
-        } else if (v < def.lo || v > def.hi) {
-          el.classList.add('v37-warn');
-          abnorms.push(`${def.lbl}=${v}`);
-        }
-      });
-      const box = document.getElementById('v37_lab_alerts');
-      if (!box) return;
-      let html = '';
-      if (panics.length) html += `<div class="v37-alert crit">🚨 <b>مقادیر بحرانی (Panic Values):</b> ${esc(panics.join(' | '))}</div>`;
-      if (abnorms.length) html += `<div class="v37-alert warn">⚠️ <b>مقادیر خارج از محدوده:</b> ${esc(abnorms.join(' | '))}</div>`;
-      if (abgFa || sumFa) html += `<div class="v37-box">${abgFa ? '<b>تفسیر ABG:</b> ' + esc(abgFa) + '\n' : ''}${sumFa ? esc(sumFa) : ''}</div>`;
-      box.innerHTML = html;
-    },
-
-    saveLabDelta(fields) {
-      const key = (getPatientSummaryContext() || 'default_patient');
-      const hist = lsGet(LS.LAB_HIST, {});
-      const prev = hist[key];
-      const deltas = [];
-      if (prev && prev.fields) {
-        const pf = prev.fields;
-        if (pf.hb && fields.hb && (pf.hb - fields.hb) >= 1.5) deltas.push(`🔻 افت Hb از ${pf.hb} به ${fields.hb} (بررسی خونریزی!)`);
-        if (pf.cr && fields.cr && (fields.cr - pf.cr) >= 0.3) deltas.push(`🔺 افزایش Cr از ${pf.cr} به ${fields.cr} (هشدار AKI / ماده حاجب!)`);
-        if (pf.trop && fields.trop && fields.trop > pf.trop * 1.2) deltas.push(`🔺 روند صعودی Troponin از ${pf.trop} به ${fields.trop}`);
-        if (pf.k && fields.k && Math.abs(fields.k - pf.k) >= 0.6) deltas.push(`⚡ تغییر پتاسیم از ${pf.k} به ${fields.k}`);
-        if (pf.ptt && fields.ptt) deltas.push(`🩸 تغییر PTT از ${pf.ptt} به ${fields.ptt}`);
-      }
-      hist[key] = { at: nowHHMM(), fields };
-      lsSet(LS.LAB_HIST, hist);
-      const dBox = document.getElementById('v37_lab_delta');
-      if (dBox) {
-        dBox.innerHTML = deltas.length
-          ? `<div class="v37-alert crit">📊 <b>مقایسه سریالی با آزمایش قبلی (${esc(prev.at)}):</b><br>${deltas.map(esc).join('<br>')}</div>`
-          : '';
-      }
-    },
-
-    clearLabs() {
-      LAB_DEFS.forEach(d => {
-        const el = document.getElementById('v37_lab_' + d.k);
-        if (el) { el.value = ''; el.classList.remove('v37-filled','v37-warn','v37-panic'); }
-      });
-      document.getElementById('v37_lab_alerts').innerHTML = '';
-      document.getElementById('v37_lab_delta').innerHTML = '';
-    },
-
-    // #3: Bridge Lab -> Calculators & Report
-    pushLabToCalc(target) {
-      const gv = (k) => document.getElementById('v37_lab_' + k)?.value || '';
-      if (target === 'gfr') {
-        if (gv('cr') && document.getElementById('gfr_cr')) document.getElementById('gfr_cr').value = gv('cr');
-        const age = document.getElementById('rep_adm_age')?.value;
-        if (age && document.getElementById('gfr_age')) document.getElementById('gfr_age').value = age;
-        switchTab('calc');
-        document.getElementById('gfr_cr')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        toast('✅ Cr به ماشین‌حساب GFR منتقل شد');
-      } else if (target === 'grace') {
-        if (gv('cr') && document.getElementById('grace-cr')) document.getElementById('grace-cr').value = gv('cr');
-        switchTab('calc');
-        document.getElementById('grace-cr')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        toast('✅ Cr به امتیاز GRACE منتقل شد');
-      } else if (target === 'na') {
-        if (gv('na') && document.getElementById('na_meas')) document.getElementById('na_meas').value = gv('na');
-        if (gv('bs') && document.getElementById('na_gluc')) document.getElementById('na_gluc').value = gv('bs');
-        switchTab('calc');
-        if (gv('na') && gv('bs') && typeof window.calcCorrNa === 'function') window.calcCorrNa();
-        document.getElementById('na_meas')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (target === 'ca') {
-        if (gv('ca') && document.getElementById('ca_val')) document.getElementById('ca_val').value = gv('ca');
-        if (gv('alb') && document.getElementById('ca_alb')) document.getElementById('ca_alb').value = gv('alb');
-        switchTab('calc');
-        if (gv('ca') && gv('alb') && typeof window.calcCorrCa === 'function') window.calcCorrCa();
-        document.getElementById('ca_val')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    },
-
-    pushLabToReport() {
-      const vals = [];
-      LAB_DEFS.forEach(d => {
-        const v = document.getElementById('v37_lab_' + d.k)?.value;
-        if (v !== '' && v != null) vals.push(`${d.lbl}=${v}`);
-      });
-      if (!vals.length) return toast('مقداری برای درج وجود ندارد');
-      const line = `نتایج آزمایشگاه/ABG کنترل و بررسی شد: ${vals.join('، ')}.` + (lastLabData?.summaryFa ? ' ' + lastLabData.summaryFa : '');
-      insertIntoReportNote(line);
-    },
-
-    // #2: Scan Radiology / Echo / Angio Photo
-    scanRadPhoto() {
-      const useBlur = document.getElementById('v37_use_blur')?.checked;
-      pickImageFor(async (dataUrl) => {
-        try {
-          const im = dataUrlToImgObj(dataUrl);
-          const res = await postServer('/webhook/extract-fields', {
-            mode: 'radiology_echo', images: [im], context: getPatientSummaryContext()
-          }, 'radar', 'در حال استخراج ریپورت اکو / رادیولوژی...');
-          const d = res.data || {};
-          lastRadData = d;
-          document.getElementById('v37_rad_ef').value = d.lvef ?? '';
-          document.getElementById('v37_rad_mod').value = d.modality || '';
-          document.getElementById('v37_rad_en').value = d.reportTextEn || '';
-          const faParts = [
-            d.summaryFa || '',
-            d.stenosisSummary ? 'تنگی عروق: ' + d.stenosisSummary : '',
-            Array.isArray(d.keyFindingsFa) && d.keyFindingsFa.length ? 'یافته‌ها: ' + d.keyFindingsFa.join('، ') : '',
-            Array.isArray(d.nursingActionsFa) && d.nursingActionsFa.length ? 'مراقبت پرستاری: ' + d.nursingActionsFa.join('، ') : ''
-          ].filter(Boolean);
-          document.getElementById('v37_rad_fa').value = faParts.join('\n');
-          const tags = Array.isArray(d.checklistTags) ? d.checklistTags : [];
-          document.getElementById('v37_rad_tags').innerHTML = tags.map(t => `<span class="v37-tag ${d.criticalAlert ? 'red' : ''}">✓ ${esc(t)}</span>`).join('');
-          // Sync with any existing text box / checkboxes in #tab-interpret
-          const legTxt = document.querySelector('#tab-interpret textarea');
-          if (legTxt && d.reportTextEn) { legTxt.value = d.reportTextEn; legTxt.dispatchEvent(new Event('input', { bubbles: true })); }
-          toast('✅ ریپورت با موفقیت استخراج و ترجمه شد');
-        } catch (e) { toast('❌ ' + e.message); }
-      }, useBlur);
-    },
-    pushRadToReport() {
-      const fa = document.getElementById('v37_rad_fa')?.value.trim();
-      const ef = document.getElementById('v37_rad_ef')?.value.trim();
-      if (!fa && !ef) return toast('ابتدا ریپورت را اسکن کنید');
-      insertIntoReportNote((ef ? `LVEF=${ef}% | ` : '') + fa);
-    },
-    pushEfToCalc() {
-      const ef = document.getElementById('v37_rad_ef')?.value.trim();
-      if (!ef) return toast('مقدار LVEF استخراج نشده است');
-      const el = document.getElementById('ef_val');
-      if (el) { el.value = ef; switchTab('calc'); if (typeof window.calcEF === 'function') window.calcEF(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    },
-
-    // #5a: Serial ECG Diff
-    pickSerialEcg(slot) {
-      const useBlur = document.getElementById('v37_use_blur')?.checked;
-      pickImageFor((dataUrl) => {
-        if (slot === 1) { serialEcg1 = dataUrl; document.getElementById('v37_ecg1_btn').textContent = '✅ نوار قلب ۱ انتخاب شد'; }
-        else { serialEcg2 = dataUrl; document.getElementById('v37_ecg2_btn').textContent = '✅ نوار قلب ۲ انتخاب شد'; }
-      }, useBlur);
-    },
-    async compareSerialEcgs() {
-      if (!serialEcg1 || !serialEcg2) return toast('هر دو عکس نوار قلب قبلی و جدید را انتخاب کنید');
-      try {
-        const res = await postServer('/webhook/extract-fields', {
-          mode: 'serial_ecg',
-          images: [dataUrlToImgObj(serialEcg1), dataUrlToImgObj(serialEcg2)],
-          context: getPatientSummaryContext()
-        }, 'ecg', 'در حال مقایسه دینامیک دو نوار قلب...');
-        const d = res.data || {};
-        const cls = d.urgency === 'critical' ? 'crit' : (d.urgency === 'warn' ? 'warn' : 'ok');
-        document.getElementById('v37_ecg_diff_out').innerHTML = `
-          <div class="v37-alert ${cls}">
-            <b>نوار اول:</b> ${esc(d.ecg1SummaryFa || '-')}<br>
-            <b>نوار دوم:</b> ${esc(d.ecg2SummaryFa || '-')}<br>
-            <b>تغییرات دینامیک:</b> ${(d.dynamicChangesFa || []).map(esc).join(' • ') || 'تغییر حاد گزارش نشد'}<br>
-            <b>توصیه:</b> ${esc(d.recommendationFa || '')}
-          </div>
-          <button type="button" class="v37-btn ok" style="width:100%;margin-top:6px;" onclick="V37.insertText(${JSON.stringify(d.chartLineFa || d.recommendationFa || '')})">📋 درج در برگ گزارش پرستاری</button>`;
-      } catch (e) { toast('❌ ' + e.message); }
-    },
-    insertText(t) { insertIntoReportNote(t); },
-
-    // #4: Follow-up Chat
-    async sendFollowup() {
-      const inp = document.getElementById('v37_fchat_inp');
-      const q = (inp?.value || '').trim();
-      if (!q) return;
-      inp.value = '';
-      const log = document.getElementById('v37_fchat_log');
-      if (!followupHistory.length) log.innerHTML = '';
-      followupHistory.push({ role: 'user', text: q });
-      log.innerHTML += `<div class="v37-chat-msg user"><b>شما:</b> ${esc(q)}</div>`;
-      log.scrollTop = log.scrollHeight;
-
-      const mainAiText = document.querySelector('#tab-interpret .int-ai-prose')?.textContent?.trim() || '';
-      const origRes = mainAiText || lastLabData?.summaryFa || lastRadData?.summaryFa || 'بدون تفسیر قبلی';
-      try {
-        const res = await postServer('/webhook/followup-chat', {
-          originalResult: origRes,
-          originalContext: getPatientSummaryContext(),
-          history: followupHistory.slice(0, -1),
-          question: q
-        }, 'radar', 'در حال پاسخ‌گویی به سؤال بالینی...');
-        followupHistory.push({ role: 'ai', text: res.answer });
-        log.innerHTML += `<div class="v37-chat-msg ai"><b>دستیار (${esc(res.via || 'AI')}):</b>\n${esc(res.answer)}</div>`;
-        log.scrollTop = log.scrollHeight;
-      } catch (e) {
-        log.innerHTML += `<div class="v37-alert crit">❌ ${esc(e.message)}</div>`;
-      }
-    },
-
-    // #7: Scan Vitals Monitor -> Fill Active Report Stage
-    scanMonitorVitals() {
-      pickImageFor(async (dataUrl) => {
-        try {
-          const res = await postServer('/webhook/extract-fields', {
-            mode: 'vitals_monitor', images: [dataUrlToImgObj(dataUrl)]
-          }, 'ecg', 'در حال خواندن علائم حیاتی از مانیتور...');
-          const d = res.data || {};
-          const pane = document.querySelector('.rep-pane.active')?.id?.replace('repPane_', '') || 'adm';
-          const setF = (id, v) => {
-            const el = document.getElementById(id);
-            if (el && v !== null && v !== undefined && v !== '') { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }
-          };
-          if (pane === 'dur') {
-            setF('rep_dur_bp', d.bp_sys); setF('rep_dur_bpd', d.bp_dia);
-          } else if (d.bp_sys && d.bp_dia) {
-            setF(`rep_${pane}_bp`, `${d.bp_sys}/${d.bp_dia}`);
-          }
-          setF(`rep_${pane}_hr`, d.hr);
-          setF(`rep_${pane}_rr`, d.rr);
-          setF(`rep_${pane}_spo2`, d.spo2);
-          setF(`rep_${pane}_temp`, d.temp);
-          if (pane === 'dur' && d.rhythm) setF('rep_dur_rhythm', d.rhythm);
-          toast(`✅ علائم حیاتی مانیتور در فرم ثبت شد (${d.notesFa || 'پایدار'})`);
-        } catch (e) { toast('❌ ' + e.message); }
-      }, false);
-    },
-
-    // #8: Scan Physician Order / Kardex
-    scanOrderPhoto() {
-      const useBlur = document.getElementById('v37_use_blur')?.checked;
-      pickImageFor(async (dataUrl) => {
-        try {
-          const res = await postServer('/webhook/extract-fields', {
-            mode: 'order_kardex', images: [dataUrlToImgObj(dataUrl)], context: getPatientSummaryContext()
-          }, 'radar', 'در حال رمزگشایی اردر پزشک...');
-          const d = res.data || {};
-          scannedOrders = Array.isArray(d.orders) ? d.orders : [];
-          const box = document.getElementById('v37_orders_box');
-          if (!scannedOrders.length) { box.innerHTML = '<div class="v37-alert warn">دستوری استخراج نشد.</div>'; return; }
-          box.innerHTML = scannedOrders.map((o, i) => `
-            <label class="v37-chk-item">
-              <input type="checkbox" checked data-v37-ord="${i}">
-              <div style="flex:1;">
-                <b dir="ltr" style="display:inline-block;">${esc(o.drugLine)}</b>
-                ${o.needsDoubleCheck ? '<span class="v37-tag red">⚠️ نیاز به دبل‌چک</span>' : ''}
-                ${o.noteFa ? `<div style="font-size:11px;color:var(--muted);">${esc(o.noteFa)}</div>` : ''}
-              </div>
-            </label>`).join('') +
-            `<button type="button" class="v37-btn ok" style="width:100%;margin-top:6px;" onclick="V37.pushOrdersToSheet()">💉 انتقال موارد تیک‌خورده به ستون داروی برگ گزارش</button>`;
-          toast(`✅ ${scannedOrders.length} دستور استخراج شد`);
-        } catch (e) { toast('❌ ' + e.message); }
-      }, useBlur);
-    },
-    pushOrdersToSheet() {
-      let added = 0;
-      document.querySelectorAll('[data-v37-ord]:checked').forEach(ch => {
-        const o = scannedOrders[Number(ch.getAttribute('data-v37-ord'))];
-        if (o && typeof window.repAddCustomProcedure === 'function') {
-          window.repAddCustomProcedure(o.drugLine, o.time || nowHHMM(), true, true);
-          added++;
-        }
-      });
-      toast(`✅ ${added} دستور به ستون داروی گزارش اضافه شد`);
-    },
-
-    // #9: Drug Interaction & Y-Site Guard
-    collectCurrentDrugs() {
-      const list = [];
-      const add = (t) => { const c = String(t || '').trim(); if (c && !list.includes(c)) list.push(c); };
-      (lsGet('CARDIAC_REPORT_PENDING_PROCS_V16', []) || []).forEach(p => add(p.text));
-      const chart = lsGet('CARDIAC_CONTINUOUS_REPORT_ACTIVE_V16', null);
-      if (chart && Array.isArray(chart.entries)) {
-        chart.entries.forEach(e => (e.procedures || []).forEach(p => add(p.text)));
-      }
-      ['rep_dur_drips','rep_dur_meds','rep_dur_prn','rep_dis_meds'].forEach(id => {
-        const v = document.getElementById(id)?.value || '';
-        v.split(/[\n،,]+/).forEach(add);
-      });
-      return list;
-    },
-    runOfflineInteractions() {
-      const drugs = this.collectCurrentDrugs();
-      const box = document.getElementById('v37_inter_out');
-      if (drugs.length < 2) {
-        box.innerHTML = '<div class="v37-alert warn">حداقل ۲ دارو در ستون داروها یا کادر داروهای گزارش وارد کنید تا تداخل و ناسازگاری سرمی بررسی شود.</div>';
-        return;
-      }
-      const joined = drugs.join(' | ');
-      const hits = INTERACTION_RULES.filter(r => r.a.test(joined) && r.b.test(joined));
-      box.innerHTML = hits.length
-        ? hits.map(h => `<div class="v37-alert ${h.lv}">${esc(h.msg)}</div>`).join('')
-        : `<div class="v37-alert ok">✅ در بررسی آفلاین بین ${drugs.length} داروی ثبت‌شده ناسازگاری Y-Site یا تداخل بحرانی پرتکرار یافت نشد.</div>`;
-    },
-    async runAiInteractions() {
-      const drugs = this.collectCurrentDrugs();
-      if (!drugs.length) return toast('دارویی برای بررسی ثبت نشده است');
-      try {
-        const res = await postServer('/webhook/clinical-generate', {
-          task: 'drug_interaction', data: { patient: getPatientSummaryContext(), drugs }
-        }, 'lab', 'در حال بررسی جامع تداخلات دارویی و Y-Site...');
-        document.getElementById('v37_inter_out').innerHTML = `<div class="v37-box">${esc(res.result)}</div>`;
-      } catch (e) { toast('❌ ' + e.message); }
-    },
-
-    // #10: SBAR Assistant
-    buildSBAR(extraPanic = '') {
-      const ctx = getPatientSummaryContext() || 'بیمار بخش قلب';
-      const pane = document.querySelector('.rep-pane.active')?.id?.replace('repPane_', '') || 'dur';
-      const bp = pane === 'dur'
-        ? ((document.getElementById('rep_dur_bp')?.value || '') + '/' + (document.getElementById('rep_dur_bpd')?.value || ''))
-        : (document.getElementById(`rep_${pane}_bp`)?.value || '');
-      const hr = document.getElementById(`rep_${pane}_hr`)?.value || '';
-      const spo2 = document.getElementById(`rep_${pane}_spo2`)?.value || '';
-      const vs = [bp && bp !== '/' ? `BP=${bp}` : '', hr ? `HR=${hr}` : '', spo2 ? `SpO2=${spo2}%` : ''].filter(Boolean).join('، ');
-      const txt =
-`S (وضعیت فعلی): تماس از بخش جهت ${ctx}. ${extraPanic ? 'مقدار/وضعیت بحرانی: ' + extraPanic : 'تغییر وضعیت بالینی / نیاز به ارزیابی.'}
-B (سابقه): ${document.getElementById('rep_adm_extra')?.value?.trim() || 'طبق پرونده بستری بخش قلب.'}
-A (ارزیابی): علائم حیاتی فعلی: ${vs || 'در حال پایش'}. ${lastLabData?.summaryFa || ''}
-R (درخواست): لطفاً جهت بررسی و صدور دستور درمانی/دارویی راهنمایی فرمایید.`;
-      const el = document.getElementById('v37_sbar_txt');
-      if (el) el.value = txt;
-    },
-    openSBARFromPanic() {
-      const panics = [];
-      LAB_DEFS.forEach(d => {
-        const el = document.getElementById('v37_lab_' + d.k);
-        if (el && el.classList.contains('v37-panic')) panics.push(`${d.lbl}=${el.value}`);
-      });
-      switchTab('report');
-      const p = document.getElementById('v37_rp_sbar');
-      if (p) p.classList.add('open');
-      this.buildSBAR(panics.join('، '));
-      p?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    },
-    copySBAR() {
-      const t = document.getElementById('v37_sbar_txt')?.value || '';
-      if (typeof window.copyTextReliable === 'function') window.copyTextReliable(t, '📋 متن SBAR کپی شد');
-    },
-    logSbarToReport() {
-      const dr = document.getElementById('rep_adm_physician')?.value?.trim() || 'پزشک کشیک';
-      insertIntoReportNote(`در ساعت ${nowHHMM()} وضعیت بالینی و نتایج بحرانی بیمار طبق ساختار SBAR به ${dr} اطلاع داده شد و دستورات صادره در دست اجراست.`);
-    },
-
-    // #11: Voice to Chart
-    toggleVoiceDictation() {
-      const btn = document.getElementById('v37_voice_rec_btn');
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return toast('مرورگر این گوشی ضبط مستقیم را ساپورت نمی‌کند؛ متن محاوره‌ای را تایپ یا با کیبورد صوتی گوگل وارد کنید و دکمه تبدیل را بزنید.');
-      if (speechRec) {
-        speechRec.stop(); speechRec = null;
-        btn.textContent = '🎙 شروع ضبط گفتار فارسی';
-        return;
-      }
-      speechRec = new SR();
-      speechRec.lang = 'fa-IR';
-      speechRec.continuous = true;
-      speechRec.interimResults = false;
-      speechRec.onresult = (ev) => {
-        const raw = document.getElementById('v37_voice_raw');
-        let txt = '';
-        for (let i = ev.resultIndex; i < ev.results.length; i++) txt += ev.results[i][0].transcript + ' ';
-        raw.value = (raw.value + ' ' + txt).trim();
-      };
-      speechRec.onend = () => { speechRec = null; btn.textContent = '🎙 شروع ضبط گفتار فارسی'; };
-      speechRec.start();
-      btn.textContent = '⏹ توقف ضبط (در حال شنیدن...)';
-    },
-    async convertVoiceToChart() {
-      const transcript = document.getElementById('v37_voice_raw')?.value.trim();
-      if (!transcript) return toast('ابتدا گفتار خود را ضبط یا تایپ کنید');
-      const stage = document.querySelector('.rep-pane.active')?.id?.replace('repPane_', '') || 'dur';
-      try {
-        const res = await postServer('/webhook/voice-to-chart', {
-          transcript, stage, context: getPatientSummaryContext()
-        }, 'radar', 'در حال تبدیل گفتار به نثر رسمی پرونده...');
-        const d = res.data || {};
-        const procs = Array.isArray(d.procedures) ? d.procedures : [];
-        document.getElementById('v37_voice_out').innerHTML = `
-          <div class="v37-box">${esc(d.formalChartFa || '')}</div>
-          ${procs.length ? `<div class="v37-alert ok">💉 داروهای استخراج‌شده: ${procs.map(p => esc((p.time ? p.time+' ' : '') + p.text)).join(' | ')}</div>` : ''}
-          <button type="button" class="v37-btn ok" style="width:100%;margin-top:6px;" onclick="V37.applyVoiceResult()">✅ درج متن در گزارش + داروها در ستون وسط</button>`;
-        window._v37LastVoice = d;
-      } catch (e) { toast('❌ ' + e.message); }
-    },
-    applyVoiceResult() {
-      const d = window._v37LastVoice;
-      if (!d) return;
-      if (d.formalChartFa) insertIntoReportNote(d.formalChartFa);
-      (d.procedures || []).forEach(p => {
-        if (p.text && typeof window.repAddCustomProcedure === 'function') {
-          window.repAddCustomProcedure(p.text, p.time || nowHHMM(), true, true);
-        }
-      });
-      toast('✅ گزارش رسمی و داروها درج شدند');
-    },
-
-    // #12: Custom Discharge Card & AI Ward Briefing
-    async genDischargeCard() {
-      const data = {
-        patient: getPatientSummaryContext(),
-        meds: document.getElementById('rep_dis_meds')?.value || this.collectCurrentDrugs().join('، '),
-        advice: document.getElementById('rep_dis_advice')?.value || '',
-        followUp: document.getElementById('rep_dis_follow')?.value || ''
-      };
-      try {
-        const res = await postServer('/webhook/clinical-generate', { task: 'discharge_card', data }, 'radar', 'در حال طراحی کارت آموزش ترخیص...');
-        document.getElementById('v37_docs_out').innerHTML = `
-          <div class="v37-box" id="v37_doc_txt">${esc(res.result)}</div>
-          <button type="button" class="v37-btn ok" style="width:100%;margin-top:6px;" onclick="copyTextReliable(document.getElementById('v37_doc_txt').textContent,'📋 کارت ترخیص کپی شد')">📋 کپی جهت ارسال در واتس‌اپ بیمار</button>`;
-      } catch (e) { toast('❌ ' + e.message); }
-    },
-    async genWardBriefing() {
-      const reports = (lsGet('HEART_WARD_FINAL_DB_V2', []) || []).slice(0, 3);
-      const beds = lsGet(LS.BEDS, []);
-      try {
-        const res = await postServer('/webhook/clinical-generate', {
-          task: 'ward_briefing', data: { latestShiftReports: reports, activeBeds: beds }
-        }, 'radar', 'در حال تولید خلاصه مدیریتی شیفت...');
-        document.getElementById('v37_docs_out').innerHTML = `
-          <div class="v37-box" id="v37_doc_txt">${esc(res.result)}</div>
-          <button type="button" class="v37-btn ok" style="width:100%;margin-top:6px;" onclick="copyTextReliable(document.getElementById('v37_doc_txt').textContent,'📋 خلاصه شیفت کپی شد')">📋 کپی گزارش سوپروایزر</button>`;
-      } catch (e) { toast('❌ ' + e.message); }
-    },
-
-    // #13: Heparin Drip Nomogram (Weight-Based Standard Cardiac Protocol)
-    calcHeparinNomogram() {
-      const wt = parseFloat(document.getElementById('v37_hep_wt').value);
-      const ptt = parseFloat(document.getElementById('v37_hep_ptt').value);
-      const cur = parseFloat(document.getElementById('v37_hep_cur').value);
-      const conc = parseFloat(document.getElementById('v37_hep_conc').value) || 100;
-      if (!(wt > 0) || !(ptt > 0) || !(cur >= 0)) return toast('وزن، PTT و سرعت فعلی را وارد کنید');
-
-      let bolus = 0, hold = 0, deltaPerKg = 0, cls = 'ok', note = 'در محدوده درمانی (۵۰–۷۰ ثانیه)';
-      if (ptt < 35)      { bolus = Math.round(80 * wt); deltaPerKg = 4; cls = 'crit'; note = 'بسیار پایین (<35): بولوس + افزایش سرعت'; }
-      else if (ptt < 50) { bolus = Math.round(40 * wt); deltaPerKg = 2; cls = 'warn'; note = 'زیر حد درمانی (35–49): بولوس + افزایش سرعت'; }
-      else if (ptt <= 70){ deltaPerKg = 0; cls = 'ok'; }
-      else if (ptt <= 90){ deltaPerKg = -2; cls = 'warn'; note = 'بالای حد درمانی (71–90): کاهش سرعت'; }
-      else               { hold = 60; deltaPerKg = -3; cls = 'crit'; note = 'پرخطر (>90): توقف پمپ ۶۰ دقیقه + کاهش سرعت'; }
-
-      const newUhr = Math.max(0, Math.round(cur + deltaPerKg * wt));
-      const newMlHr = (newUhr / conc).toFixed(1);
-      const line = `Heparin Drip Adjusted (PTT=${ptt}s): ${bolus ? 'Bolus '+bolus+'U IV + ' : ''}${hold ? 'Hold '+hold+'min + ' : ''}${newUhr} U/hr (${newMlHr} ml/hr)`;
-
-      document.getElementById('v37_hep_out').innerHTML = `
-        <div class="v37-alert ${cls}">
-          <b>${note}</b><br>
-          ${bolus ? `💉 بولوس: <b>${bolus} Unit IV</b><br>` : ''}
-          ${hold ? `⏸ توقف پمپ (Hold): <b>${hold} دقیقه</b><br>` : ''}
-          ⚡ سرعت جدید: <b>${newUhr} U/hr</b> معادل <b>${newMlHr} ml/hr</b>
-        </div>
-        <div class="v37-grid-2" style="margin-top:6px;">
-          <button type="button" class="v37-btn ok" onclick="if(typeof repAddCustomProcedure==='function') repAddCustomProcedure(${JSON.stringify(line)},'${nowHHMM()}',true,false)">💉 ثبت در برگ گزارش</button>
-          <button type="button" class="v37-btn main" onclick="V37.addRadarPreset('ptt')">⏰ آلارم PTT شش ساعت بعد</button>
-        </div>`;
-    },
-
-    // #14: Blood Transfusion Guard
-    startBloodTimer() {
-      const end = Date.now() + 4 * 3600 * 1000;
-      lsSet(LS.BLOOD, {
-        end,
-        type: document.getElementById('v37_bld_type')?.value || 'PC',
-        bag: document.getElementById('v37_bld_bag')?.value || ''
-      });
-      this.addRadarItem('چک علائم حیاتی دقیقه ۱۵ تزریق خون', 15);
-      toast('🩸 تایمر ۴ ساعته تزریق خون و آلارم دقیقه ۱۵ فعال شد');
-    },
-    logBloodToReport() {
-      const t = document.getElementById('v37_bld_type')?.value || 'فرآورده خونی';
-      const bag = document.getElementById('v37_bld_bag')?.value || '-';
-      const txt = `تزریق ${t} (شماره کیسه: ${bag}) پس از تطبیق دوپرستاره، کنترل علائم حیاتی پایه و با ست استاندارد فیلتردار در ساعت ${nowHHMM()} شروع شد. بیمار از نظر علائم واکنش ترانسفیوژن تحت پایش نزدیک است.`;
-      insertIntoReportNote(txt);
-      if (typeof window.repAddCustomProcedure === 'function') window.repAddCustomProcedure(`Blood Transfusion: ${t} (#${bag})`, nowHHMM(), true, true);
-    },
-
-    // #15: Interactive Emergency Algorithms
-    showAlgo(key, btn) {
-      if (btn) {
-        btn.parentElement.querySelectorAll('.v37-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      }
-      const a = ALGORITHMS[key] || ALGORITHMS.edema;
-      const box = document.getElementById('v37_algo_box');
-      if (box) box.innerHTML = `<b style="color:var(--accent);">${esc(a.title)}</b>\n${a.steps.map(esc).join('\n')}`;
-    },
-
-    // #16: NEWS2 + SVG Trend Chart
-    addNews2Point() {
-      const sbp = parseFloat(document.getElementById('v37_n2_sbp').value);
-      const hr = parseFloat(document.getElementById('v37_n2_hr').value);
-      const rr = parseFloat(document.getElementById('v37_n2_rr').value);
-      const spo2 = parseFloat(document.getElementById('v37_n2_spo2').value);
-      const temp = parseFloat(document.getElementById('v37_n2_temp').value);
-      const o2 = parseInt(document.getElementById('v37_n2_o2').value, 10) || 0;
-      if (isNaN(sbp) || isNaN(hr) || isNaN(rr) || isNaN(spo2)) return toast('حداقل SBP، HR، RR و SpO2 را وارد کنید');
-
-      let sc = o2;
-      sc += (rr <= 8 || rr >= 25) ? 3 : (rr >= 21 ? 2 : (rr <= 11 ? 1 : 0));
-      sc += (spo2 <= 91) ? 3 : (spo2 <= 93 ? 2 : (spo2 <= 95 ? 1 : 0));
-      sc += (sbp <= 90 || sbp >= 220) ? 3 : (sbp <= 100 ? 2 : (sbp <= 110 ? 1 : 0));
-      sc += (hr <= 40 || hr >= 131) ? 3 : (hr >= 111 ? 2 : (hr <= 50 || hr >= 91 ? 1 : 0));
-      if (!isNaN(temp)) sc += (temp <= 35.0) ? 3 : (temp >= 39.1 ? 2 : (temp <= 36.0 || temp >= 38.1 ? 1 : 0));
-
-      const arr = lsGet(LS.VITALS, []);
-      arr.push({ t: nowHHMM(), sbp, hr, spo2, rr, news2: sc });
-      lsSet(LS.VITALS, arr.slice(-12));
-
-      const cls = sc >= 7 ? 'crit' : (sc >= 5 ? 'warn' : 'ok');
-      const msg = sc >= 7 ? '🔴 ریسک بالا (≥7): ارزیابی فوری پزشک/تیم احیا و پایش مداوم'
-        : (sc >= 5 ? '🟠 ریسک متوسط (5–6): اطلاع فوری به پزشک و کنترل ساعتی' : '🟢 ریسک پایین (0–4): پایش روتین');
-      document.getElementById('v37_news2_out').innerHTML = `<div class="v37-alert ${cls}"><b>NEWS2 = ${sc}</b> — ${msg}</div>`;
-      this.renderNews2Chart();
-    },
-    renderNews2Chart() {
-      const box = document.getElementById('v37_news2_svg');
-      if (!box) return;
-      const arr = lsGet(LS.VITALS, []);
-      if (arr.length < 2) { box.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;">با ثبت ۲ نوبت علائم حیاتی، نمودار روند رسم می‌شود.</div>'; return; }
-      const W = 320, H = 120, pad = 20;
-      const mapPts = (key, minV, maxV) => arr.map((p, i) => {
-        const x = pad + (i * (W - pad * 2)) / (arr.length - 1);
-        const y = H - pad - ((Math.max(minV, Math.min(maxV, p[key])) - minV) / (maxV - minV)) * (H - pad * 2);
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      }).join(' ');
-      box.innerHTML = `
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:130px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;">
-          <polyline fill="none" stroke="#ef4444" stroke-width="2.2" points="${mapPts('sbp',60,220)}"/>
-          <polyline fill="none" stroke="#38bdf8" stroke-width="2.2" points="${mapPts('hr',40,180)}"/>
-          <polyline fill="none" stroke="#10b981" stroke-width="2.2" points="${mapPts('spo2',75,100)}"/>
-        </svg>
-        <div style="font-size:10.5px;text-align:center;color:var(--muted);margin-top:3px;">🔴 SBP &nbsp;|&nbsp; 🔵 HR &nbsp;|&nbsp; 🟢 SpO2 (آخرین ${arr.length} نوبت)</div>`;
-    },
-    clearNews2() { lsSet(LS.VITALS, []); document.getElementById('v37_news2_out').innerHTML = ''; this.renderNews2Chart(); },
-
-    // #17: Sliding Scale Insulin
-    calcInsulin() {
-      const bs = parseFloat(document.getElementById('v37_bs_val').value);
-      const p = document.getElementById('v37_bs_proto').value;
-      if (!(bs > 0)) return toast('قند خون را وارد کنید');
-      const tables = {
-        low:  [[150,0],[200,1],[250,2],[300,3],[350,4],[9999,6]],
-        std:  [[150,0],[200,2],[250,4],[300,6],[350,8],[9999,10]],
-        high: [[150,0],[200,4],[250,6],[300,9],[350,12],[9999,15]]
-      };
-      let units = 0;
-      for (const [lim, u] of tables[p]) { if (bs <= lim) { units = u; break; } }
-      const cls = bs < 70 || bs >= 350 ? 'crit' : (bs > 180 ? 'warn' : 'ok');
-      const extra = bs < 70 ? '🚨 هیپوگلیسمی! بدون انسولین — تزریق دکستروز ۵۰٪ یا قند خوراکی و چک BS پس از ۱۵ دقیقه.'
-        : (units > 0 ? `توصیه پروتکل: <b>${units} Unit Regular Insulin SC</b>` : 'نیازی به انسولین رگولار نیست.');
-      const procLine = `BS=${bs} mg/dL -> Regular Insulin ${units}U SC`;
-      document.getElementById('v37_bs_out').innerHTML = `
-        <div class="v37-alert ${cls}">BS = <b>${bs} mg/dL</b><br>${extra}</div>
-        ${units > 0 ? `<button type="button" class="v37-btn ok" style="width:100%;margin-top:6px;" onclick="if(typeof repAddCustomProcedure==='function') repAddCustomProcedure(${JSON.stringify(procLine)},'${nowHHMM()}',true,false)">💉 ثبت در ستون داروی برگ گزارش</button>` : ''}`;
-    },
-
-    // #18: Ward Bed Board + Line Age Tracker
-    addBed() {
-      const no = document.getElementById('v37_bed_no').value.trim();
-      const name = document.getElementById('v37_bed_name').value.trim();
-      if (!no) return toast('شماره تخت را وارد کنید');
-      const beds = lsGet(LS.BEDS, []).filter(b => b.no !== no);
-      const ivHrs = parseFloat(document.getElementById('v37_bed_ivhrs').value);
-      beds.push({
-        no, name: name || 'بیمار',
-        st: document.getElementById('v37_bed_st').value,
-        pump: document.getElementById('v37_bed_pump').value.trim(),
-        npo: document.getElementById('v37_bed_npo').checked,
-        ivAt: !isNaN(ivHrs) ? (Date.now() - ivHrs * 3600000) : Date.now()
-      });
-      beds.sort((a, b) => Number(a.no) - Number(b.no));
-      lsSet(LS.BEDS, beds);
-      ['v37_bed_no','v37_bed_name','v37_bed_pump','v37_bed_ivhrs'].forEach(id => { document.getElementById(id).value = ''; });
-      document.getElementById('v37_bed_npo').checked = false;
-      this.renderBeds();
-      toast(`✅ تخت ${no} ذخیره شد`);
-    },
-    delBed(no) {
-      lsSet(LS.BEDS, lsGet(LS.BEDS, []).filter(b => b.no !== no));
-      this.renderBeds();
-    },
-    openBedInReport(no) {
-      const b = lsGet(LS.BEDS, []).find(x => x.no === no);
-      if (!b) return;
-      if (document.getElementById('rep_adm_name')) document.getElementById('rep_adm_name').value = b.name;
-      if (document.getElementById('rep_adm_room')) document.getElementById('rep_adm_room').value = b.no;
-      if (typeof window.repLiveHeaderSync === 'function') window.repLiveHeaderSync();
-      switchTab('report');
-    },
-    renderBeds() {
-      const grid = document.getElementById('v37_beds_grid');
-      if (!grid) return;
-      const beds = lsGet(LS.BEDS, []);
-      if (!beds.length) { grid.innerHTML = '<div style="grid-column:1/-1;font-size:11.5px;color:var(--muted);text-align:center;">هنوز تختی ثبت نشده است.</div>'; return; }
-      grid.innerHTML = beds.map(b => {
-        const hrs = Math.floor((Date.now() - (b.ivAt || Date.now())) / 3600000);
-        const ivBadge = hrs >= 72 ? `<span class="v37-tag red">⏳ آنژیوکت ${hrs}س (تعویض!)</span>` : `<span class="v37-tag ok">💉 لاین ${hrs}س</span>`;
-        return `<div class="v37-bed-card ${esc(b.st)}">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <b>تخت ${esc(b.no)} — ${esc(b.name)}</b>
-            <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:15px;" onclick="V37.delBed('${esc(b.no)}')">×</button>
-          </div>
-          <div>${b.npo ? '<span class="v37-tag warn">🚫 NPO</span>' : ''}${b.pump ? `<span class="v37-tag">💧 ${esc(b.pump)}</span>` : ''}${ivBadge}</div>
-          <button type="button" class="v37-btn" style="width:100%;margin-top:6px;padding:5px;font-size:11px;" onclick="V37.openBedInReport('${esc(b.no)}')">📋 باز کردن در برگ گزارش</button>
-        </div>`;
-      }).join('');
-    },
-
-    // #19a: Shift Serial Timer Radar
-    addRadarItem(label, mins) {
-      const arr = lsGet(LS.RADAR, []);
-      arr.push({ id: Date.now() + Math.random(), label, due: Date.now() + mins * 60000, alerted: false });
-      lsSet(LS.RADAR, arr);
-      this.renderRadar();
-    },
-    addRadarPreset(type) {
-      if (type === 'post_angio') {
-        [15, 30, 45, 60, 90, 120].forEach((m, i) => this.addRadarItem(`پست‌آنژیو نوبت ${i+1} (نبض دیستال/هماتوم)`, m));
-        toast('🩺 ۶ تایمر سریال پست‌آنژیو (۱۵×۴ + ۳۰×۲) تنظیم شد');
-      } else if (type === 'trop') {
-        this.addRadarItem('کنترل سریال تروپونین + ECG', 180);
-        toast('🧪 تایمر ۳ ساعته تروپونین تنظیم شد');
-      } else if (type === 'ptt') {
-        this.addRadarItem('کنترل PTT پس از تنظیم هپارین', 360);
-        toast('🩸 تایمر ۶ ساعته PTT تنظیم شد');
-      }
-    },
-    addCustomRadar() {
-      const lbl = document.getElementById('v37_rad_lbl').value.trim();
-      const min = parseFloat(document.getElementById('v37_rad_min').value);
-      if (!lbl || !(min > 0)) return toast('عنوان و زمان (دقیقه) را وارد کنید');
-      this.addRadarItem(lbl, min);
-      document.getElementById('v37_rad_lbl').value = '';
-    },
-    delRadar(id) {
-      lsSet(LS.RADAR, lsGet(LS.RADAR, []).filter(x => x.id !== id));
-      this.renderRadar();
-    },
-    renderRadar() {
-      const box = document.getElementById('v37_radar_list');
-      if (!box) return;
-      const arr = lsGet(LS.RADAR, []).sort((a, b) => a.due - b.due);
-      if (!arr.length) { box.innerHTML = '<div style="font-size:11.5px;color:var(--muted);text-align:center;">تایمر فعالی ثبت نشده است.</div>'; return; }
-      box.innerHTML = arr.map(it => {
-        const remSec = Math.floor((it.due - Date.now()) / 1000);
-        const due = remSec <= 0;
-        const mm = Math.max(0, Math.floor(remSec / 60)), ss = Math.max(0, remSec % 60);
-        return `<div class="v37-chk-item" style="justify-content:space-between;${due ? 'border-color:#ef4444;background:rgba(239,68,68,0.16);' : ''}">
-          <span>${due ? '🔔 <b>زمان رسید!</b> ' : '⏱ '}${esc(it.label)}</span>
-          <span style="display:flex;align-items:center;gap:6px;">
-            <b style="font-family:monospace;">${due ? '00:00' : `${('0'+mm).slice(-2)}:${('0'+ss).slice(-2)}`}</b>
-            <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;" onclick="V37.delRadar(${it.id})">✕</button>
-          </span>
-        </div>`;
-      }).join('');
-    },
-
-    // #19b/c: Export Checklists
-    exportChecklist(containerId, title) {
-      const box = document.getElementById(containerId);
-      if (!box) return;
-      const done = [], miss = [];
-      box.querySelectorAll('label').forEach(l => {
-        const inp = l.querySelector('input');
-        const txt = l.textContent.trim();
-        if (inp?.checked) done.push(txt); else miss.push(txt);
-      });
-      const summary = `${title} (${nowHHMM()}): ${done.length} مورد تایید شد.` + (miss.length ? ` موارد باقی‌مانده: ${miss.join('، ')}.` : ' تمام موارد کامل و تایید است.');
-      if (containerId === 'v37_cart_chks') {
-        const ch = document.getElementById('challenges');
-        if (ch) ch.value = ch.value.trim() ? (ch.value.trim() + '\n' + summary) : summary;
-        toast('✅ در کادر چالش‌ها/توضیحات شیفت ثبت شد');
-      } else {
-        insertIntoReportNote(summary);
-      }
-    },
-
-    // #20: Privacy PIN Lock & Night Dimmer
-    setDimmer(val) {
-      const n = Math.max(0, Math.min(75, Number(val) || 0));
-      localStorage.setItem(LS.DIM, String(n));
-      const ov = document.getElementById('v37DimOverlay');
-      if (ov) ov.style.background = `rgba(10, 5, 0, ${(n / 100).toFixed(2)})`;
-      const lbl = document.getElementById('v37_dim_val');
-      if (lbl) lbl.textContent = n + '%';
-    },
-    savePin() {
-      const p = (document.getElementById('v37_pin_new')?.value || '').trim();
-      if (!/^\d{4}$/.test(p)) return toast('پین باید دقیقاً ۴ رقم عددی باشد');
-      localStorage.setItem(LS.PIN, p);
-      document.getElementById('v37_pin_new').value = '';
-      const b = document.getElementById('v37HdrLockBtn'); if (b) b.style.display = 'inline-flex';
-      toast('🔒 قفل پین ۴ رقمی فعال شد');
-    },
-    removePin() {
-      localStorage.removeItem(LS.PIN);
-      const b = document.getElementById('v37HdrLockBtn'); if (b) b.style.display = 'none';
-      toast('🔓 قفل پین حذف شد');
-    },
-    lockNow() {
-      if (!localStorage.getItem(LS.PIN)) return toast('ابتدا در تب تنظیمات یک پین ۴ رقمی ذخیره کنید');
-      pinBuf = ''; this.renderPinDots();
-      document.getElementById('v37PinOverlay')?.classList.add('open');
-    },
-    renderPinDots() {
-      document.querySelectorAll('#v37PinDots span').forEach((s, i) => s.classList.toggle('on', i < pinBuf.length));
-    },
-    pinKey(k) {
-      const saved = localStorage.getItem(LS.PIN) || '';
-      if (k === 'C') pinBuf = '';
-      else if (k === 'B') pinBuf = pinBuf.slice(0, -1);
-      else if (pinBuf.length < 4) pinBuf += k;
-      this.renderPinDots();
-      if (pinBuf.length === 4) {
-        if (pinBuf === saved) {
-          document.getElementById('v37PinOverlay')?.classList.remove('open');
-          pinBuf = '';
-        } else {
-          document.getElementById('v37PinMsg').textContent = '❌ پین اشتباه است؛ دوباره تلاش کنید';
-          pinBuf = ''; this.renderPinDots();
-        }
-      }
-    }
-  };
-
-  // Global 1-Second Ticker for Blood Timer & Shift Radar
-  setInterval(() => {
-    const bld = lsGet(LS.BLOOD, null);
-    const clk = document.getElementById('v37_bld_clk');
-    if (bld && bld.end && clk) {
-      const rem = Math.max(0, Math.floor((bld.end - Date.now()) / 1000));
-      const h = Math.floor(rem / 3600), m = Math.floor((rem % 3600) / 60), s = rem % 60;
-      clk.textContent = `${('0'+h).slice(-2)}:${('0'+m).slice(-2)}:${('0'+s).slice(-2)}`;
-      clk.style.color = rem < 1800 ? '#ef4444' : '#34d399';
-    }
-    const rad = lsGet(LS.RADAR, []);
-    if (rad.length) {
-      let changed = false;
-      rad.forEach(it => {
-        if (!it.alerted && Date.now() >= it.due) {
-          it.alerted = true; changed = true;
-          playBeep(); toast('⏰ یادآور شیفت: ' + it.label);
-        }
-      });
-      if (changed) lsSet(LS.RADAR, rad);
-      if (document.getElementById('v37_wp_radar')?.classList.contains('open')) V37.renderRadar();
-    }
-  }, 1000);
-
-  function bootV37() {
-    initBlurEvents();
-    mountInterpretV37();
-    mountReportV37();
-    mountCalcV37();
-    mountWardV37();
-    mountSecurityV37();
-    if (localStorage.getItem(LS.PIN)) V37.lockNow();
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(bootV37, 180));
-  else setTimeout(bootV37, 180);
 })();
 </script>
 </body>
