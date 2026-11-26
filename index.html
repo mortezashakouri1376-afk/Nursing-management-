@@ -68,7 +68,7 @@ html,body{max-width:100%;overflow-x:hidden;}
 <style id="HW_CUSTOM_FONT_STYLE"></style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>سیستم جامع پرستاری قلب (نسخه ۲۹ — مفسر هوشمند Gemini 4 / 3.8 + جستجوی زنده Tavily و Exa AI)</title>
+    <title>سیستم جامع پرستاری قلب (نسخه ۳۱ — مفسر هوشمند Gemini 4 / 3.8 + جستجوی زنده Tavily و Exa AI)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -2344,6 +2344,148 @@ html[data-v12-theme="pearl-light"] .int-severity-pill.crit { color: #b91c1c; }
   background: var(--input-bg); color: var(--text); font-family: inherit;
   font-size: 11px; font-weight: bold; cursor: pointer;
 }
+
+/* ==== V31 Modality-Aware Fullscreen Animated Scan Overlay ==== */
+#intScanOverlay {
+  position: fixed; inset: 0; z-index: 200100;
+  background: radial-gradient(circle at 50% 42%, rgba(14, 28, 48, 0.96), rgba(5, 8, 16, 0.98));
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; color: #f8fafc;
+}
+#intScanOverlay.open { display: flex; animation: fadeIn 0.2s ease-out; }
+.int-scan-stage {
+  width: 170px; height: 120px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px; position: relative;
+}
+.int-scan-title {
+  font-size: 16px; font-weight: bold; color: #38bdf8;
+  margin: 0 0 8px; line-height: 1.6; max-width: 340px;
+}
+.int-scan-sub {
+  font-size: 12px; color: #94a3b8; margin: 0 0 22px; line-height: 1.6; max-width: 320px;
+}
+.int-scan-cancel {
+  padding: 10px 22px; border-radius: 10px;
+  background: rgba(127, 29, 29, 0.35); border: 1px solid rgba(248, 113, 113, 0.55);
+  color: #fca5a5; font-family: inherit; font-size: 13px; font-weight: bold;
+  cursor: pointer; transition: 0.15s;
+}
+.int-scan-cancel:active { transform: scale(0.96); background: rgba(220, 38, 38, 0.5); }
+
+/* 1. ECG Monitor Animated Waveform */
+.scan-ecg-wrap {
+  width: 170px; height: 88px; border-radius: 14px;
+  background: rgba(6, 20, 28, 0.85); border: 1.5px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 26px rgba(16, 185, 129, 0.22);
+  overflow: hidden; position: relative; display: flex; align-items: center;
+}
+.scan-ecg-svg { width: 100%; height: 100%; }
+.scan-ecg-path {
+  fill: none; stroke: #10b981; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 280; stroke-dashoffset: 280;
+  filter: drop-shadow(0 0 6px #10b981);
+  animation: ecgDraw 1.5s linear infinite;
+}
+@keyframes ecgDraw {
+  0% { stroke-dashoffset: 280; opacity: 0.4; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.3; }
+}
+
+/* 2. CT / General Radar Sweep (matching screenshot) */
+.scan-radar {
+  width: 106px; height: 106px; border-radius: 50%;
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(4, 10, 22, 0.9) 70%);
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 26px rgba(56, 189, 248, 0.25);
+}
+.scan-radar::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(56, 189, 248, 0.85) 0deg, rgba(56, 189, 248, 0.12) 65deg, transparent 95deg);
+  animation: radarSpin 1.35s linear infinite;
+}
+@keyframes radarSpin { to { transform: rotate(360deg); } }
+
+/* 3. Lab Test Tube / Analysis */
+.scan-lab-tube {
+  width: 44px; height: 96px; border-radius: 8px 8px 22px 22px;
+  border: 2.5px solid #38bdf8; position: relative; overflow: hidden;
+  background: rgba(15, 23, 42, 0.8); box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);
+}
+.scan-lab-liq {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 58%;
+  background: linear-gradient(180deg, #a855f7, #6366f1);
+  animation: labWave 1.6s ease-in-out infinite alternate;
+}
+.scan-lab-beam {
+  position: absolute; left: 0; right: 0; height: 3px; background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8; animation: laserY 1.3s ease-in-out infinite alternate;
+}
+@keyframes labWave { 0% { height: 42%; } 100% { height: 68%; } }
+@keyframes laserY { 0% { top: 6%; } 100% { top: 88%; } }
+
+/* 4. CXR / Document Laser Scanner */
+.scan-frame-box {
+  width: 92px; height: 108px; border-radius: 12px;
+  border: 2px solid rgba(56, 189, 248, 0.65); background: rgba(12, 24, 42, 0.85);
+  position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  font-size: 38px; box-shadow: 0 0 24px rgba(56, 189, 248, 0.22);
+}
+.scan-frame-laser {
+  position: absolute; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+  box-shadow: 0 0 12px #38bdf8; animation: laserY 1.4s ease-in-out infinite alternate;
+}
+
+/* 5. MRI Concentric Pulse */
+.scan-mri {
+  width: 104px; height: 104px; position: relative; display: flex; align-items: center; justify-content: center;
+}
+.scan-mri span {
+  position: absolute; border-radius: 50%; border: 2px solid #a855f7;
+  animation: mriPulse 1.6s ease-out infinite;
+}
+.scan-mri span:nth-child(2) { animation-delay: 0.55s; }
+.scan-mri span:nth-child(3) { animation-delay: 1.1s; }
+@keyframes mriPulse {
+  0% { width: 22px; height: 22px; opacity: 1; }
+  100% { width: 104px; height: 104px; opacity: 0; }
+}
+
+/* 6. Angio / Echo Beating Heart */
+.scan-heart-wrap {
+  width: 104px; height: 104px; border-radius: 50%;
+  border: 2px solid rgba(244, 63, 94, 0.5); background: rgba(136, 19, 55, 0.2);
+  display: flex; align-items: center; justify-content: center; font-size: 44px;
+  box-shadow: 0 0 28px rgba(244, 63, 94, 0.28);
+  animation: heartBeatScan 0.95s ease-in-out infinite;
+}
+@keyframes heartBeatScan {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.16); }
+  45% { transform: scale(0.98); }
+  65% { transform: scale(1.12); }
+}
+
+/* 7. Nuclear Isotope Orbit */
+.scan-nuc {
+  width: 100px; height: 100px; position: relative; display: flex; align-items: center; justify-content: center;
+}
+.scan-nuc-ring {
+  position: absolute; width: 92px; height: 36px; border-radius: 50%;
+  border: 2px solid #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  animation: radarSpin 1.8s linear infinite;
+}
+.scan-nuc-ring:nth-child(2) { transform: rotate(60deg); animation-duration: 2.2s; }
+.scan-nuc-ring:nth-child(3) { transform: rotate(120deg); animation-duration: 2.6s; }
+.scan-nuc-core {
+  width: 16px; height: 16px; border-radius: 50%; background: #f59e0b;
+  box-shadow: 0 0 16px #f59e0b;
+}
+
 </style>
 
 </head>
@@ -2368,7 +2510,7 @@ html[data-v12-theme="pearl-light"] .int-severity-pill.crit { color: #b91c1c; }
 
     <header>
         <button id="headerErrorBtn" type="button" onclick="openErrorReporter()" title="ثبت سریع خطای بیمارستانی">🚨 ثبت خطا <span id="headerErrBadge" class="hdr-err-badge" style="display:none;">0</span></button>
-        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v30</small></h1>
+        <h1>سیستم جامع پرستاری قلب <small style="font-size:11px;opacity:.75;">v31</small></h1>
         <button id="themeToggleBtn" type="button" onclick="v12ToggleThemeMenu()" title="انتخاب تم ظاهری">🎨 <span class="theme-btn-lbl">تم</span></button>
     </header>
 
@@ -12916,7 +13058,16 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     var xlsHtml = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body dir="rtl">'
       + '<table border="1"><thead><tr>'
       + '<th>ردیف</th><th>تاریخ/ساعت</th><th>بخش</th><th>شیفت</th><th>نوع/دسته خطا</th><th>شدت</th><th>شرح خطا</th>'
-      + '</tr></thead><tbody>' + rows + '</tbody></table></body></html>';
+      + '</tr></thead><tbody>' + rows + '</tbody></table>
+    <!-- لودینگ تمام‌صفحه متحرک متناسب با نوع مدرک بالینی (v31) -->
+    <div id="intScanOverlay" role="dialog" aria-modal="true" aria-label="در حال اسکن و تحلیل">
+        <div id="intScanVisual" class="int-scan-stage"></div>
+        <div id="intScanTitle" class="int-scan-title">در حال اسکن و تحلیل هوشمند...</div>
+        <div id="intScanSub" class="int-scan-sub">اتصال آنلاین به سرور اختصاصی + تحلیل تصویر و سرچ زنده</div>
+        <button type="button" class="int-scan-cancel" onclick="intCancelActiveScan()">✕ لغو عملیات اسکن</button>
+    </div>
+
+</body></html>';
     return new Blob(["\ufeff" + xlsHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
   }
 
@@ -14594,20 +14745,99 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
   };
 
   // ============================================================================
-  // ENGINE 2: GEMINI VISION (NEW FREE MODELS) + LIVE WEB SEARCH (TAVILY / EXA / GOOGLE) (v29)
+  // ENGINE 2: FAST PARALLEL GEMINI + LIVE SEARCH + MODALITY LOADING OVERLAY (v31)
   // ============================================================================
+  let activeScanController = null;
+  let scanPhaseTimer = null;
+
+  function getModalityScanVisualHTML(mod) {
+    if (mod === 'ecg') {
+      return '<div class="scan-ecg-wrap"><svg class="scan-ecg-svg" viewBox="0 0 220 90">'
+        + '<path class="scan-ecg-path" d="M0,50 L36,50 L46,42 L54,50 L68,50 L76,14 L84,78 L92,38 L102,50 L122,50 L132,36 L144,50 L175,50 L185,18 L193,74 L202,42 L212,50 L220,50"/>'
+        + '</svg></div>';
+    }
+    if (mod === 'lab') {
+      return '<div class="scan-lab-tube"><div class="scan-lab-liq"></div><div class="scan-lab-beam"></div></div>';
+    }
+    if (mod === 'cxr') {
+      return '<div class="scan-frame-box">🩻<div class="scan-frame-laser"></div></div>';
+    }
+    if (mod === 'mri') {
+      return '<div class="scan-mri"><span></span><span></span><span></span><div style="font-size:28px;z-index:2;">🧲</div></div>';
+    }
+    if (mod === 'angio_echo') {
+      return '<div class="scan-heart-wrap">🫀</div>';
+    }
+    if (mod === 'nuclear') {
+      return '<div class="scan-nuc"><div class="scan-nuc-ring"></div><div class="scan-nuc-ring"></div><div class="scan-nuc-ring"></div><div class="scan-nuc-core"></div></div>';
+    }
+    if (mod === 'report') {
+      return '<div class="scan-frame-box">📄<div class="scan-frame-laser"></div></div>';
+    }
+    // ct and default: radar sweep
+    return '<div class="scan-radar"></div>';
+  }
+
+  function openScanOverlay(mod, titleText, subText) {
+    const ov = document.getElementById('intScanOverlay');
+    const vis = document.getElementById('intScanVisual');
+    const ttl = document.getElementById('intScanTitle');
+    const sub = document.getElementById('intScanSub');
+    if (vis) vis.innerHTML = getModalityScanVisualHTML(mod);
+    if (ttl) ttl.textContent = titleText || 'در حال اسکن و تحلیل هوشمند...';
+    if (sub) sub.textContent = subText || 'اتصال آنلاین به سرور اختصاصی + تحلیل تصویر و سرچ زنده';
+    if (ov) ov.classList.add('open');
+  }
+
+  function updateScanOverlayText(titleText, subText) {
+    const ttl = document.getElementById('intScanTitle');
+    const sub = document.getElementById('intScanSub');
+    if (ttl && titleText) ttl.textContent = titleText;
+    if (sub && subText) sub.textContent = subText;
+  }
+
+  function closeScanOverlay() {
+    if (scanPhaseTimer) { clearTimeout(scanPhaseTimer); scanPhaseTimer = null; }
+    document.getElementById('intScanOverlay')?.classList.remove('open');
+  }
+
+  window.intCancelActiveScan = function() {
+    if (activeScanController) {
+      try { activeScanController.abort(); } catch (e) {}
+      activeScanController = null;
+    }
+    closeScanOverlay();
+    toast('عملیات اسکن لغو شد');
+  };
+
+  async function fetchFast(url, options, timeoutMs, externalSignal) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    const onExtAbort = () => ctrl.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) { clearTimeout(timer); throw new DOMException('Aborted', 'AbortError'); }
+      externalSignal.addEventListener('abort', onExtAbort, { once: true });
+    }
+    try {
+      return await fetch(url, Object.assign({}, options, { signal: ctrl.signal }));
+    } finally {
+      clearTimeout(timer);
+      if (externalSignal) externalSignal.removeEventListener('abort', onExtAbort);
+    }
+  }
+
   function buildClinicalSystemPrompt(modInfo, ctxText) {
     return 'شما یک متخصص تفسیر پاراکلینیک، رادیولوژی و پرستاری مراقبت‌های ویژه قلب (CCU) در بیمارستان‌های ایران هستید.\n'
       + 'نوع مدرک: ' + modInfo.label + '\n'
       + (ctxText ? ('زمینه بالینی مددجو: ' + ctxText + '\n') : '')
-      + 'لطفاً به زبان فارسی روان، دقیق و ساختاریافته پاسخ دهید و دقیقاً شامل این ۴ بخش باشد:\n'
-      + '۱) خلاصه یافته‌های اصلی و مقادیر غیرطبیعی (با ترجمه اصطلاحات انگلیسی)\n'
-      + '۲) مقادیر یا یافته‌های بحرانی / Red Flags (در صورت وجود با علامت 🚨)\n'
-      + '۳) تفسیر بالینی و تشخیص‌های افتراقی محتمل\n'
-      + '۴) اقدامات فوری پرستاری بخش قلب و یک جمله کوتاه آماده برای ثبت در برگ گزارش پرستاری.';
+      + 'پاسخ فارسی، دقیق، خلاصه و ساختاریافته در ۴ بخش بنویس:\n'
+      + '۱) یافته‌های اصلی و مقادیر غیرطبیعی\n'
+      + '۲) هشدارهای بحرانی / Red Flags (با 🚨)\n'
+      + '۳) تفسیر بالینی و تشخیص‌های افتراقی\n'
+      + '۴) اقدامات فوری پرستاری + یک جمله آماده برای برگ گزارش پرستاری.';
   }
 
-  async function callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch) {
+  async function callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch, signal) {
     if (isRenderDeployHookUrl(cfg.webhookUrl)) {
       throw new Error('لینک واردشده Deploy Hook است نه آدرس وب‌سرویس (.onrender.com)');
     }
@@ -14619,7 +14849,7 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       headers['Authorization'] = 'Bearer ' + cfg.webhookSecret;
       headers['X-API-Key'] = cfg.webhookSecret;
     }
-    const resp = await fetch(targetWh, {
+    const resp = await fetchFast(targetWh, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -14635,103 +14865,89 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         clientExaKey: cfg.exaKey || '',
         images: uploadedImages.map(im => ({ name: im.name, mimeType: im.mimeType, base64: im.base64 }))
       })
-    });
+    }, 24000, signal);
+
     if (!resp.ok) {
       const eTxt = await resp.text().catch(() => '');
       let errMsg = eTxt.slice(0, 180);
-      try {
-        const jErr = JSON.parse(eTxt);
-        if (jErr && jErr.error) errMsg = jErr.error;
-      } catch (e) {}
+      try { const jErr = JSON.parse(eTxt); if (jErr?.error) errMsg = jErr.error; } catch (e) {}
       throw new Error('Render HTTP ' + resp.status + (errMsg ? ': ' + errMsg : ''));
     }
     const ct = resp.headers.get('content-type') || '';
     if (ct.includes('text/html')) {
-      throw new Error('آدرس Render به صفحه HTML اشاره می‌کند (لینک سرویس server.js با .onrender.com را وارد کنید)');
+      throw new Error('آدرس Render به صفحه HTML اشاره می‌کند (لینک سرویس .onrender.com را بررسی کنید)');
     }
     if (ct.includes('application/json')) {
       const data = await resp.json();
       const obj = Array.isArray(data) ? data[0] : data;
-      if (obj && obj.error && !obj.result) {
-        throw new Error('Render: ' + obj.error);
-      }
-      const aiText = obj?.result || obj?.analysis || obj?.output || obj?.text || obj?.reply || obj?.message
-        || obj?.candidates?.[0]?.content?.parts?.map(p => p.text).join('\n')
-        || '';
+      if (obj?.error && !obj.result) throw new Error('Render: ' + obj.error);
+      const aiText = obj?.result || obj?.analysis || obj?.output || obj?.text || '';
       if (!aiText) throw new Error('پاسخ معتبری از سرور Render دریافت نشد');
-      const sources = Array.isArray(obj?.sources) ? obj.sources : [];
       serverHealth.online = true;
       syncCfgUI();
-      return { aiText: String(aiText).trim(), sources, via: 'Render' + (obj?.via ? ' • ' + obj.via : '') };
+      return { aiText: String(aiText).trim(), sources: Array.isArray(obj?.sources) ? obj.sources : [], via: 'Render' + (obj?.via ? ' • ' + obj.via : '') };
     }
-    const rawPlain = String(await resp.text()).trim();
-    if (!rawPlain || /^<!doctype|^<html/i.test(rawPlain)) {
-      throw new Error('پاسخ غیرمعتبر (HTML) از آدرس Render دریافت شد');
-    }
-    serverHealth.online = true;
-    syncCfgUI();
-    return { aiText: rawPlain, sources: [], via: 'Render' };
+    throw new Error('پاسخ غیرمعتبر از سرور Render');
   }
 
-  async function callDirectWebSearch(queryText) {
+  async function callDirectWebSearch(queryText, signal) {
+    const tasks = [];
     if (cfg.tavilyKey) {
-      try {
-        const r = await fetch('https://api.tavily.com/search', {
+      tasks.push((async () => {
+        const r = await fetchFast('https://api.tavily.com/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             api_key: cfg.tavilyKey.trim(),
             query: queryText + ' clinical guideline cardiology radiology',
-            search_depth: 'basic',
-            max_results: 4,
-            include_answer: true
+            search_depth: 'basic', max_results: 4, include_answer: true
           })
-        });
-        if (r.ok) {
-          const d = await r.json();
-          const srcs = (Array.isArray(d.results) ? d.results : []).map(it => ({
-            title: it.title || '', link: it.url || '', snippet: it.content || ''
-          }));
-          if (srcs.length) return { sources: srcs, answer: d.answer || '', provider: 'Tavily' };
-        }
-      } catch (e) {}
+        }, 4500, signal);
+        if (!r.ok) throw new Error('Tavily ' + r.status);
+        const d = await r.json();
+        const srcs = (Array.isArray(d.results) ? d.results : []).map(it => ({
+          title: it.title || '', link: it.url || '', snippet: (it.content || '').slice(0, 240)
+        }));
+        if (!srcs.length) throw new Error('empty');
+        return { sources: srcs, answer: d.answer || '', provider: 'Tavily' };
+      })());
     }
     if (cfg.exaKey) {
-      try {
-        const r = await fetch('https://api.exa.ai/search', {
+      tasks.push((async () => {
+        const r = await fetchFast('https://api.exa.ai/search', {
           method: 'POST',
           headers: { 'x-api-key': cfg.exaKey.trim(), 'Content-Type': 'application/json' },
           body: JSON.stringify({
             query: queryText + ' clinical guideline cardiology radiology',
-            numResults: 4,
-            type: 'auto',
-            contents: { highlights: { numSentences: 3, highlightsPerUrl: 1 } }
+            numResults: 4, type: 'auto',
+            contents: { highlights: { numSentences: 2, highlightsPerUrl: 1 } }
           })
-        });
-        if (r.ok) {
-          const d = await r.json();
-          const srcs = (Array.isArray(d.results) ? d.results : []).map(it => ({
-            title: it.title || it.url || '',
-            link: it.url || '',
-            snippet: (Array.isArray(it.highlights) && it.highlights[0]) ? it.highlights[0] : ''
-          }));
-          if (srcs.length) return { sources: srcs, answer: '', provider: 'Exa AI' };
-        }
-      } catch (e) {}
+        }, 4500, signal);
+        if (!r.ok) throw new Error('Exa ' + r.status);
+        const d = await r.json();
+        const srcs = (Array.isArray(d.results) ? d.results : []).map(it => ({
+          title: it.title || it.url || '', link: it.url || '',
+          snippet: (Array.isArray(it.highlights) && it.highlights[0]) ? it.highlights[0] : ''
+        }));
+        if (!srcs.length) throw new Error('empty');
+        return { sources: srcs, answer: '', provider: 'Exa AI' };
+      })());
     }
-    return { sources: [], answer: '', provider: '' };
+    if (!tasks.length) return { sources: [], answer: '', provider: '' };
+    try { return await Promise.any(tasks); }
+    catch (e) { return { sources: [], answer: '', provider: '' }; }
   }
 
-  async function callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch) {
+  async function callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch, signal) {
     const keys = getAllManualGeminiKeys();
     if (!keys.length) throw new Error('هیچ کلید دستی Gemini وارد نشده است');
 
     let sources = [];
     let searchAns = '';
     if (useLiveSearch) {
-      const qSeed = (rawText || ctxText || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+      const qSeed = (rawText || ctxText || '').replace(/\s+/g, ' ').trim().slice(0, 140);
       if (qSeed) {
-        const sr = await callDirectWebSearch(qSeed);
+        const sr = await callDirectWebSearch(qSeed, signal);
         sources = sr.sources;
         searchAns = sr.answer;
       }
@@ -14750,74 +14966,44 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       parts.push({ inline_data: { mime_type: im.mimeType, data: im.base64 } });
     });
 
-    const wantGoogleGrounding = Boolean(useLiveSearch && !sources.length);
     const mList = [cfg.geminiModel || 'gemini-4-hydrogen', ...GEMINI_FREE_MODELS]
-      .filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+      .filter((v, idx, arr) => v && arr.indexOf(v) === idx)
+      .slice(0, 4);
 
-    async function sendDirectGem(epUrl, withSearch) {
-      const pl = { contents: [{ role: 'user', parts }] };
-      if (withSearch) pl.tools = [{ google_search: {} }];
-      const resp = await fetch(epUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pl)
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const cand = data?.candidates?.[0] || {};
-        const aiText = cand?.content?.parts?.map(x => x.text).filter(Boolean).join('\n') || '';
-        const chunks = cand?.groundingMetadata?.groundingChunks || [];
-        chunks.filter(c => c?.web?.uri).slice(0, 5).forEach(c => {
-          sources.push({ title: c.web.title || c.web.uri, link: c.web.uri, snippet: 'Google Search زنده' });
-        });
-        if (aiText) return { ok: true, aiText: aiText.trim() };
-        return { ok: false, status: 502, body: 'پاسخ متنی خالی' };
-      }
-      const eBody = await resp.text().catch(() => '');
-      return { ok: false, status: resp.status, body: eBody.slice(0, 140) };
-    }
+    const payload = {
+      contents: [{ role: 'user', parts }],
+      generationConfig: { temperature: 0.2, maxOutputTokens: 1600 }
+    };
 
     const errs = [];
     for (let i = 0; i < keys.length; i++) {
       const cleanKey = keys[i].replace(/^["']+|["']+$/g, '').trim();
       const isVertex = cleanKey.startsWith('AQ.');
-      let stopKey = false;
       for (let mIdx = 0; mIdx < mList.length; mIdx++) {
         const mName = mList[mIdx];
-        const epList = isVertex
-          ? [
-              { lbl: 'Vertex', url: 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) },
-              { lbl: 'AIStudio', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) }
-            ]
-          : [
-              { lbl: 'AIStudio', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey) }
-            ];
-
-        for (let eIdx = 0; eIdx < epList.length; eIdx++) {
-          const ep = epList[eIdx];
-          try {
-            let resObj = await sendDirectGem(ep.url, wantGoogleGrounding);
-            if (!resObj.ok && resObj.status === 400 && wantGoogleGrounding) {
-              resObj = await sendDirectGem(ep.url, false);
-            }
-            if (resObj.ok) {
-              return { aiText: resObj.aiText, sources, via: 'Gemini ' + mName + ' • ' + ep.lbl + ' (کلید #' + (i + 1) + ')' };
-            }
-            errs.push('Gemini/' + ep.lbl + ' (' + mName + ') HTTP ' + resObj.status + ': ' + resObj.body);
-            if ([401, 403, 429].includes(resObj.status)) {
-              if (isVertex && ep.lbl === 'Vertex') continue;
-              stopKey = true;
-              break;
-            }
-            if (resObj.status === 404) break;
-          } catch (e) {
-            errs.push('Gemini/' + ep.lbl + ': ' + (e.message || 'خطای شبکه/CORS'));
-            if (isVertex && ep.lbl === 'Vertex') continue;
-            stopKey = true;
-            break;
+        const url = isVertex
+          ? 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey)
+          : 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(mName) + ':generateContent?key=' + encodeURIComponent(cleanKey);
+        try {
+          const resp = await fetchFast(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }, 15000, signal);
+          if (resp.ok) {
+            const data = await resp.json();
+            const aiText = data?.candidates?.[0]?.content?.parts?.map(x => x.text).filter(Boolean).join('\n') || '';
+            if (aiText) return { aiText: aiText.trim(), sources, via: 'Gemini ' + mName + ' (کلید #' + (i + 1) + ')' };
           }
+          const eBody = await resp.text().catch(() => '');
+          errs.push('Gemini (' + mName + ') HTTP ' + resp.status + ': ' + eBody.slice(0, 90));
+          if (resp.status === 404) continue;
+          break;
+        } catch (e) {
+          if (e.name === 'AbortError' && signal && signal.aborted) throw e;
+          errs.push('Gemini (' + mName + '): ' + (e.name === 'AbortError' ? 'Timeout' : e.message));
+          break;
         }
-        if (stopKey) break;
       }
     }
     throw new Error(errs.length ? errs.join(' | ') : 'خطا در اتصال مستقیم Gemini');
@@ -14831,9 +15017,10 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       toast('ابتدا اصطلاح پزشکی، متن ریپورت یا نام دارو/آزمایش را در کادر بالا وارد کنید');
       return;
     }
+    activeScanController = new AbortController();
+    openScanOverlay('ct', 'جستجوی زنده منابع پزشکی در Tavily و Exa AI...', 'در حال دریافت گایدلاین‌ها و منابع معتبر بالینی');
     const btn = document.getElementById('intRunSerperBtn');
-    const oldTxt = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ سرچ زنده...'; }
+    if (btn) btn.disabled = true;
     try {
       let sources = [];
       let answer = '';
@@ -14846,40 +15033,45 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
             headers['Authorization'] = 'Bearer ' + cfg.webhookSecret;
             headers['X-API-Key'] = cfg.webhookSecret;
           }
-          const r = await fetch(proxyUrl, {
+          const r = await fetchFast(proxyUrl, {
             method: 'POST',
             headers,
             body: JSON.stringify({
               query: q,
               clientTavilyKey: cfg.tavilyKey || '',
               clientExaKey: cfg.exaKey || '',
-              clientGeminiKeys: getAllManualGeminiKeys(),
               num: 5
             })
-          });
+          }, 9000, activeScanController.signal);
           if (r.ok && (r.headers.get('content-type') || '').includes('application/json')) {
             const j = await r.json();
             if (Array.isArray(j.sources)) sources = j.sources;
             answer = j.answer || '';
             prov = j.provider || 'Render';
           }
-        } catch (e) {}
+        } catch (e) {
+          if (e.name === 'AbortError' && activeScanController?.signal?.aborted) throw e;
+        }
       }
       if (!sources.length && !answer) {
-        const dOut = await callDirectWebSearch(q);
+        const dOut = await callDirectWebSearch(q, activeScanController.signal);
         sources = dOut.sources;
         answer = dOut.answer;
         prov = dOut.provider;
       }
       if (!sources.length && !answer) {
-        toast('⚠️ نتیجه‌ای دریافت نشد؛ کلید Tavily / Exa / Gemini را در Render یا ⚙️ بررسی کنید');
+        toast('⚠️ نتیجه‌ای دریافت نشد؛ کلید Tavily یا Exa را در Render یا ⚙️ بررسی کنید');
         return;
       }
       const findings = sources.map(s => ({ lv: 'ok', title: s.title || 'منبع پزشکی', desc: s.snippet || '' }));
       renderFindingsResult('intAiResultBox', 'ai', '🔎 نتایج جستجوی زنده پزشکی (' + (prov || 'Live') + ')', 'جستجوی منابع پزشکی', findings, [], answer, sources);
       toast('✅ نتایج زنده پزشکی دریافت شد');
+    } catch (e) {
+      if (e.name !== 'AbortError') toast('⚠️ ' + (e.message || 'خطا در جستجو'));
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = oldTxt || '🔎 جستجوی زنده منابع پزشکی'; }
+      activeScanController = null;
+      closeScanOverlay();
+      if (btn) btn.disabled = false;
     }
   };
 
@@ -14898,24 +15090,43 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
     const btn = document.getElementById('intRunAiBtn');
     const modInfo = MODALITY_META[activeModality] || MODALITY_META.report;
     const sysPrompt = buildClinicalSystemPrompt(modInfo, ctxText);
-    const oldBtnTxt = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ اتصال و تحلیل هوشمند...'; }
+    if (btn) btn.disabled = true;
+
+    activeScanController = new AbortController();
+    const sig = activeScanController.signal;
+    openScanOverlay(
+      activeModality,
+      'در حال اسکن و تحلیل ' + modInfo.label + '...',
+      useLiveSearch
+        ? 'اتصال آنلاین به سرور اختصاصی + تحلیل تصویر و سرچ زنده (Tavily / Exa)'
+        : 'اتصال آنلاین به سرور اختصاصی + تحلیل هوشمند Gemini'
+    );
+    scanPhaseTimer = setTimeout(() => {
+      updateScanOverlayText(
+        'در حال استخراج یافته‌ها و هشدارهای بالینی...',
+        'آماده‌سازی گزارش پرستاری و اقدامات فوری بخش قلب'
+      );
+    }, 3500);
 
     try {
       let out = null;
       if (cfg.mode === 'webhook') {
-        out = await callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch);
+        out = await callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch, sig);
       } else if (cfg.mode === 'gemini') {
-        out = await callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch);
+        out = await callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch, sig);
       } else {
         let renderErr = null;
         if (cfg.webhookUrl) {
-          try { out = await callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch); }
-          catch (e) { renderErr = e; }
+          try { out = await callRenderServer(modInfo, sysPrompt, rawText, ctxText, useLiveSearch, sig); }
+          catch (e) {
+            if (e.name === 'AbortError' && sig.aborted) throw e;
+            renderErr = e;
+          }
         }
         if (!out) {
-          try { out = await callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch); }
+          try { out = await callDirectProviders(sysPrompt, rawText, ctxText, useLiveSearch, sig); }
           catch (e2) {
+            if (e2.name === 'AbortError' && sig.aborted) throw e2;
             const combined = [
               renderErr ? ('سرور Render: ' + renderErr.message) : '',
               e2 ? ('کلید دستی: ' + e2.message) : ''
@@ -14940,12 +15151,9 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
       );
       toast('✅ تحلیل هوشمند از طریق ' + out.via + ' انجام شد');
     } catch (err) {
+      if (err.name === 'AbortError' && sig.aborted) return;
       console.error(err);
       const errDetail = String(err.message || 'خطا در اتصال');
-      const hasAqKey = getAllManualGeminiKeys().some(k => k.startsWith('AQ.'));
-      const aqHint = hasAqKey
-        ? '\n💡 نکته کلید AQ....: مرورگر گوشی معمولاً به دلیل CORS اجازه اتصال مستقیم به Vertex را نمی‌دهد؛ این کلید را در Render بگذارید یا از کلید AIzaSy... استفاده کنید.'
-        : '';
       toast('⚠️ خطا در اتصال AI — جزئیات خطا نمایش داده شد');
       if (rawText) {
         intRunOfflineReportDecoder('ai');
@@ -14954,12 +15162,14 @@ var MEDDB_BUILTIN = [{"generic_name": "آسپرین", "brand_name": "Aspirin (AS
         if (resBox) {
           resBox.classList.add('show');
           resBox.innerHTML = '<div class="int-res-head"><b>⚠️ خطا در اتصال به هوش مصنوعی</b><span class="int-severity-pill crit">ناموفق</span></div>'
-            + '<div class="int-ai-prose" dir="auto">' + esc(errDetail + aqHint) + '</div>';
+            + '<div class="int-ai-prose" dir="auto">' + esc(errDetail) + '</div>';
         }
         document.getElementById('intCfgBox')?.classList.add('open');
       }
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = oldBtnTxt || '🧠 تفسیر هوشمند (Gemini + سرچ زنده)'; }
+      activeScanController = null;
+      closeScanOverlay();
+      if (btn) btn.disabled = false;
     }
   };
 
